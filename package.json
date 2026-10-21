@@ -1,0 +1,12 @@
+{
+  "name": "rts-game",
+  "version": "1.0.0",
+  "description": "2D Izometrická Real-Time Strategie",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "dev": "node --watch server/src/index.js"
+  },
+  "keywords": ["rts", "game", "isometric", "strategy"],
+  "author": "",
+  "license": "MIT"
+}

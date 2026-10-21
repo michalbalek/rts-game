@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Království | Izometrická RTS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Herní plátno -->
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <!-- Uživatelské rozhraní (HUD) -->
+  <div id="hud-overlay">
+    <!-- Horní lišta: Heraldika, Písař a Suroviny -->
+    <header class="top-bar">
+      <!-- Erb a název hry -->
+      <div class="logo-badge">
+        <div class="crusader-crest">
+          <span class="crest-cross">✠</span>
+        </div>
+        <div class="logo-text">
+          <h1>KRÁLOVSTVÍ</h1>
+          <span class="sub-text">IZOMETRICKÁ RTS</span>
+        </div>
+      </div>
+
+      <!-- Písař / Spokojenost lidu -->
+      <div class="popularity-badge" id="pop-badge" title="Spokojenost poddaných">
+        <span class="scribe-face" id="pop-face">😀</span>
+        <div class="scribe-info">
+          <span class="scribe-quote" id="pop-quote">„Lidé jsou spokojeni, můj pane.“</span>
+          <span class="scribe-score" id="pop-score">Popularita: 100%</span>
+        </div>
+      </div>
+
+      <!-- Zdroje panství -->
+      <div class="resources-container">
+        <!-- Dřevo -->
+        <div class="res-card" id="res-wood-card" title="Dřevo v zásobárně">
+          <span class="res-icon">🪵</span>
+          <div class="res-info">
+            <span class="res-label">DŘEVO</span>
+            <span class="res-value" id="val-wood">180</span>
+          </div>
+        </div>
+
+        <!-- Pískovcový kámen -->
+        <div class="res-card" id="res-stone-card" title="Pískovcové kvádry pro stavbu pevností">
+          <span class="res-icon">🪨</span>
+          <div class="res-info">
+            <span class="res-label">KÁMEN</span>
+            <span class="res-value" id="val-stone">120</span>
+          </div>
+        </div>
+
+        <!-- Sýpka (Jídlo) -->
+        <div class="res-card granary-card" id="res-food-card" title="Sýpka - jablečné příděly">
+          <span class="res-icon">🍎</span>
+          <div class="res-info">
+            <span class="res-label">SÝPKA</span>
+            <span class="res-value" id="val-food">120</span>
+          </div>
+        </div>
+
+        <!-- Poddaní u ohniště -->
+        <div class="res-card campfire-card" id="res-citizens-card" title="Poddaní u hradního ohniště (nový každých 5s, max 20)">
+          <span class="res-icon">🔥</span>
+          <div class="res-info">
+            <div class="res-label-row">
+              <span class="res-label">U OHNIŠTĚ</span>
+              <span class="res-timer-text" id="citizen-timer-txt">5.0s</span>
+            </div>
+            <div class="res-val-progress">
+              <span class="res-value" id="val-citizens">5 / 20</span>
+              <div class="citizen-progress-bar">
+                <div class="citizen-progress-fill" id="citizen-progress-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vojsko -->
+        <div class="res-card army-card" id="res-army-card" title="Vojsko připravené k obraně donjonu">
+          <span class="res-icon">⚔️</span>
+          <div class="res-info">
+            <span class="res-label">VOJSKO</span>
+            <span class="res-value" id="val-army">3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tlačítka rychlého ovládání -->
+      <div class="quick-controls">
+        <button id="btn-sound" class="hud-btn-circle" title="Zvuky (ZAP/VYP)">🔊</button>
+        <button id="btn-center-castle" class="hud-btn-circle" title="Vycentrovat na Donjon (Mezerník)">🏰</button>
+        <button id="btn-help" class="hud-btn-circle" title="Kronika panovníka (H)">📜</button>
+      </div>
+    </header>
+
+    <!-- Banner stavby -->
+    <div id="build-status-banner" class="build-banner hidden">
+      <div class="build-banner-content">
+        <span class="banner-icon" id="banner-building-icon">🏗️</span>
+        <div class="banner-info">
+          <div class="banner-title" id="banner-building-name">Stavební plány: Kasárna</div>
+          <div class="banner-sub" id="banner-distance-info">Vzdálenost od hradu: 14 / 100 bloků (Povoleno ✓)</div>
+        </div>
+        <button id="btn-cancel-build" class="btn-cancel" title="Zrušit stavbu (ESC)">Zrušit (ESC)</button>
+      </div>
+    </div>
+
+    <!-- Spodní panel -->
+    <footer class="bottom-bar">
+      <!-- Levý panel: Informace o vybrané budově/jednotce -->
+      <section class="selection-panel" id="selection-panel">
+        <div class="panel-header">
+          <span class="panel-icon" id="sel-icon">🏰</span>
+          <div class="panel-title-wrap">
+            <h3 id="sel-title">Královský Donjon</h3>
+            <span class="panel-subtitle" id="sel-subtitle">Sídlo Lorda a velení oázy</span>
+          </div>
+        </div>
+        <div class="panel-body" id="sel-body">
+          <p class="panel-desc" id="sel-desc">Pevnost z pískovcových kvádrů. Před branou plane táborové ohniště, kde usedají volní poddaní čekající na rozkazy panovníka.</p>
+          <div class="panel-stats" id="sel-stats"></div>
+          <div class="panel-actions" id="sel-actions"></div>
+        </div>
+      </section>
+
+      <!-- Střední panel: Stavební dok panství -->
+      <section class="build-dock">
+        <div class="dock-title">
+          <span>✠ STAVBA PANSTVÍ (Královský okruh 100 bloků) ✠</span>
+        </div>
+        <div class="build-buttons-row">
+          <!-- 1. Donjon (3x3) -->
+          <button class="build-btn active-castle" id="btn-build-castle" data-building="castle" title="Královský Donjon (Základna 3×3)">
+            <span class="btn-hotkey">1</span>
+            <span class="build-icon">🏰</span>
+            <span class="build-name">Donjon (3×3)</span>
+            <span class="build-cost">Sídlo</span>
+          </button>
+
+          <!-- 2. Kasárna (2x2) -->
+          <button class="build-btn" id="btn-build-barracks" data-building="barracks" title="Kasárna - výcvik lučištníků (2×2)">
+            <span class="btn-hotkey">2</span>
+            <span class="build-icon">🏹</span>
+            <span class="build-name">Kasárna (2×2)</span>
+            <div class="build-cost-tags">
+              <span>🪵 60</span>
+              <span>🪨 40</span>
+            </div>
+          </button>
+
+          <!-- 3. Dřevorubec (2x2) -->
+          <button class="build-btn" id="btn-build-lumberjack" data-building="lumberjack" title="Dřevorubecký tábor - těžba dřeva v oáze (2×2)">
+            <span class="btn-hotkey">3</span>
+            <span class="build-icon">🪓</span>
+            <span class="build-name">Dřevorubec (2×2)</span>
+            <div class="build-cost-tags">
+              <span>🪵 35</span>
+              <span>🪨 15</span>
+            </div>
+          </button>
+
+          <!-- 4. Kamenolom (2x2) -->
+          <button class="build-btn" id="btn-build-quarry" data-building="quarry" title="Pískovcový kamenolom - těžba kamene (2×2)">
+            <span class="btn-hotkey">4</span>
+            <span class="build-icon">⛏️</span>
+            <span class="build-name">Kamenolom (2×2)</span>
+            <div class="build-cost-tags">
+              <span>🪵 50</span>
+              <span>🪨 25</span>
+            </div>
+          </button>
+
+          <!-- 5. Jabloňový sad (2x2) -->
+          <button class="build-btn" id="btn-build-orchard" data-building="orchard" title="Jabloňový sad v oáze - jídlo pro sýpku (2×2)">
+            <span class="btn-hotkey">5</span>
+            <span class="build-icon">🍏</span>
+            <span class="build-name">Sad (2×2)</span>
+            <div class="build-cost-tags">
+              <span>🪵 40</span>
+              <span>🪨 10</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Pravý panel: Minimapa panství -->
+      <section class="minimap-panel">
+        <div class="minimap-wrapper">
+          <canvas id="minimap-canvas" width="160" height="160"></canvas>
+          <div class="minimap-hud-coords" id="minimap-coords">X: 0, Y: 0</div>
+        </div>
+      </section>
+    </footer>
+
+    <!-- Toasty -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Modální okno: Kronika panovníka -->
+    <div id="help-modal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2>📜 Kronika Panovníka</h2>
+          <button id="btn-close-help" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="help-section">
+            <h4>🎮 Ovládání království</h4>
+            <ul>
+              <li><strong>WASD nebo Šipky:</strong> Pohyb po mapě a oázách</li>
+              <li><strong>Stisk a tažení pravým/prostředním tlačítkem:</strong> Posun kamery</li>
+              <li><strong>Kolečko myši:</strong> Přiblížení a oddálení (Zoom)</li>
+              <li><strong>Mezerník:</strong> Okamžité vycentrování na Donjon</li>
+              <li><strong>Klávesy 1–5:</strong> Rychlé stavební plány</li>
+            </ul>
+          </div>
+          <div class="help-section">
+            <h4>🏰 Základní pravidla a mřížka</h4>
+            <ul>
+              <li><strong>Uchycení na mřížku:</strong> Budovy se přesně přichytávají na izometrickou mřížku (Donjon 3×3, ostatní 2×2).</li>
+              <li><strong>Královský stavební okruh:</strong> Stavět lze v okruhu <strong>100 bloků</strong> od Donjonu.</li>
+              <li><strong>Táborové ohniště:</strong> Každých <strong>5 sekund usedne k ohništi 1 volný poddaný</strong> (max 20).</li>
+              <li><strong>Hospodářství:</strong> Poddané přidělte jako dělníky do táborů dřevorubců, kamenolomů a zavlažovaných sadů.</li>
+              <li><strong>Vojsko:</strong> Vycvičte pěšáky s mečem a štítem v Donjonu a lučištníky v Kasárnách.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

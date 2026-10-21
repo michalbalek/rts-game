@@ -1,0 +1,732 @@
+/* =========================================================
+   KRÁLOVSTVÍ - HERNÍ DESIGN SYSTEM & STYLY
+   ========================================================= */
+
+:root {
+  --sand-dark: #1f160e;
+  --sand-panel: rgba(38, 26, 16, 0.88);
+  --sandstone-border: rgba(222, 179, 112, 0.35);
+  --sandstone-glow: rgba(222, 179, 112, 0.25);
+  
+  --crusader-red: #dc2626;
+  --crusader-red-dark: #991b1b;
+  --crusader-gold: #f59e0b;
+  --crusader-gold-light: #fef08a;
+
+  --wood-color: #facc15;
+  --stone-color: #deb370;
+  --food-color: #f87171;
+  --campfire-color: #fb923c;
+  --army-color: #f43f5e;
+
+  --text-main: #fef3c7;
+  --text-muted: #d4b996;
+  
+  --font-title: 'Cinzel', serif;
+  --font-ui: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--sand-dark);
+  font-family: var(--font-ui);
+  color: var(--text-main);
+}
+
+/* Plátno */
+#game-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+/* HUD Vrstva */
+#hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* =========================================================
+   HORNÍ LIŠTA (Top Bar) - CRUSADER HERALDRY
+   ========================================================= */
+.top-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: linear-gradient(180deg, rgba(28, 18, 10, 0.96) 0%, rgba(38, 26, 16, 0.88) 75%, transparent 100%);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--sandstone-border);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Křižácký erb */
+.logo-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.crusader-crest {
+  width: 44px;
+  height: 48px;
+  background: linear-gradient(135deg, #ffffff 50%, #f1f5f9 50%);
+  border: 2px solid #ca8a04;
+  border-radius: 4px 4px 22px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.5);
+}
+
+.crest-cross {
+  color: var(--crusader-red);
+  font-size: 2rem;
+  line-height: 1;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.logo-text h1 {
+  font-family: var(--font-title);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #fef08a;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5), 1px 2px 2px #000;
+  line-height: 1.1;
+}
+
+.logo-text .sub-text {
+  font-size: 0.72rem;
+  color: var(--crusader-red);
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+
+/* Písař / Spokojenost lidu */
+.popularity-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(45, 29, 16, 0.8);
+  border: 1px solid #ca8a04;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.scribe-face {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 0 6px var(--crusader-gold));
+}
+
+.scribe-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.scribe-quote {
+  font-family: var(--font-title);
+  font-size: 0.78rem;
+  font-style: italic;
+  color: #fde047;
+}
+
+.scribe-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #86efac;
+}
+
+/* Suroviny panství */
+.resources-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.res-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(30, 20, 12, 0.8);
+  border: 1px solid var(--sandstone-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+}
+
+.res-card:hover {
+  background: rgba(45, 30, 18, 0.9);
+  border-color: var(--crusader-gold);
+  transform: translateY(-1px);
+}
+
+.res-icon {
+  font-size: 1.3rem;
+}
+
+.res-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.res-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.res-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: #fff;
+}
+
+#val-wood { color: var(--wood-color); }
+#val-stone { color: var(--stone-color); }
+#val-food { color: var(--food-color); }
+#val-citizens { color: var(--campfire-color); }
+#val-army { color: var(--army-color); }
+
+/* Poddaní u ohniště */
+.campfire-card {
+  min-width: 145px;
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.res-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.res-timer-text {
+  font-size: 0.65rem;
+  color: var(--crusader-gold);
+  font-family: monospace;
+}
+
+.res-val-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.citizen-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.citizen-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #ea580c, #f59e0b, #fef08a);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+  transition: width 0.1s linear;
+}
+
+/* Ovládací kruhová tlačítka */
+.quick-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-btn-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--sandstone-border);
+  background: rgba(30, 20, 12, 0.85);
+  color: var(--text-main);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hud-btn-circle:hover {
+  background: #78350f;
+  border-color: var(--crusader-gold);
+  box-shadow: 0 0 12px var(--sandstone-glow);
+  transform: scale(1.05);
+}
+
+/* =========================================================
+   STAVEBNÍ BANNER
+   ========================================================= */
+.build-banner {
+  pointer-events: auto;
+  align-self: center;
+  margin-top: 10px;
+  background: rgba(30, 20, 12, 0.94);
+  border: 2px solid var(--crusader-gold);
+  border-radius: 30px;
+  padding: 8px 24px;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.build-banner.hidden {
+  display: none;
+}
+
+.build-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.banner-icon {
+  font-size: 1.6rem;
+}
+
+.banner-title {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: #fde047;
+  font-size: 0.95rem;
+}
+
+.banner-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.btn-cancel {
+  background: #b91c1c;
+  border: 1px solid #f87171;
+  border-radius: 20px;
+  color: #fff;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #dc2626;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
+}
+
+/* =========================================================
+   SPODNÍ CRUSADER PANEL (Bottom Bar)
+   ========================================================= */
+.bottom-bar {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 340px 1fr 200px;
+  gap: 16px;
+  padding: 16px 24px;
+  background: linear-gradient(0deg, rgba(22, 14, 8, 0.97) 0%, rgba(32, 21, 12, 0.9) 80%, transparent 100%);
+  backdrop-filter: blur(10px);
+  border-top: 2px solid var(--sandstone-border);
+  box-shadow: 0 -6px 25px rgba(0, 0, 0, 0.6);
+  min-height: 180px;
+}
+
+/* Levý panel výběru */
+.selection-panel {
+  background: var(--sand-panel);
+  border: 1px solid var(--sandstone-border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(222, 179, 112, 0.2);
+  padding-bottom: 8px;
+}
+
+.panel-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 8px var(--crusader-gold));
+}
+
+.panel-title-wrap h3 {
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  color: #fde047;
+}
+
+.panel-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.panel-desc {
+  font-size: 0.78rem;
+  color: #e5d5be;
+  line-height: 1.35;
+}
+
+.panel-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.1);
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #451a03, #291204);
+  border: 1px solid #b45309;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #78350f, #451a03);
+  border-color: var(--crusader-gold);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #57422f;
+}
+
+.action-cost {
+  font-size: 0.68rem;
+  color: var(--crusader-gold-light);
+}
+
+/* Stavební dok panství */
+.build-dock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dock-title {
+  font-family: var(--font-title);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #fde047;
+  text-align: center;
+}
+
+.build-buttons-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.build-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 95px;
+  height: 95px;
+  background: rgba(30, 20, 12, 0.85);
+  border: 1px solid var(--sandstone-border);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.build-btn:hover {
+  background: rgba(50, 32, 18, 0.95);
+  border-color: var(--crusader-gold);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+}
+
+.build-btn.selected {
+  border-color: var(--crusader-gold);
+  background: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+}
+
+.btn-hotkey {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-size: 0.65rem;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--crusader-gold);
+  font-family: monospace;
+}
+
+.build-icon {
+  font-size: 1.6rem;
+}
+
+.build-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.build-cost-tags {
+  display: flex;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-family: monospace;
+  color: var(--text-muted);
+}
+
+.build-cost {
+  font-size: 0.68rem;
+  color: var(--crusader-gold);
+}
+
+/* Pravý panel minimapy */
+.minimap-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.minimap-wrapper {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  background: #b8894d;
+  border: 2px solid #ca8a04;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+#minimap-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.minimap-hud-coords {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.65rem;
+  background: rgba(30, 20, 12, 0.85);
+  border: 1px solid rgba(222, 179, 112, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fde047;
+  font-family: monospace;
+}
+
+/* =========================================================
+   TOASTY (Křižácká hlášení)
+   ========================================================= */
+.toast-container {
+  position: absolute;
+  top: 80px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background: rgba(28, 18, 10, 0.96);
+  border-left: 4px solid var(--crusader-gold);
+  border-top: 1px solid rgba(222, 179, 112, 0.2);
+  border-right: 1px solid rgba(222, 179, 112, 0.2);
+  border-bottom: 1px solid rgba(222, 179, 112, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: #fef3c7;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 270px;
+}
+
+.toast.toast-error {
+  border-left-color: #ef4444;
+}
+
+.toast.toast-success {
+  border-left-color: #22c55e;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Modální okno */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 10, 5, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-box {
+  width: 90%;
+  max-width: 580px;
+  background: #24150b;
+  border: 2px solid #ca8a04;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.35);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(222, 179, 112, 0.25);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-header h2 {
+  font-family: var(--font-title);
+  font-size: 1.3rem;
+  color: #fde047;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #fff;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.help-section h4 {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  color: var(--crusader-gold);
+  margin-bottom: 6px;
+}
+
+.help-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #fed7aa;
+}
+
+.help-section li strong {
+  color: #fff;
+}
