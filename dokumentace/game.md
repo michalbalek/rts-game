@@ -16,9 +16,10 @@ Projekt se skládá z:
 
 ---
 
-## 3. Základna, hrad a stavební rádius
+## 3. Základna, hrad a stavební pravidla
 - Uživatel začíná s centrální pevností (**Královský hrad**).
-- V rozmezí **100 bloků** od hradu je vymezen posvátný stavební okruh panovníka, kde je dovoleno stavět budovy a opevnění. Mimo tento rádius stavebníci odmítnou pracovat.
+- Stavební okruh je neomezený: budovy a opevnění lze stavět kdekoli na mapě.
+- Stavět nelze v okruhu **20 bloků** od nepřátelské jednotky nebo budovy. Stavebníci na takovém místě odmítnou pracovat.
 
 ---
 

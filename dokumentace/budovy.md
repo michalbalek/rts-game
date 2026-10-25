@@ -7,7 +7,7 @@
 - **Pevně daná velikost (Footprint)**: Každá budova má svou pevně definovanou šířku a délku v celočíselných jednotkách dlaždic ($W \times H$).
 - **Uchycení na mřížku (Snap to Grid)**: Umístění budovy se automaticky přichytává k celočíselným souřadnicím dlaždic. Není možné umístit budovu „mezi“ bloky.
 - **Výchozí izometrická orientace (symetrická dlaždice 2:1)**: Všechny budovy jsou výchozím způsobem vykreslovány i kolizně orientovány na symetrické mřížce 64×32 px v souladu s celou herní mapou. Základna každé budovy na mřížce tvoří izometrický kosočtverec/polygon.
-- **Stavební okruh**: Stavba je povolena pouze v okruhu **100 bloků** od královského hradu.
+- **Stavební okruh**: Stavba je neomezená, nelze ji však provést v okruhu **20 bloků** od nepřátelské jednotky nebo budovy.
 - **Materiál na stavbu**: suroviny se berou ze skladu a dělníci je odnášejí na staviště. Náklady jsou u každé budovy v jejím popisu.
 - **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s.
 - **Kolize a terén**: 
