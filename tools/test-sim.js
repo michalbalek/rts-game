@@ -1,6 +1,6 @@
 import { GameSim } from '../client/js/sim/sim.js';
 import { GameMap } from '../client/js/sim/mapgen.js';
-import { START_POSITIONS, RESOURCE_TYPES, TILE_TYPES } from '../client/js/sim/constants.js';
+import { START_POSITIONS, RESOURCE_TYPES, TILE_TYPES, buildSpeedFactor } from '../client/js/sim/constants.js';
 import { formatSaveLabel } from '../client/js/game/save.js';
 
 let failures = 0;
@@ -64,7 +64,7 @@ assert(sim.buildings.length === 2, 'dva hrady');
 assert(sim.units.length === 40, 'dvě sídla po 20 poddaných');
 assert(sim.players[0].resources.wood === 200, 'startovní kapitál dřeva');
 
-// Lidský hráč postaví dřevorubce na stromě a přiřadí dělníky.
+// Lidský hráč zadá dřevorubce na stromě, čtyři poddaní ho postaví a přiřadí se dělníci.
 const humanCastle = sim.getCastle(1);
 let lumberSpot = null;
 for (let y = 0; y < sim.map.size && !lumberSpot; y++) {
@@ -80,10 +80,18 @@ for (let y = 0; y < sim.map.size && !lumberSpot; y++) {
 assert(!!lumberSpot, 'lze najít místo pro dřevorubce');
 const buildRes = sim.command(1, { op: 'build', buildingType: 'lumberjack', x: lumberSpot.x, y: lumberSpot.y });
 assert(buildRes.ok, 'lidský hráč postavil dřevorubce');
+const lumber = sim.buildings.find(b => b.id === buildRes.buildingId);
+assert(lumber && !lumber.complete, 'nově zadaná budova je staveniště bez dokončení');
 const humanWoodBefore = sim.players[0].resources.wood;
-for (let tick = 0; tick < 20 * 35; tick++) sim.tick(1 / 20);
-const lumber = sim.buildings.find(b => b.ownerId === 1 && b.type === 'lumberjack');
-assert(lumber && lumber.complete, 'dřevorubec dokončen');
+const lumberBuilders = sim.units.filter(u => u.ownerId === 1 && u.isVillager).slice(0, 4);
+assert(sim.command(1, { op: 'construct', buildingId: lumber.id, unitIds: lumberBuilders.map(u => u.id) }).ok,
+  'čtyři poddaní byli přiřazeni ke stavbě dřevorubce');
+let lumberBuildTicks = 0;
+while (!lumber.complete && lumberBuildTicks < 20 * 60) {
+  sim.tick(1 / 20);
+  lumberBuildTicks++;
+}
+assert(lumber.complete, 'dřevorubec dokončen čtyřmi staviteli');
 const assignRes = sim.command(1, { op: 'assign', buildingId: lumber.id, count: 4 });
 assert(assignRes.ok, 'přiřazeni dělníci');
 const lumberWorkers = () => sim.units.filter(u => u.work && u.work.buildingId === lumber.id);
@@ -106,6 +114,13 @@ while (lumber.workers === 0 && arrivalTicks < 20 * 40) {
 }
 assert(lumber.workers > 0, 'poddaný se po příchodu do budovy započítá jako dělník');
 assert(lumberWorkers().some(u => u.work.arrived), 'stav práce označí dělníka, který dorazil');
+const releasedWorker = lumberWorkers().find(u => u.work.arrived);
+const workersBeforeRelease = lumber.workers;
+const releaseWorkerRes = sim.command(1, { op: 'release', unitIds: [releasedWorker.id] });
+assert(releaseWorkerRes.ok && !releasedWorker.work && lumber.workers === workersBeforeRelease - 1,
+  'uvolnění pracujícího poddaného ho odebere z budovy');
+assert(sim.command(1, { op: 'assign', buildingId: lumber.id, count: 1 }).ok,
+  'uvolněný poddaný se dá znovu přiřadit');
 const t0 = Date.now();
 for (let tick = 0; tick < 20 * 150; tick++) sim.tick(1 / 20);
 console.log(`  simulace 160 s: ${Date.now() - t0} ms, tick ${sim.tickCount}`);
@@ -169,9 +184,16 @@ const marketSpot = findSpot(sim3, 1, 'market');
 assert(!!marketSpot, 'lze najít místo pro Obchod');
 const marketBuild = sim3.command(1, { op: 'build', buildingType: 'market', x: marketSpot.x, y: marketSpot.y });
 assert(marketBuild.ok, 'Obchod zadán ke stavbě');
-for (let i = 0; i < 20 * 61; i++) sim3.tick(1 / 20);
-const market = sim3.buildings.find(b => b.ownerId === 1 && b.type === 'market');
-assert(market && market.complete, 'Obchod dokončen');
+const market = sim3.buildings.find(b => b.id === marketBuild.buildingId);
+const marketBuilders = sim3.units.filter(u => u.ownerId === 1 && u.isVillager).slice(0, 3);
+assert(sim3.command(1, { op: 'construct', buildingId: market.id, unitIds: marketBuilders.map(u => u.id) }).ok,
+  'tři poddaní byli přiřazeni ke stavbě obchodu');
+let marketBuildTicks = 0;
+while (!market.complete && marketBuildTicks < 20 * 90) {
+  sim3.tick(1 / 20);
+  marketBuildTicks++;
+}
+assert(market.complete, 'Obchod dokončen třemi staviteli');
 
 const trader = sim3.players[0];
 trader.resources.money = 100000;
@@ -313,11 +335,14 @@ assert(restored.players[0].resources.money === sim.players[0].resources.money,
 
 const savedLumber = restored.buildings.find(b => b.type === 'lumberjack' && b.ownerId === 1);
 const originalLumber = sim.buildings.find(b => b.type === 'lumberjack' && b.ownerId === 1);
+assert(originalLumber.workers > 0, 'před uložením pracují u dřevorubce dělníci');
 assert(savedLumber && savedLumber.workers === originalLumber.workers, 'načtený stav dělníků budovy odpovídá uložení');
-assert(savedLumber.assignedWorkerIds.length === originalLumber.assignedWorkerIds.length,
+assert(savedLumber && originalLumber.assignedWorkerIds.length > 0 &&
+  savedLumber.assignedWorkerIds.length === originalLumber.assignedWorkerIds.length,
   'načtené přiřazené dělníky odpovídají uložení');
 const originalWorker = sim.units.find(u => u.work && u.work.buildingId === originalLumber.id);
-const restoredWorker = restored.units.find(u => u.id === originalWorker.id);
+assert(!!originalWorker, 'před uložením existuje rozdělaná práce dělníka');
+const restoredWorker = originalWorker && restored.units.find(u => u.id === originalWorker.id);
 assert(restoredWorker && restoredWorker.work && restoredWorker.work.phase === originalWorker.work.phase,
   'rozdělaná práce dělníka se obnoví');
 
@@ -341,6 +366,231 @@ const fogSaved = JSON.parse(JSON.stringify(sim4.toSaveState({ startedAt })));
 const fogRestored = GameSim.fromSaveState(fogSaved);
 assert(fogRestored.isVisible(1, ownCastle.centerX, ownCastle.centerY), 'po načtení zůstává vlastní hrad viditelný');
 assert(!fogRestored.isVisible(1, enemyCastle.centerX, enemyCastle.centerY), 'po načtení zůstává nepřátelský hrad skrytý');
+
+console.log('\n--- Stavba staveništěm ---');
+assert(buildSpeedFactor(0) === 0, 'bez stavitelů se stavba nehýbe');
+assert(buildSpeedFactor(1) === 1, 'jeden stavitel staví základní rychlostí');
+assert(buildSpeedFactor(2) === 1.5, 'druhý stavitel přidá 50 %');
+assert(buildSpeedFactor(3) === 2, 'třetí stavitel přidá dalších 50 %, ne stejně jako první');
+assert(buildSpeedFactor(16) === 8.5, 'šestnáct stavitelů dává 850 % rychlosti');
+
+const sim7 = new GameSim({
+  seed: 4242,
+  mapType: 'desert',
+  mode: 'sandbox',
+  capital: 'rich',
+  players: [
+    { name: 'Hráč', isBot: false },
+    { name: 'Soupeř', isBot: false }
+  ]
+});
+const siteSpot = findSpot(sim7, 1, 'dwelling');
+assert(!!siteSpot, 'lze najít místo pro obydlí');
+const siteRes = sim7.command(1, { op: 'build', buildingType: 'dwelling', x: siteSpot.x, y: siteSpot.y });
+assert(siteRes.ok, 'obydlí zakoupeno a na místě vzniklo staveniště');
+const site = sim7.buildings.find(b => b.id === siteRes.buildingId);
+assert(site.progress === 0 && !site.complete, 'staveniště začíná bez postupu');
+const crew = sim7.units.filter(u => u.ownerId === 1 && u.isVillager);
+for (let i = 0; i < 20 * 20; i++) sim7.tick(1 / 20);
+assert(site.progress === 0 && !site.complete, 'bez stavitelů staveniště 20 s stojí');
+
+const siteCrew = crew.slice(0, 2);
+assert(sim7.command(1, { op: 'construct', buildingId: site.id, unitIds: siteCrew.map(u => u.id) }).assigned === 2,
+  'dva poddaní přijali povel ke stavbě');
+let siteTicks = 0;
+while (!site.complete && siteTicks < 20 * 120) {
+  sim7.tick(1 / 20);
+  siteTicks++;
+}
+assert(site.complete && site.hp === site.maxHp, 'dva stavitelé obydlí dokončí a má plné zdraví');
+assert(!siteCrew.some(u => u.build), 'po dokončení stavitelé stavbu opustí');
+assert(!sim7.command(1, { op: 'construct', buildingId: site.id, unitIds: [crew[2].id] }).ok,
+  'hotovou budovu už nelze stavět');
+
+const site2Spot = findSpot(sim7, 1, 'dwelling');
+assert(!!site2Spot, 'lze najít místo pro druhé staveniště');
+const site2Res = sim7.command(1, { op: 'build', buildingType: 'dwelling', x: site2Spot.x, y: site2Spot.y });
+assert(site2Res.ok, 'druhé staveniště zadáno');
+const site2 = sim7.buildings.find(b => b.id === site2Res.buildingId);
+const walker = crew[2];
+assert(sim7.command(1, { op: 'construct', buildingId: site2.id, unitIds: [walker.id] }).ok,
+  'jeden poddaný se přihlásil ke druhému staveništi');
+assert(walker.build && walker.build.buildingId === site2.id, 'poddaný je stavitelem druhého staveniště');
+sim7.command(1, { op: 'move', unitIds: [walker.id], x: walker.x + 2, y: walker.y + 2 });
+assert(!walker.build, 'příkaz k přesunu stavitele z práce odvolá');
+
+const site2Crew = [crew[3], crew[4]];
+assert(sim7.command(1, { op: 'construct', buildingId: site2.id, unitIds: site2Crew.map(u => u.id) }).ok,
+  'dva poddaní jsou přiřazeni k druhému staveništi');
+let progressTicks = 0;
+while (site2.progress === 0 && progressTicks < 20 * 60) {
+  sim7.tick(1 / 20);
+  progressTicks++;
+}
+assert(site2.progress > 0 && !site2.complete, 'stavba postupuje, jakmile stavitelé dorazí');
+
+const savedBuilders = sim7.units.filter(u => u.build && u.build.buildingId === site2.id);
+assert(savedBuilders.length === 2, 'na staveništi jsou dva stavitelé');
+const saved7 = JSON.parse(JSON.stringify(sim7.toSaveState({ startedAt })));
+const restored7 = GameSim.fromSaveState(saved7);
+const restoredSite2 = restored7.buildings.find(b => b.id === site2.id);
+const restoredBuilders = restored7.units.filter(u => u.build && u.build.buildingId === site2.id);
+assert(restoredSite2 && !restoredSite2.complete && restoredSite2.progress === site2.progress,
+  'po načtení stavba pokračuje od uloženého postupu');
+assert(restoredBuilders.length === 2 && restoredBuilders.every(u => savedBuilders.some(s =>
+  s.id === u.id && s.build.arrived === u.build.arrived)),
+  'po načtení zůstanou stejní stavitelé ve stejném stavu');
+let restoredTicks = 0;
+while (restoredSite2 && !restoredSite2.complete && restoredTicks < 20 * 120) {
+  restored7.tick(1 / 20);
+  restoredTicks++;
+}
+assert(restoredSite2 && restoredSite2.complete, 'načtené staveniště dokončí stavitelé po načtení');
+
+const releaseIds = savedBuilders.map(u => u.id);
+const releasedRes = sim7.command(1, { op: 'release', unitIds: releaseIds });
+assert(releasedRes.ok && releasedRes.released === 2, 'uvolnění vrátí oba stavitele k volným úkolům');
+assert(!sim7.units.some(u => u.build && u.build.buildingId === site2.id), 'uvolnění odebere stavitele ze staveniště');
+assert(!sim7.command(1, { op: 'release', unitIds: releaseIds }).ok, 'opakované uvolnění nemá co uvolnit');
+
+console.log('\n--- Nosič s nákladem nejde přeřadit ---');
+const sim8 = new GameSim({
+  seed: 777,
+  mapType: 'oasis',
+  mode: 'sandbox',
+  capital: 'rich',
+  players: [
+    { name: 'Hráč', isBot: false },
+    { name: 'Soupeř', isBot: false }
+  ]
+});
+const carryCastle = sim8.getCastle(1);
+let carrySpot = null;
+for (let y = 0; y < sim8.map.size && !carrySpot; y++) {
+  for (let x = 0; x < sim8.map.size; x++) {
+    if (Math.hypot(x - carryCastle.centerX, y - carryCastle.centerY) > 30) continue;
+    if (sim8.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
+    if (sim8.canPlaceBuilding(1, 'lumberjack', x, y).valid) {
+      carrySpot = { x, y };
+      break;
+    }
+  }
+}
+assert(!!carrySpot, 'lze najít místo pro dřevorubce u nosiče');
+const carryLumberRes = sim8.command(1, { op: 'build', buildingType: 'lumberjack', x: carrySpot.x, y: carrySpot.y });
+assert(carryLumberRes.ok, 'dřevorubec zadán');
+const carryLumber = sim8.buildings.find(b => b.id === carryLumberRes.buildingId);
+const carryBuilders = sim8.units.filter(u => u.ownerId === 1 && u.isVillager).slice(0, 2);
+assert(sim8.command(1, { op: 'construct', buildingId: carryLumber.id, unitIds: carryBuilders.map(u => u.id) }).assigned === 2,
+  'dva poddaní staví dřevorubce');
+let carryBuildTicks = 0;
+while (!carryLumber.complete && carryBuildTicks < 20 * 90) {
+  sim8.tick(1 / 20);
+  carryBuildTicks++;
+}
+assert(carryLumber.complete, 'dřevorubec je hotový');
+assert(sim8.command(1, { op: 'assign', buildingId: carryLumber.id, count: 1 }).ok, 'jeden poddaný jde do práce');
+const carrier = sim8.units.find(u => u.work && u.work.buildingId === carryLumber.id);
+assert(!!carrier, 'poddaný má přidělenou práci');
+let carryTicks = 0;
+while (!(carrier.work && carrier.work.carry > 0) && carryTicks < 20 * 240) {
+  sim8.tick(1 / 20);
+  carryTicks++;
+}
+assert(carrier.work && carrier.work.carry > 0, 'poddaný nese náklad dřeva');
+
+const carryWarehouseSpot = findSpot(sim8, 1, 'warehouse');
+assert(!!carryWarehouseSpot, 'lze najít místo pro sklad');
+const carryWarehouseRes = sim8.command(1, { op: 'build', buildingType: 'warehouse', x: carryWarehouseSpot.x, y: carryWarehouseSpot.y });
+assert(carryWarehouseRes.ok, 'sklad zadán jako staveniště');
+const carryWarehouse = sim8.buildings.find(b => b.id === carryWarehouseRes.buildingId);
+const carriedAmount = carrier.work.carry;
+const refusedBuild = sim8.command(1, { op: 'construct', buildingId: carryWarehouse.id, unitIds: [carrier.id] });
+assert(!refusedBuild.ok && refusedBuild.reason === 'Vybraní poddaní nejdřív odevzdají náklad do skladu.',
+  'nosič s nákladem nejde přeřadit ke stavbě');
+assert(carrier.work && carrier.work.carry === carriedAmount, 'po odmítnutí povelu nosič náklad i práci ponechá');
+const refusedRelease = sim8.command(1, { op: 'release', unitIds: [carrier.id] });
+assert(!refusedRelease.ok && carrier.work && carrier.work.carry === carriedAmount,
+  'nosič s nákladem nejde uvolnit z práce');
+const carryHelper = sim8.units.find(u => u.ownerId === 1 && u.isVillager && !u.work && !u.build);
+assert(!!carryHelper, 'je k dispozici volný poddaný');
+const mixedRes = sim8.command(1, { op: 'construct', buildingId: carryWarehouse.id, unitIds: [carryHelper.id, carrier.id] });
+assert(mixedRes.ok && mixedRes.assigned === 1, 'ke stavbě jde jen volný poddaný z vybraných');
+assert(carryHelper.build && carryHelper.build.buildingId === carryWarehouse.id, 'volný poddaný staví sklad');
+assert(carrier.work && carrier.work.carry === carriedAmount, 'nosič si při smíšeném povelu náklad ponechá');
+assert(sim8.events.some(ev => ev.type === 'toast' && /nesou náklad/.test(ev.text || '')),
+  'smíšený povel oznámí, že někteří vybraní nesou náklad');
+
+const woodBeforeDelivery = sim8.players[0].resources.wood;
+let deliverTicks = 0;
+while (carrier.work && carrier.work.carry > 0 && deliverTicks < 20 * 120) {
+  sim8.tick(1 / 20);
+  deliverTicks++;
+}
+assert(carrier.work && carrier.work.carry === 0, 'nosič odevzdal náklad do skladu');
+assert(sim8.players[0].resources.wood - woodBeforeDelivery === carriedAmount,
+  'do skladu přibylo přesně tolik dřeva, kolik nosič nesl');
+const carrierBuild = sim8.command(1, { op: 'construct', buildingId: carryWarehouse.id, unitIds: [carrier.id] });
+assert(carrierBuild.ok && carrierBuild.assigned === 1, 'po odevzdání lze nosiče přidat ke stavbě');
+assert(!carrier.work && carrier.build && carrier.build.buildingId === carryWarehouse.id,
+  'po odevzdání nosič opustí práci a začne stavět');
+assert(!carryWarehouse.complete, 'sklad zatím není hotový');
+
+console.log('\n--- Jablka z sadu jdou do sýpky ---');
+const sim9 = new GameSim({
+  seed: 777,
+  mapType: 'oasis',
+  mode: 'sandbox',
+  capital: 'rich',
+  players: [
+    { name: 'Hráč', isBot: false },
+    { name: 'Soupeř', isBot: false }
+  ]
+});
+const appleVillagers = sim9.units.filter(u => u.ownerId === 1 && u.isVillager);
+assert(appleVillagers.length >= 6, 'bohaté hlavní město má dost poddaných na dvě stavby');
+const appleOrchardSpot = findSpot(sim9, 1, 'orchard');
+assert(!!appleOrchardSpot, 'lze najít místo pro jabloňový sad');
+const appleOrchardRes = sim9.command(1, { op: 'build', buildingType: 'orchard', x: appleOrchardSpot.x, y: appleOrchardSpot.y });
+assert(appleOrchardRes.ok, 'sad zadán ke stavbě');
+const appleOrchard = sim9.buildings.find(b => b.id === appleOrchardRes.buildingId);
+const appleGranarySpot = findSpot(sim9, 1, 'granary');
+assert(!!appleGranarySpot, 'lze najít místo pro sýpku');
+const appleGranaryRes = sim9.command(1, { op: 'build', buildingType: 'granary', x: appleGranarySpot.x, y: appleGranarySpot.y });
+assert(appleGranaryRes.ok, 'sýpka zadána ke stavbě');
+const appleGranary = sim9.buildings.find(b => b.id === appleGranaryRes.buildingId);
+assert(sim9.command(1, { op: 'construct', buildingId: appleOrchard.id, unitIds: appleVillagers.slice(0, 3).map(u => u.id) }).assigned === 3,
+  'tři poddaní staví sad');
+assert(sim9.command(1, { op: 'construct', buildingId: appleGranary.id, unitIds: appleVillagers.slice(3, 6).map(u => u.id) }).assigned === 3,
+  'tři další poddaní staví sýpku');
+let appleBuildTicks = 0;
+while (!(appleOrchard.complete && appleGranary.complete) && appleBuildTicks < 20 * 240) {
+  sim9.tick(1 / 20);
+  appleBuildTicks++;
+}
+assert(appleOrchard.complete && appleGranary.complete, 'sad i sýpka jsou dokončeny');
+assert(sim9.command(1, { op: 'assign', buildingId: appleOrchard.id, count: 1 }).ok, 'jeden poddaný jde do sadu');
+const appleWorker = sim9.units.find(u => u.work && u.work.buildingId === appleOrchard.id);
+assert(!!appleWorker, 'poddaný má práci v sadu');
+let appleGatherTicks = 0;
+while (!(appleWorker.work && appleWorker.work.phase === 'toStorage') && appleGatherTicks < 20 * 300) {
+  sim9.tick(1 / 20);
+  appleGatherTicks++;
+}
+assert(appleWorker.work && appleWorker.work.phase === 'toStorage', 'poddaný nasbíral jablka a jde je odnést');
+const appleCarried = appleWorker.work.carry;
+assert(appleCarried > 0, `nosič drží jablka: ${appleCarried}`);
+assert(appleWorker.work.storageId === appleGranary.id, 'jablka jdou do sýpky, ne do hradu');
+const appleGatheredBefore = sim9.players[0].stats.gathered;
+let appleDeliverTicks = 0;
+while (appleWorker.work && appleWorker.work.carry > 0 && appleDeliverTicks < 20 * 120) {
+  sim9.tick(1 / 20);
+  appleDeliverTicks++;
+}
+assert(appleWorker.work && appleWorker.work.carry === 0, 'poddaný odevzdal jablka');
+assert(sim9.players[0].stats.gathered - appleGatheredBefore === appleCarried, 'sýpka přijala celý náklad jablek');
+assert(sim9.events.some(ev => ev.type === 'gather' && ev.resource === 'food' && ev.amount === appleCarried
+  && ev.x === appleGranary.centerX && ev.y === appleGranary.centerY), 'událost příjmu jablek ukazuje na sýpku');
 
 console.log('\n--- Stavební okruh a odstup od nepřítele ---');
 const placementSim = new GameSim({

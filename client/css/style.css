@@ -1934,9 +1934,9 @@ input[type="checkbox"] {
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: 322px minmax(0, 1fr) 224px;
+  grid-template-columns: 322px minmax(0, 1fr) 260px;
   gap: 9px;
-  padding: 9px 12px 10px;
+  padding: 7px 12px 8px;
   pointer-events: none;
   background: linear-gradient(0deg, rgba(14, 9, 5, 0.95) 0%, rgba(23, 15, 8, 0.82) 62%, rgba(23, 15, 8, 0) 100%);
 }
@@ -1948,10 +1948,11 @@ input[type="checkbox"] {
 }
 
 .selection-panel {
-  min-height: 188px;
-  max-height: 216px;
+  /* Pevná výška, aby se spodní lišta při změně výběru nezměnila. */
+  min-height: 176px;
+  max-height: 176px;
   overflow-y: auto;
-  padding: 12px 13px;
+  padding: 9px 12px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(222, 179, 112, 0.3);
   background: linear-gradient(180deg, rgba(49, 34, 20, 0.95), rgba(26, 17, 9, 0.96));
@@ -1974,7 +1975,6 @@ input[type="checkbox"] {
   align-items: center;
   gap: 13px;
   height: 100%;
-  min-height: 160px;
   color: var(--text-dim);
 }
 
@@ -2007,16 +2007,16 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .sel-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
-  font-size: 22px;
+  font-size: 19px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(222, 179, 112, 0.3);
   background: rgba(10, 6, 3, 0.35);
@@ -2028,7 +2028,7 @@ input[type="checkbox"] {
 
 .sel-title h3 {
   font-family: var(--font-title);
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0.03em;
   line-height: 1.15;
   white-space: nowrap;
@@ -2060,7 +2060,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 
 .hp-line > span {
@@ -2097,9 +2097,9 @@ input[type="checkbox"] {
 
 .sel-desc {
   color: var(--text-muted);
-  font-size: 11.5px;
-  line-height: 1.45;
-  margin-bottom: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-bottom: 2px;
 }
 
 .sel-progress {
@@ -2119,7 +2119,7 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 
 .sel-row {
@@ -2176,11 +2176,11 @@ input[type="checkbox"] {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #d9b87f;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .train-section {
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 
 .train-buttons {
@@ -2194,7 +2194,7 @@ input[type="checkbox"] {
   align-items: center;
   gap: 7px;
   flex: 1 1 120px;
-  padding: 6px 8px;
+  padding: 4px 7px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(222, 179, 112, 0.28);
   background: rgba(58, 40, 23, 0.7);
@@ -2271,14 +2271,30 @@ input[type="checkbox"] {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  margin-top: 4px;
+}
+
+.building-actions > .btn-small {
+  flex: 1 1 auto;
+  padding: 5px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Popis nákladů opravy je dlouhý, proto má tlačítko vlastní řádek. */
+.building-actions > [data-action="repair"] {
+  flex-basis: 100%;
+}
+
+.selection-panel .btn.wide {
   margin-top: 6px;
 }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 12px;
-  margin: 6px 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px 8px;
+  margin: 4px 0;
 }
 
 .stat-grid > div {
@@ -2328,7 +2344,7 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 8px 10px 9px;
+  padding: 7px 9px 8px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(222, 179, 112, 0.3);
   background: linear-gradient(180deg, rgba(49, 34, 20, 0.95), rgba(26, 17, 9, 0.96));
@@ -2340,7 +2356,7 @@ input[type="checkbox"] {
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 0 3px 6px;
+  padding: 0 3px 5px;
   font-family: var(--font-title);
   font-size: 11.5px;
   letter-spacing: 0.12em;
@@ -2369,10 +2385,10 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 2px;
   min-width: 0;
-  padding: 7px 4px 6px;
+  padding: 6px 4px 5px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(222, 179, 112, 0.24);
   background: linear-gradient(180deg, rgba(69, 47, 27, 0.8), rgba(37, 24, 13, 0.86));
@@ -2473,10 +2489,13 @@ input[type="checkbox"] {
 /* ---------- Minimapa ---------- */
 
 .minimap-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 7px;
+  --minimap-size: 156px;
+  display: grid;
+  grid-template-columns: var(--minimap-size) minmax(0, 1fr);
+  align-items: start;
+  align-content: center;
+  gap: 6px;
+  padding: 6px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(222, 179, 112, 0.3);
   background: linear-gradient(180deg, rgba(49, 34, 20, 0.95), rgba(26, 17, 9, 0.96));
@@ -2485,6 +2504,7 @@ input[type="checkbox"] {
 
 .minimap-frame {
   position: relative;
+  width: var(--minimap-size);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(222, 179, 112, 0.35);
   background: #241a10;
@@ -2504,7 +2524,8 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 74px;
+  min-width: 0;
+  max-height: var(--minimap-size);
   overflow-y: auto;
   padding: 1px 2px;
   scrollbar-width: thin;
@@ -2535,11 +2556,14 @@ input[type="checkbox"] {
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
+/* Jméno se zalomí nejvýš na dva řádky, aby se legenda vešla do výšky minimapy. */
 .legend-name {
   flex: 1 1 auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .legend-pop {
@@ -3057,12 +3081,17 @@ input[type="checkbox"] {
    RESPONSIVITA
    ========================================================= */
 
+/* Devět karet v jedné řadě ořezává ceny staveb, proto dok do 1600 px má dvě řady. */
+@media (max-width: 1600px) {
+  .dock-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .build-size { display: none; }
+}
+
 @media (max-width: 1240px) {
   .hud-brand-text { display: none; }
-  .hud-bottom { grid-template-columns: 300px minmax(0, 1fr) 200px; }
-  .dock-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hud-bottom { grid-template-columns: 300px minmax(0, 1fr) 232px; }
+  .minimap-panel { --minimap-size: 140px; }
   .build-card { flex-direction: row; justify-content: flex-start; gap: 6px; padding: 5px 7px; }
-  .build-size { display: none; }
   .build-name { font-size: 9px; }
   .build-cost { font-size: 8px; }
   .popularity-badge { max-width: 220px; }
@@ -3091,7 +3120,7 @@ input[type="checkbox"] {
   .map-grid { grid-template-columns: 1fr; }
   .map-preview { height: 96px; }
   .hud-bottom {
-    grid-template-columns: minmax(0, 1fr) 170px;
+    grid-template-columns: minmax(0, 1fr) 232px;
     grid-template-rows: auto auto;
     gap: 7px;
   }
@@ -3124,7 +3153,7 @@ input[type="checkbox"] {
   .hud-brand { display: none; }
   .hud-bottom { grid-template-columns: 1fr; }
   .minimap-panel { display: none; }
-  .selection-panel { max-height: 150px; }
+  .selection-panel { max-height: 150px; min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

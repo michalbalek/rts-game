@@ -55,6 +55,10 @@ class BaseSession {
     }
   }
 
+  getBuilderInfo(building) {
+    return building.builders || { active: 0, total: 0 };
+  }
+
   isEntityVisible(entity) {
     if (!this.state.fogEnabled) return true;
     if (entity.ownerId === this.selfId) return true;
@@ -111,6 +115,11 @@ export class LocalSession extends BaseSession {
   command(cmd) {
     const result = this.sim.command(this.selfId, cmd);
     return result;
+  }
+
+  // Lokální stav je přímo simulace, která pole builders nemá, takže počty bereme z ní.
+  getBuilderInfo(building) {
+    return this.sim.getBuilderCounts().get(building.id) || { active: 0, total: 0 };
   }
 
   canPlace(type, x, y) {

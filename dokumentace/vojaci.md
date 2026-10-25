@@ -22,8 +22,8 @@
 - **Doba výcviku**: 45 s.
 
 ### 3. Poddaný / Dělník
-- Chodí pro suroviny k budovám a odnášejí je do Královského hradu po 10 kusech (viz [ekonomika.md](ekonomika.md)).
-- **Úloha**: čeká u ohniště před hradem, dokud ho nepřiřadí hráč k budově.
+- Chodí pro suroviny k budovám a odnášejí je po 10 kusech. Dřevo, kámen a železo jdou do Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu, viz [ekonomika.md](ekonomika.md)).
+- **Úloha**: čeká u ohniště před hradem, dokud ho hráč nepřiřadí k budově nebo ke stavbě na staveništi (tlačítkem stavby v sekci Stavět). Po dokončení stavby se vrací k ohništi. Tlačítkem „Uvolnit z práce“ ho lze v místní hře propustit; zůstane na místě. Poddaný, který nese náklad, ho nejdřív odevzdá; dokud ho nese, nejde přidělit na stavbu ani uvolnit.
 - **Útok**: dělník nebojuje. Při napadení uteče do hradu.
 
 ### Další plánované jednotky

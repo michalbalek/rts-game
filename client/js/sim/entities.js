@@ -63,6 +63,7 @@ export class Unit {
     this.autoAttack = true;
     this.work = null;           // { buildingId, phase, carry, timer, source }
     this.repairBuildingId = null;
+    this.build = null;          // { buildingId, arrived } – stavba, kterou dělník staví
     this.fleeing = false;
     this.aggroTimer = Math.random() * 0.4;
     this.repathTimer = 0;

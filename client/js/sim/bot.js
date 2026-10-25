@@ -3,6 +3,8 @@ import {
   RESOURCE_TYPES
 } from './constants.js';
 
+const BOT_BUILDERS = 3;
+
 /**
  * Jednoduchý, ale schopný bot podle dokumentace:
  * - staví v daném pořadí a dodržuje volný pruh,
@@ -19,6 +21,7 @@ export function updateBot(sim, player, dt) {
   if (player.popularity < 45 && player.tax !== 'low') player.tax = 'low';
   else if (player.popularity > 72 && player.tax !== 'medium') player.tax = 'medium';
 
+  assignBuilders(sim, player);
   assignWorkers(sim, player, castle);
   tryBuild(sim, player, castle);
   tryTrade(sim, player);
@@ -26,10 +29,31 @@ export function updateBot(sim, player, dt) {
   handleArmy(sim, player, castle);
 }
 
+function assignBuilders(sim, player) {
+  const sites = sim.buildings.filter(b =>
+    b.ownerId === player.id && !b.complete && b.config.buildTime > 0
+  );
+  if (!sites.length) return;
+  const counts = sim.getBuilderCounts();
+  // Stavitelé nečerpají ze zálohy pro armádu, jinak by staveniště zůstala bez nich.
+  const idle = sim.units.filter(u =>
+    u.ownerId === player.id && u.isVillager && !u.work && !u.build && !u.repairBuildingId && !u.fleeing
+  );
+  for (const site of sites) {
+    const need = BOT_BUILDERS - (counts.get(site.id)?.total || 0);
+    if (need <= 0 || !idle.length) continue;
+    idle.sort((a, c) =>
+      Math.hypot(a.x - site.centerX, a.y - site.centerY) - Math.hypot(c.x - site.centerX, c.y - site.centerY)
+    );
+    const unitIds = idle.splice(0, need).map(u => u.id);
+    sim.command(player.id, { op: 'construct', buildingId: site.id, unitIds });
+  }
+}
+
 function assignWorkers(sim, player, castle) {
   const workers = sim.units.filter(u => u.ownerId === player.id && u.isVillager && u.work);
   const idle = sim.units.filter(u =>
-    u.ownerId === player.id && u.isVillager && !u.work && !u.repairBuildingId && !u.fleeing
+    u.ownerId === player.id && u.isVillager && !u.work && !u.build && !u.repairBuildingId && !u.fleeing
   );
   // Necháváme část poddaných k dispozici pro armádu.
   const reserve = Math.max(4, Math.ceil(player.capacity * 0.22));

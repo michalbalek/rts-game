@@ -76,6 +76,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Výběr jednotky / budovy | Levé tlačítko |
 | Výběr více jednotek | Levé tlačítko a tažení obdélníkem |
 | Pohyb a povely | Pravé tlačítko |
+| Zadání stavby poddaným | Vybrané poddané: v jejich panelu klikněte na stavbu v sekci Stavět |
 | Umístění stavby | Levé tlačítko |
 | Zrušení stavby / výběru | Pravé tlačítko nebo `ESC` |
 
@@ -93,7 +94,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 - **Horní lišta** – peníze, dřevo, kámen, jídlo, železo, obyvatelstvo a spokojenost, přepínač daní.
 - **Spodní dok** – nabídka staveb s cenou a dobou výstavby.
-- **Výběrový panel** – informace o budově nebo jednotkách, přiřazení dělníků, výcvik, oprava a bourání.
+- **Výběrový panel** – informace o budově, staveništi nebo jednotkách, přiřazení dělníků, výcvik, oprava a bourání.
 - **Minimapa** – přehled mapy včetně mlhy války; kliknutím nebo tažením se kamera přesune.
 
 ---
@@ -101,9 +102,10 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 ## ⚔️ Pravidla
 
 - **Stavění** je povoleno kdekoli na mapě, nejméně **20 dlaždic** od nepřátelských jednotek a budov. Budovy se přichytávají na mřížku a nesmějí se překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice (výjimka: sklady vedle sebe).
-- **Doba stavby** odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s.
+- **Doba stavby** odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný přidá polovinu základní rychlosti, bez horní hranice. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
+- **Staveniště** – po zakoupení budovy vznikne staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Hráč je vybere a v jejich panelu klikne na stavbu v sekci Stavět. Po dokončení se poddaní vrátí k ohništi.
 - **Dřevorubec** musí stát na stromě, **Kamenolom** na ložisku kamene a **Železný důl** na ložisku železa.
-- **Poddaní** odnášejí suroviny po 10 kusech. Ložisko kamene má 2000 jednotek, železa 1000; po vyčerpání se po 3 minutách objeví nové.
+- **Poddaní** sbírají suroviny po 10 kusech a odnášejí je do hradu; jídlo jde do nejbližší sýpky (bez sýpky do hradu). Ložisko kamene má 2000 jednotek, železa 1000; po vyčerpání se po 3 minutách objeví nové.
 - **Nedostatek surovin** znamená, že se příkaz neprovede a písař to oznámí. Náklady se platí celé při zadání.
 - **Výcvik** spotřebuje volného poddaného u ohniště. Pěšák = 60 peněz + 20 jídla / 40 s, Lučištník = 70 peněz + 20 jídla / 45 s.
 - **Vítězství** – zničte všechny nepřátelské Královské hrady. **Prohra** – padne váš hrad; zbývající budovy se stanou neutrálními.

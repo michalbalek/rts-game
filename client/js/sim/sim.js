@@ -2,7 +2,7 @@ import {
   MAP_SIZE, TILE_TYPES, RESOURCE_TYPES, START_POSITIONS,
   PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, TAX_LEVELS, MARKET_PRICES,
   BOT_DIFFICULTIES, BUILDING_DEFS, UNIT_DEFS, WORK, STORAGE, DEPOSITS,
-  FOG_RANGES, GAME_MODES, MILITARY_TYPES
+  FOG_RANGES, GAME_MODES, MILITARY_TYPES, BUILD, buildSpeedFactor, DELIVERY
 } from './constants.js';
 import { GameMap } from './mapgen.js';
 import { Building, Unit } from './entities.js';
@@ -13,6 +13,10 @@ import { updateBot } from './bot.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+// Mezizastávku stačí zasáhnout v tomto okolí. Přesný střed by se při tlačení davu netrefil
+// a jednotky by u něj natrvalo uvízly (tlačení je zase odsouvalo zpět).
+const WAYPOINT_REACH = 0.45;
+const SIDE_STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 /** Čtvercová vzdálenost k obdélníku budovy. */
 export function distanceToBuilding(x, y, b) {
@@ -61,6 +65,8 @@ export class GameSim {
     this.mapChangeSeq = 0;
 
     this.blockGrid = new Uint8Array(this.map.size * this.map.size);
+    this.regionGrid = new Int32Array(this.map.size * this.map.size);
+    this.regionsDirty = true;
 
     this.fogData = new Map();
     this.fogTimer = 0;
@@ -70,6 +76,7 @@ export class GameSim {
     this.foodWarnTimer = 0;
 
     this.map.onChange = (idx, res) => {
+      this.regionsDirty = true;
       this.mapChanges.push({ seq: ++this.mapChangeSeq, i: idx, r: res });
       if (this.mapChanges.length > 6000) this.mapChanges.splice(0, 1000);
     };
@@ -350,7 +357,10 @@ export class GameSim {
 
   rebuildBlockGrid() {
     this.blockGrid.fill(0);
+    this.regionsDirty = true;
     for (const b of this.buildings) {
+      // Průchozí budova po dokončení neblokuje chůzi.
+      if (b.complete && b.config.passable) continue;
       for (let dy = 0; dy < b.height; dy++) {
         for (let dx = 0; dx < b.width; dx++) {
           const i = this.map.idx(b.tileX + dx, b.tileY + dy);
@@ -471,7 +481,7 @@ export class GameSim {
     const base = this.campfirePosition(playerId);
     for (const u of this.units) {
       if (u.ownerId !== playerId || !u.isVillager) continue;
-      if (u.work || u.repairBuildingId || u.fleeing) continue;
+      if (u.work || u.build || u.repairBuildingId || u.fleeing) continue;
       const d = dist(u.x, u.y, base.x, base.y);
       if (d < bestD) { bestD = d; best = u; }
     }
@@ -559,7 +569,7 @@ export class GameSim {
     const free = [];
     for (const u of this.units) {
       if (u.ownerId !== playerId || !u.isVillager) continue;
-      if (u.work || u.repairBuildingId || u.fleeing) continue;
+      if (u.work || u.build || u.repairBuildingId || u.fleeing) continue;
       free.push(u);
     }
     free.sort((a, c) => dist(a.x, a.y, b.centerX, b.centerY) - dist(c.x, c.y, b.centerX, b.centerY));
@@ -572,13 +582,17 @@ export class GameSim {
       b.assignedWorkerIds.push(u.id);
       u.work = {
         buildingId: b.id,
+        produce: b.config.produce,
         phase: 'toBuilding',
         carry: 0,
         timer: 0,
         source: null,
         storageId: null,
         waitTimer: 0,
-        arrived: false
+        roamWait: 0,
+        arrived: false,
+        depleted: false,
+        fullStorage: false
       };
       u.autoAttack = false;
       u.workPaused = false;
@@ -625,10 +639,145 @@ export class GameSim {
     }
   }
 
-  releaseAllWorkers(building) {
+  releaseRepair(unit) {
+    if (!unit.repairBuildingId) return;
+    const b = this.buildings.find(x => x.id === unit.repairBuildingId);
+    if (b && b.repair && b.repair.workerId === unit.id) b.repair = null;
+    unit.repairBuildingId = null;
+  }
+
+  // Stavitelé jsou poddaní poslaní na staveniště. Budova je nepamatuje, drží je
+  // jen jednotka (unit.build), takže se stav při uložení a načtení nerozjede.
+  isActiveBuilder(unit) {
+    return !!unit.build && unit.build.arrived && !unit.workPaused && !unit.fleeing && unit.hp > 0;
+  }
+
+  // Počty stavitelů podle budovy: active = skutečně staví, total = i ti na cestě.
+  getBuilderCounts() {
+    const counts = new Map();
     for (const u of this.units) {
+      if (!u.build) continue;
+      const entry = counts.get(u.build.buildingId) || { active: 0, total: 0 };
+      entry.total++;
+      if (this.isActiveBuilder(u)) entry.active++;
+      counts.set(u.build.buildingId, entry);
+    }
+    return counts;
+  }
+
+  assignBuilders(playerId, buildingId, units) {
+    const player = this.getPlayer(playerId);
+    const b = this.buildings.find(x => x.id === buildingId);
+    if (!player || !b || b.ownerId !== playerId) return { ok: false, reason: 'Neplatná budova.' };
+    if (b.complete || !b.config.buildTime) return { ok: false, reason: 'Tato budova se nestaví.' };
+    let assigned = 0;
+    let carrying = 0;
+    for (const u of units) {
+      if (u.ownerId !== playerId || !u.isVillager || u.hp <= 0 || u.fleeing) continue;
+      // Opakované kliknutí nesmí stavitele, kteří už jdou nebo staví, vrátit na začátek cesty.
+      if (u.build && u.build.buildingId === b.id) {
+        assigned++;
+        continue;
+      }
+      // Nosič by při přeřazení přišel o náklad, proto ho nejdřív musí doručit.
+      if (u.work && u.work.carry > 0) {
+        carrying++;
+        continue;
+      }
+      const approach = this.findBuildingApproach(u, b);
+      const path = approach ? findPath(this.map, this.blockGrid, u.x, u.y, approach.x, approach.y, 12000) : null;
+      if (!path) continue;
+      if (u.work) this.releaseWorker(u, false);
+      this.releaseRepair(u);
+      u.clearOrders();
+      u.autoAttack = false;
+      u.workPaused = false;
+      u.build = { buildingId: b.id, arrived: false };
+      u.setPath(path);
+      u.repathTimer = 1.5;
+      assigned++;
+    }
+    if (!assigned) {
+      return {
+        ok: false,
+        reason: carrying ? 'Vybraní poddaní nejdřív odevzdají náklad do skladu.' : 'Žádný z vybraných poddaných nemůže ke stavbě dojít.'
+      };
+    }
+    if (carrying) this.noticeCarrying(playerId);
+    return { ok: true, assigned };
+  }
+
+  noticeCarrying(playerId) {
+    this.emit('toast', {
+      playerId,
+      text: 'Někteří vybraní poddaní nesou náklad. Nejdřív ho odevzdají do skladu; potom je lze znovu vybrat.',
+      kind: 'info'
+    });
+  }
+
+  releaseBuilder(unit, sendHome = true) {
+    if (!unit || !unit.build) return;
+    unit.build = null;
+    unit.workPaused = false;
+    if (sendHome && unit.ownerId && !unit.fleeing) {
+      const spot = this.idleSpot(unit.ownerId, unit.id, 1.8);
+      this.navigateTo(unit, spot.x, spot.y);
+    }
+  }
+
+  releaseBuildersOf(buildingId, sendHome = true) {
+    for (const u of this.units) {
+      if (u.build && u.build.buildingId === buildingId) this.releaseBuilder(u, sendHome);
+    }
+  }
+
+  updateVillagerBuild(unit) {
+    const player = this.getPlayer(unit.ownerId);
+    const b = this.buildings.find(x => x.id === unit.build.buildingId);
+    if (!player || !b || b.complete || b.ownerId !== unit.ownerId || !b.config.buildTime) {
+      this.releaseBuilder(unit, true);
+      return;
+    }
+    if (player.foodShortage) {
+      unit.workPaused = true;
+      unit.setPath([]);
+      return;
+    }
+    unit.workPaused = false;
+
+    const build = unit.build;
+    const d = distanceToBuilding(unit.x, unit.y, b);
+    if (!build.arrived && d <= BUILD.reach) {
+      build.arrived = true;
+    } else if (build.arrived && d > BUILD.leaveReach) {
+      build.arrived = false;
+    }
+    if (build.arrived) {
+      unit.setPath([]);
+      return;
+    }
+    if (unit.path.length === 0 && unit.repathTimer <= 0) {
+      const approach = this.findBuildingApproach(unit, b);
+      if (!approach || !this.navigateTo(unit, approach.x, approach.y)) {
+        this.releaseBuilder(unit, true);
+        return;
+      }
+      unit.repathTimer = 1.5;
+    }
+  }
+
+  // Dělník v keep ještě odváží poslední náklad z vyčerpaného dolu, proto ho nepouštíme.
+  // Ostatní dělníci s nákladem ho nejdřív doručí, jinak by se při uvolnění ztratil.
+  releaseAllWorkers(building, keep = null) {
+    for (const u of this.units) {
+      if (u === keep) continue;
       if (u.work && u.work.buildingId === building.id) {
-        this.releaseWorker(u, true);
+        if (u.work.carry > 0) {
+          u.work.depleted = true;
+          if (u.work.phase === 'gather' || u.work.phase === 'pick') u.work.phase = 'toSource';
+        } else {
+          this.releaseWorker(u, true);
+        }
       }
       if (u.repairBuildingId === building.id) {
         u.repairBuildingId = null;
@@ -636,9 +785,12 @@ export class GameSim {
         this.navigateTo(u, spot.x, spot.y);
       }
     }
-    building.workers = 0;
-    building.assignedWorkerIds = [];
+    this.releaseBuildersOf(building.id, true);
     building.repair = null;
+    if (!keep) {
+      building.workers = 0;
+      building.assignedWorkerIds = [];
+    }
   }
 
   findSource(unit, b) {
@@ -676,10 +828,12 @@ export class GameSim {
       return { sx: tx, sy: ty, px: approach.x, py: approach.y, depositId: dep.id };
     }
     if (def.produce === 'food') {
-      // Dělník stojí u sadu a sklízí jablka.
-      const approach = this.findBuildingApproach(unit, b);
-      if (!approach) return null;
-      return { sx: Math.floor(b.centerX), sy: Math.floor(b.centerY), px: approach.x, py: approach.y };
+      // Dělník se toulá mezi stromy sadu, kotvou je proto střed budovy.
+      const sx = Math.floor(b.centerX);
+      const sy = Math.floor(b.centerY);
+      const spot = findNearestWalkable(this.map, this.blockGrid, sx, sy, 2);
+      if (!spot) return null;
+      return { sx, sy, px: spot.x, py: spot.y };
     }
     return null;
   }
@@ -710,7 +864,8 @@ export class GameSim {
           timer: DEPOSITS.stone.respawn
         });
         this.emit('depositDepleted', { x: source.sx, y: source.sy, type: dep.type, playerId: unit.ownerId });
-        this.releaseAllWorkers(b);
+        unit.work.depleted = true;
+        this.releaseAllWorkers(b, unit);
       }
       return taken;
     }
@@ -719,18 +874,89 @@ export class GameSim {
   }
 
   findStorage(playerId, resource, unit) {
-    // Podle pravidel nosí dělníci veškeré nasbírané suroviny do Královského
-    // hradu. Sýpky a sklady zvyšují kapacitu, ale nejsou místem odevzdání.
-    return this.getCastle(playerId);
+    const castle = this.getCastle(playerId);
+    const type = DELIVERY[resource];
+    if (!type || type === 'castle') return castle;
+    let best = null;
+    let bestD = Infinity;
+    for (const b of this.buildings) {
+      if (b.ownerId !== playerId || !b.complete || b.type !== type) continue;
+      const d = dist(unit.x, unit.y, b.centerX, b.centerY);
+      // Sklad, do kterého dělník nedojde (jiná oblast), nevybírat.
+      if (d < bestD && this.findBuildingApproach(unit, b)) {
+        bestD = d;
+        best = b;
+      }
+    }
+    // Když cílová budova chybí, náklad jde do hradu.
+    return best || castle;
+  }
+
+  // Oblasti souvislé průchozí plochy počítané čtyřsměrně. A* s diagonálami dosáhne
+  // stejných dlaždic, protože šikmý krok vyžaduje obě sousední dlaždice průchozí.
+  ensureRegions() {
+    if (!this.regionsDirty) return;
+    const size = this.map.size;
+    const labels = this.regionGrid;
+    labels.fill(0);
+    let label = 0;
+    const stack = [];
+    for (let start = 0; start < size * size; start++) {
+      if (labels[start] !== 0) continue;
+      const sx = start % size;
+      if (!this.isWalkableTile(sx, (start - sx) / size)) continue;
+      label++;
+      labels[start] = label;
+      stack.push(start);
+      while (stack.length > 0) {
+        const cur = stack.pop();
+        const cx = cur % size;
+        const cy = (cur - cx) / size;
+        for (const [dx, dy] of SIDE_STEPS) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+          const ni = ny * size + nx;
+          if (labels[ni] !== 0 || !this.isWalkableTile(nx, ny)) continue;
+          labels[ni] = label;
+          stack.push(ni);
+        }
+      }
+    }
+    this.regionsDirty = false;
+  }
+
+  // Oblasti, do kterých jednotka dojde. Stojí-li na neprůchozí dlaždici,
+  // může odejít jen přes sousední průchozí dlaždice.
+  unitRegions(unit) {
+    this.ensureRegions();
+    const size = this.map.size;
+    const x = clamp(Math.floor(unit.x), 0, size - 1);
+    const y = clamp(Math.floor(unit.y), 0, size - 1);
+    const own = this.regionGrid[y * size + x];
+    if (own) return [own];
+    const found = [];
+    for (const [dx, dy] of SIDE_STEPS) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+      const label = this.regionGrid[ny * size + nx];
+      if (label && !found.includes(label)) found.push(label);
+    }
+    return found;
   }
 
   findBuildingApproach(unit, b) {
+    const regions = this.unitRegions(unit);
+    if (regions.length === 0) return null;
+    const size = this.map.size;
     let best = null;
     let bestD = Infinity;
     for (let x = b.tileX - 1; x <= b.tileX + b.width; x++) {
       for (let y = b.tileY - 1; y <= b.tileY + b.height; y++) {
         if (b.containsTile(x, y)) continue;
         if (!this.isWalkableTile(x, y)) continue;
+        if (!regions.includes(this.regionGrid[y * size + x])) continue;
         const d = dist(unit.x, unit.y, x + 0.5, y + 0.5);
         if (d < bestD) {
           bestD = d;
@@ -753,13 +979,51 @@ export class GameSim {
     return true;
   }
 
+  // Dělník s nákladem vyrazí do skladu. Když žádný není, náklad si drží a zkusí to později.
+  beginDelivery(unit, work) {
+    const storage = this.findStorage(unit.ownerId, work.produce, unit);
+    const approach = storage ? this.findBuildingApproach(unit, storage) : null;
+    if (!storage || !approach) {
+      work.storageId = null;
+      work.phase = 'waitStorage';
+      work.waitTimer = 3;
+      return;
+    }
+    work.storageId = storage.id;
+    work.phase = 'toStorage';
+    this.navigateTo(unit, approach.x, approach.y);
+  }
+
+  // Při sběru dělník obchází okolí zdroje a mezi kroky chvíli postojí.
+  roam(unit, work) {
+    const cx = work.source.px + 0.5;
+    const cy = work.source.py + 0.5;
+    for (let i = 0; i < 12; i++) {
+      const angle = this.rng() * Math.PI * 2;
+      const d = Math.sqrt(this.rng()) * WORK.roamRadius;
+      const tx = Math.floor(cx + Math.cos(angle) * d);
+      const ty = Math.floor(cy + Math.sin(angle) * d);
+      if (!this.isWalkableTile(tx, ty)) continue;
+      this.navigateTo(unit, tx + 0.5, ty + 0.5, 400);
+      break;
+    }
+    const [minPause, maxPause] = WORK.roamPause;
+    work.roamWait = minPause + (maxPause - minPause) * this.rng();
+  }
+
   updateVillagerWork(unit, dt) {
     const player = this.getPlayer(unit.ownerId);
     if (!player || !unit.work) return;
-    const b = this.buildings.find(x => x.id === unit.work.buildingId);
+    const work = unit.work;
+    const b = this.buildings.find(x => x.id === work.buildingId);
     if (!b || !b.complete || b.ownerId !== unit.ownerId) {
-      this.releaseWorker(unit, true);
-      return;
+      // Zdrojová budova zanikla: dělník s nákladem ho ještě doručí, ostatní odejdou.
+      if (work.carry <= 0) {
+        this.releaseWorker(unit, true);
+        return;
+      }
+      work.depleted = true;
+      if (work.phase !== 'toStorage' && work.phase !== 'waitStorage') work.phase = 'toSource';
     }
     if (player.foodShortage) {
       unit.workPaused = true;
@@ -767,7 +1031,6 @@ export class GameSim {
       return;
     }
     unit.workPaused = false;
-    const work = unit.work;
 
     switch (work.phase) {
       case 'toBuilding': {
@@ -795,6 +1058,15 @@ export class GameSim {
         break;
       }
       case 'toSource': {
+        // Dělník s nákladem ho nejdřív doručí, sbírat smí až s prázdnými rukama.
+        if (work.carry > 0) {
+          this.beginDelivery(unit, work);
+          break;
+        }
+        if (work.depleted) {
+          this.releaseWorker(unit, true);
+          break;
+        }
         if (!work.source) {
           work.source = this.findSource(unit, b);
           if (!work.source) {
@@ -808,6 +1080,7 @@ export class GameSim {
           if (this.unitAt(unit, work.source.px + 0.5, work.source.py + 0.5, 2.2)) {
             work.phase = 'gather';
             work.timer = WORK.gatherTime;
+            work.roamWait = 0;
             unit.setPath([]);
           } else {
             // Cesta selhala – zkusit jiné místo.
@@ -821,47 +1094,65 @@ export class GameSim {
       case 'gather': {
         work.timer -= dt;
         if (work.timer <= 0) {
-          const got = this.harvest(unit, b);
-          if (got <= 0) {
-            work.source = null;
-            work.phase = 'toSource';
-            return;
-          }
-          work.carry += got;
-          const storage = this.findStorage(unit.ownerId, b.config.produce, unit);
-          work.storageId = storage ? storage.id : null;
-          if (!storage) {
-            work.phase = 'wait';
-            work.waitTimer = 4;
-            return;
-          }
-          const approach = this.findBuildingApproach(unit, storage);
-          if (!approach) {
-            work.phase = 'wait';
-            work.waitTimer = 3;
-            return;
-          }
-          work.phase = 'toStorage';
-          this.navigateTo(unit, approach.x, approach.y);
+          unit.setPath([]);
+          work.phase = 'pick';
+          break;
         }
+        if (unit.path.length > 0) break;
+        if (work.roamWait > 0) {
+          work.roamWait -= dt;
+          break;
+        }
+        this.roam(unit, work);
+        break;
+      }
+      case 'pick': {
+        if (!work.source) {
+          work.phase = 'toSource';
+          break;
+        }
+        const ax = work.source.px + 0.5;
+        const ay = work.source.py + 0.5;
+        if (!this.unitAt(unit, ax, ay, 2.2)) {
+          if (unit.path.length === 0 && !this.navigateTo(unit, ax, ay)) {
+            work.source = null;
+            work.phase = 'wait';
+            work.waitTimer = 2;
+          }
+          break;
+        }
+        unit.setPath([]);
+        const got = this.harvest(unit, b);
+        if (unit.work !== work) break;
+        if (got <= 0) {
+          work.source = null;
+          work.phase = 'toSource';
+          break;
+        }
+        work.carry += got;
+        this.beginDelivery(unit, work);
         break;
       }
       case 'toStorage': {
         const storage = this.buildings.find(x => x.id === work.storageId && x.ownerId === unit.ownerId && x.complete);
         if (!storage) {
-          work.phase = 'toSource';
-          work.carry = 0;
-          return;
+          this.beginDelivery(unit, work);
+          break;
         }
         const approach = this.findBuildingApproach(unit, storage);
-        if (approach && this.unitAt(unit, approach.x, approach.y, 0.9)) {
-          const accepted = this.addResource(unit.ownerId, b.config.produce, work.carry);
+        if (!approach) {
+          work.phase = 'waitStorage';
+          work.waitTimer = 3;
+          break;
+        }
+        if (this.unitAt(unit, approach.x, approach.y, 0.9)) {
+          const accepted = this.addResource(unit.ownerId, work.produce, work.carry);
           if (accepted > 0) {
             work.carry -= accepted;
             player.stats.gathered += accepted;
             this.emit('gather', {
               playerId: unit.ownerId,
-              resource: b.config.produce,
+              resource: work.produce,
               amount: accepted,
               x: storage.centerX,
               y: storage.centerY
@@ -870,21 +1161,31 @@ export class GameSim {
           if (work.carry <= 0) {
             work.carry = 0;
             work.source = null;
+            work.fullStorage = false;
             work.phase = 'toSource';
           } else {
-            work.phase = 'wait';
-            work.waitTimer = 2;
-            if (this.slowTimer <= 0) {
-              const text = b.config.produce === 'food'
+            // Sklad je plný, dělník drží náklad a zkusí to za chvíli znovu.
+            work.phase = 'waitStorage';
+            work.waitTimer = 3;
+            if (!work.fullStorage && this.slowTimer <= 0) {
+              work.fullStorage = true;
+              const text = work.produce === 'food'
                 ? 'Sýpky jsou plné, dělníci čekají.'
                 : 'Sklady jsou plné, dělníci čekají.';
               this.emit('toast', { playerId: unit.ownerId, text, kind: 'error' });
             }
           }
-        } else if (approach && unit.path.length === 0 &&
-                   !this.unitAt(unit, approach.x, approach.y, 2.0)) {
-          this.navigateTo(unit, approach.x, approach.y);
+        } else if (unit.path.length === 0 && !this.unitAt(unit, approach.x, approach.y, 2.0)) {
+          if (!this.navigateTo(unit, approach.x, approach.y)) {
+            work.phase = 'waitStorage';
+            work.waitTimer = 3;
+          }
         }
+        break;
+      }
+      case 'waitStorage': {
+        work.waitTimer -= dt;
+        if (work.waitTimer <= 0) this.beginDelivery(unit, work);
         break;
       }
       case 'wait': {
@@ -1072,6 +1373,7 @@ export class GameSim {
       unit.cooldown = Math.max(0, unit.cooldown - dt);
       unit.aggroTimer -= dt;
       unit.repathTimer -= dt;
+      this.ejectFromBlockedTile(unit);
 
       if (unit.isVillager) {
         this.updateVillager(unit, dt);
@@ -1097,6 +1399,10 @@ export class GameSim {
         this.navigateTo(unit, castle.centerX, castle.tileY + castle.height + 1.5);
         unit.repathTimer = 1.5;
       }
+      return;
+    }
+    if (unit.build) {
+      this.updateVillagerBuild(unit);
       return;
     }
     if (unit.repairBuildingId) {
@@ -1184,6 +1490,21 @@ export class GameSim {
     }
   }
 
+  // Jednotka překrytá budovou nebo stromem (nebo vytlačená davem) se přesune
+  // na nejbližší volné místo. Voják s rozkazem k přesunu pokračuje dál.
+  ejectFromBlockedTile(unit) {
+    const size = this.map.size;
+    const tx = clamp(Math.floor(unit.x), 0, size - 1);
+    const ty = clamp(Math.floor(unit.y), 0, size - 1);
+    if (this.isWalkableTile(tx, ty)) return;
+    const spot = findNearestWalkable(this.map, this.blockGrid, tx, ty, 6);
+    if (!spot) return;
+    unit.x = spot.x + 0.5;
+    unit.y = spot.y + 0.5;
+    if (unit.moveTarget) this.navigateTo(unit, unit.moveTarget.x, unit.moveTarget.y);
+    else unit.setPath([]);
+  }
+
   moveUnit(unit, dt) {
     if (!unit.path.length) return;
     let remaining = unit.speed * dt;
@@ -1195,7 +1516,8 @@ export class GameSim {
       const dx = tx - unit.x;
       const dy = ty - unit.y;
       const d = Math.hypot(dx, dy);
-      if (d < 0.08) {
+      const reach = unit.pathIndex < unit.path.length - 1 ? WAYPOINT_REACH : 0.08;
+      if (d < reach) {
         unit.pathIndex++;
         continue;
       }
@@ -1235,10 +1557,19 @@ export class GameSim {
         let aShare = 0.5;
         if (aMoving !== bMoving) aShare = aMoving ? 0.15 : 0.85;
 
-        a.x -= nx * overlap * aShare;
-        a.y -= ny * overlap * aShare;
-        b.x += nx * overlap * (1 - aShare);
-        b.y += ny * overlap * (1 - aShare);
+        // Tlačení nesmí vystrčit jednotku na neprůchozí dlaždici (budova, strom).
+        const aX = a.x - nx * overlap * aShare;
+        const aY = a.y - ny * overlap * aShare;
+        if (this.isWalkableTile(Math.floor(aX), Math.floor(aY))) {
+          a.x = aX;
+          a.y = aY;
+        }
+        const bX = b.x + nx * overlap * (1 - aShare);
+        const bY = b.y + ny * overlap * (1 - aShare);
+        if (this.isWalkableTile(Math.floor(bX), Math.floor(bY))) {
+          b.x = bX;
+          b.y = bY;
+        }
       }
     }
   }
@@ -1248,16 +1579,23 @@ export class GameSim {
   // ------------------------------------------------------------------
 
   updateBuildings(dt) {
+    const builderCounts = this.getBuilderCounts();
     for (const b of this.buildings.slice()) {
       if (!b.complete) {
         const def = b.config;
         if (def.buildTime > 0) {
-          b.progress = Math.min(1, b.progress + dt / def.buildTime);
-          b.hp = Math.max(1, Math.round(b.maxHp * b.progress));
+          const counts = builderCounts.get(b.id);
+          const active = counts ? counts.active : 0;
+          if (active > 0) {
+            b.progress = Math.min(1, b.progress + (dt * buildSpeedFactor(active)) / def.buildTime);
+            b.hp = Math.max(1, Math.round(b.maxHp * b.progress));
+          }
           if (b.progress >= 1) {
             b.complete = true;
             b.progress = 1;
             b.hp = b.maxHp;
+            this.rebuildBlockGrid();
+            this.releaseBuildersOf(b.id, true);
             this.emit('buildingComplete', {
               playerId: b.ownerId,
               x: b.centerX,
@@ -1338,7 +1676,7 @@ export class GameSim {
       for (const u of this.units) {
         if (u.ownerId !== player.id) continue;
         if (u.isVillager) {
-          if (u.work && !u.workPaused) workers++;
+          if ((u.work || u.build) && !u.workPaused) workers++;
         } else if (u.isMilitary) soldiers++;
       }
       const needPerSec = (workers * WORK.foodPerWorkerMinute + soldiers * WORK.foodPerSoldierMinute) / 60;
@@ -1453,7 +1791,7 @@ export class GameSim {
         if (over > 0) {
           for (const u of this.units.slice()) {
             if (over <= 0) break;
-            if (u.ownerId === ownerId && u.isVillager && !u.work) {
+            if (u.ownerId === ownerId && u.isVillager && !u.work && !u.build) {
               this.removeUnit(u, { silent: true });
               over--;
             }
@@ -1583,7 +1921,8 @@ export class GameSim {
         let moving = 0;
         for (const u of units) {
           if (u.work) this.releaseWorker(u, false);
-          if (u.repairBuildingId) u.repairBuildingId = null;
+          this.releaseRepair(u);
+          this.releaseBuilder(u, false);
           u.clearOrders();
           u.autoAttack = !u.isVillager;
           u.moveTarget = { x: tx, y: ty };
@@ -1625,6 +1964,36 @@ export class GameSim {
         return this.unassignWorkers(playerId, cmd.buildingId, Math.max(1, Number(cmd.count) || 1));
       case 'repair':
         return this.startRepair(playerId, cmd.buildingId);
+      case 'construct': {
+        const units = this.getOwnedUnits(playerId, cmd.unitIds);
+        if (!units.length) return { ok: false, reason: 'Nejsou vybráni žádní poddaní.' };
+        return this.assignBuilders(playerId, cmd.buildingId, units);
+      }
+      case 'release': {
+        const units = this.getOwnedUnits(playerId, cmd.unitIds);
+        let released = 0;
+        let carrying = 0;
+        for (const u of units) {
+          if (!u.work && !u.build) continue;
+          if (u.work && u.work.carry > 0) {
+            carrying++;
+            continue;
+          }
+          this.releaseWorker(u, false);
+          this.releaseBuilder(u, false);
+          u.clearOrders();
+          u.autoAttack = !u.isVillager;
+          released++;
+        }
+        if (!released) {
+          return {
+            ok: false,
+            reason: carrying ? 'Vybraní poddaní nejdřív odevzdají náklad do skladu.' : 'Žádný z vybraných poddaných nepracuje ani nestaví.'
+          };
+        }
+        if (carrying) this.noticeCarrying(playerId);
+        return { ok: true, released };
+      }
       case 'demolish':
         return this.demolishBuilding(playerId, cmd.buildingId);
       case 'buy':
@@ -1742,6 +2111,7 @@ export class GameSim {
     const fog = this.fogEnabled;
     const vis = (x, y) => !fog || this.isVisible(playerId, x, y);
 
+    const builderCounts = this.getBuilderCounts();
     const buildings = [];
     for (const b of this.buildings) {
       if (fog && b.ownerId !== playerId && !vis(b.centerX, b.centerY)) continue;
@@ -1756,6 +2126,7 @@ export class GameSim {
         progress: b.progress,
         complete: b.complete,
         workers: b.workers,
+        builders: builderCounts.get(b.id) || { active: 0, total: 0 },
         depositId: b.depositId,
         repair: !!b.repair,
         queue: b.queue.map(q => ({
@@ -1778,6 +2149,7 @@ export class GameSim {
         hp: Math.round(u.hp),
         maxHp: u.maxHp,
         work: !!u.work,
+        build: !!u.build,
         carry: u.work ? u.work.carry : 0,
         fleeing: u.fleeing,
         moving: u.path.length > 0
@@ -1907,7 +2279,8 @@ export class GameSim {
           moveTarget: u.moveTarget ? { ...u.moveTarget } : null,
           work: u.work
             ? { ...u.work, source: u.work.source ? { ...u.work.source } : null }
-            : null
+            : null,
+          build: u.build ? { ...u.build } : null
         })),
         projectiles: this.projectiles.map(p => ({ ...p })),
         fogData: [...this.fogData.entries()].map(([id, data]) => ({
@@ -1964,6 +2337,7 @@ export class GameSim {
     this.events = [];
     this.mapChanges = [];
     this.map.onChange = (idx, res) => {
+      this.regionsDirty = true;
       this.mapChanges.push({ seq: ++this.mapChangeSeq, i: idx, r: res });
       if (this.mapChanges.length > 6000) this.mapChanges.splice(0, 1000);
     };
@@ -1989,6 +2363,7 @@ export class GameSim {
       unit.work = raw.work
         ? { ...raw.work, source: raw.work.source ? { ...raw.work.source } : null }
         : null;
+      unit.build = raw.build ? { ...raw.build } : null;
       return unit;
     });
 
@@ -2016,6 +2391,22 @@ export class GameSim {
       if (raw.isCastle) building.isCastle = true;
       return building;
     });
+    // Starší uložené hry neukládají surovinu, kterou dělník odnáší.
+    for (const u of this.units) {
+      if (!u.work || u.work.produce) continue;
+      const b = this.buildings.find(x => x.id === u.work.buildingId);
+      if (b) u.work.produce = b.config.produce;
+      else u.work = null;
+    }
+
+    // Stavitel musí stát u rozestavěné budovy stejného hráče, jinak jeho stav zrušíme.
+    for (const u of this.units) {
+      if (!u.build) continue;
+      const site = this.buildings.find(b => b.id === u.build.buildingId);
+      if (site && !site.complete && site.ownerId === u.ownerId) continue;
+      u.build = null;
+      u.workPaused = false;
+    }
 
     this.projectiles = (state.projectiles || []).map(p => ({ ...p }));
 

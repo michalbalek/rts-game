@@ -44,7 +44,7 @@ Každá mapa se generuje náhodně v rámci svého biomu. Níže je popsaný typ
 ## Přírodní zdroje a ložiska
 - **Kámen**: ložiska kamenných žil. Z kamene se staví hradby a opevnění. Těží se v Kamenolomu. Ložisko má zásobu 2000 jednotek.
 - **Železo**: ložiska železné rudy na skalnatých místech (rokle, skalní masivy). Každá mapa má alespoň dvě ložiska. Těží se v Železném dole, ložisko má zásobu 1000 jednotek rudy. Z železa jsou lepší hradby a zbraně pro vojáky. Lze ho prodat v Obchodu, stejně jako ostatní suroviny.
-- **Obnova ložisek**: vyčerpané ložisko zmizí. Po 3 minutách se na volném místě mapy objeví nové ložisko stejného typu. Místo musí být nejméně 20 dlaždic od všech hradů a nesmí být na vodě. Budova na vyčerpaném místě zůstává stát bez práce a dělníci se uvolní do hradu. Hráč musí na novém ložisku postavit novou budovu.
+- **Obnova ložisek**: vyčerpané ložisko zmizí. Po 3 minutách se na volném místě mapy objeví nové ložisko stejného typu. Místo musí být nejméně 20 dlaždic od všech hradů a nesmí být na vodě. Budova na vyčerpaném místě zůstává stát bez práce a dělníci se uvolní do hradu. Dělník, který nese náklad, ho nejdřív odevzdá. Hráč musí na novém ložisku postavit novou budovu.
 - **Dřevo**: oblasti se stromy. Dřevorubec strom pokácí a na jeho místě po náhodné době 30 až 90 sekund vyroste nový strom. Jeden strom dá 10 dřeva.
 
 ## Fog of War (Mlha války)

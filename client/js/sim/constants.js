@@ -153,10 +153,32 @@ export const FOG_RANGES = {
 
 export const WORK = {
   carry: 10,
-  gatherTime: 20,       // 10 kusů za 20 s (max 30/min)
+  gatherTime: 20,       // sekund sběru na jeden náklad; během nich se dělník toulá kolem zdroje
   foodPerWorkerMinute: 2,
-  foodPerSoldierMinute: 1
+  foodPerSoldierMinute: 1,
+  roamRadius: 3,        // dělník se během práce toulá v tomto okruhu kolem místa práce
+  roamPause: [1, 3]     // pauza mezi jednotlivými toulkami v sekundách [min, max]
 };
+
+// Kam se která surovina odnáší. Jídlo jde do nejbližší sýpky, bez sýpky do hradu.
+export const DELIVERY = {
+  food: 'granary',
+  wood: 'castle',
+  stone: 'castle',
+  iron: 'castle'
+};
+
+export const BUILD = {
+  extraBuilderSpeed: 0.5, // každý další stavitel přidá jen 50 % základní rychlosti
+  reach: 1.2,             // stavitel dojde k obrysu budovy do této vzdálenosti
+  leaveReach: 1.8         // a odejde až za ni (hystereze, aby neposkakoval)
+};
+
+// Násobek rychlosti stavby: 1 stavitel = 1×, 2 = 1,5×, 3 = 2×, 4 = 2,5× …
+export function buildSpeedFactor(builders) {
+  if (builders <= 0) return 0;
+  return 1 + BUILD.extraBuilderSpeed * (builders - 1);
+}
 
 export const UNIT_DEFS = {
   swordsman: {
@@ -278,7 +300,8 @@ export const BUILDING_DEFS = {
     cost: cost(120, 60, 0),
     workers: 4,
     produce: 'food',
-    desc: 'Zavlažovaný sad v oázové půdě. Dělníci nosí jablka do hradu. Jablka jsou nevyčerpatelná.'
+    passable: true, // po dokončení neblokuje chůzi, dělníci chodí mezi stromy
+    desc: 'Zavlažovaný sad v oázové půdě. Dělníci chodí mezi stromy, sbírají jablka a nosí je do sýpky (bez sýpky do hradu). Jablka jsou nevyčerpatelná.'
   },
   market: {
     key: 'market',

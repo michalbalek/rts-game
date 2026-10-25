@@ -7,9 +7,12 @@
 - **Pevně daná velikost (Footprint)**: Každá budova má svou pevně definovanou šířku a délku v celočíselných jednotkách dlaždic ($W \times H$).
 - **Uchycení na mřížku (Snap to Grid)**: Umístění budovy se automaticky přichytává k celočíselným souřadnicím dlaždic. Není možné umístit budovu „mezi“ bloky.
 - **Výchozí izometrická orientace (symetrická dlaždice 2:1)**: Všechny budovy jsou výchozím způsobem vykreslovány i kolizně orientovány na symetrické mřížce 64×32 px v souladu s celou herní mapou. Základna každé budovy na mřížce tvoří izometrický kosočtverec/polygon.
-- **Stavební okruh**: Stavba je neomezená, nelze ji však provést v okruhu **20 bloků** od nepřátelské jednotky nebo budovy.
+- **Stavební okruh**: Stavba je neomezená, jen ji nelze položit v okruhu **20 bloků** od nepřátelské jednotky nebo budovy. Poddaní na rozestavěné stavbě nepřestanou stavět jen kvůli nepříteli v okolí; napadený poddaný uteče a práci přeruší.
 - **Materiál na stavbu**: stavba se hradí ze zásob panství v okamžiku položení základů. Náklady jsou u každé budovy v jejím popisu.
-- **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s.
+- **Staveniště**: po zakoupení vznikne na místě budovy staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Bez nich stavba stojí.
+- **Zadání stavby poddaným**: hráč vybere libovolný počet poddaných a v jejich panelu v sekci **Stavět** klikne na tlačítko stavby. Vybraní poddaní pak jdou na staveniště a začnou stavět. Pravé tlačítko stavbu nezadává.
+- **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný na staveništi přidá jen polovinu rychlosti jednoho poddaného, takže celková rychlost je 1 + 0,5 × (počet poddaných − 1) násobek rychlosti jednoho. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
+- **Dokončení stavby**: po dokončení se poddaní vrátí k ohništi a čekají na další příkaz. Hotovou budovu lze používat a přiřazovat do ní dělníky (viz [ekonomika.md](ekonomika.md)).
 - **Kolize a terén**: 
   - Žádné dvě budovy se nesmí překrývat.
   - Mezi budovami musí zůstat volný pruh, kterým procházejí NPC a vojáci (šířka pruhu: 1 dlaždice).
@@ -37,7 +40,7 @@
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: zdarma, vzniká při spuštění hry.
 - **Vzhled**: pískovcová pevnost a sídlo lorda. Před hradem plane táborové ohniště, u kterého čekají nezaměstnaní poddaní.
-- **Funkce**: centrální správa panství a jediné místo, kam dělníci odevzdávají suroviny i jídlo. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla. Na začátku hry má 20 volných obyvatel.
+- **Funkce**: centrální správa panství a místo, kam dělníci odevzdávají dřevo, kámen a železo. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla. Na začátku hry má 20 volných obyvatel.
 - **Výroba jednotek**: těžcí pěšáci (bojovníci s mečem a štítem).
 
 ### 2. Kasárna
@@ -65,7 +68,7 @@
 - **Velikost na mřížce**: 4×4 bloky
 - **Náklady**: 120 peněz, 60 dřeva.
 - **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě.
-- **Funkce**: stálý přísun jídla do hradu a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu.
+- **Funkce**: stálý přísun jídla (dělníci chodí mezi stromy a nosí jablka do nejbližší sýpky, bez sýpky do hradu) a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu.
 
 ### 6. Obchod
 - **Velikost na mřížce**: 2×2 bloky
@@ -92,7 +95,7 @@
 ### 8. Sýpka
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 100 dřeva, 50 kamene.
-- **Funkce**: zvyšuje kapacitu pro jídlo. Dělníci odnášejí jídlo z Jabloňového sadu do Královského hradu po 10 kusech.
+- **Funkce**: zvyšuje kapacitu pro jídlo. Dělníci odnášejí jídlo z Jabloňového sadu do nejbližší hotové sýpky po 10 kusech (bez sýpky do hradu).
 - **Kapacita**: 300 jednotek jídla na jednu sýpku. Kapacitu pro suroviny nezvyšuje.
 - **Vzhled**: vysoká kulatá sýpka s dřevěnou střechou a kamennými základy.
 

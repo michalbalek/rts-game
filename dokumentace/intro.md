@@ -50,7 +50,7 @@ Po kliknutí na Start hráč nastaví:
 - **Výpadek během hry**: řídí se pravidly v [multiplayer.md](multiplayer.md).
 
 ## Herní menu (ESC)
-- Otevře se klávesou ESC, pokud není nic vybráno ani rozestavěno.
+- Otevře se klávesou ESC, pokud není nic vybráno a neumisťuje se žádná budova.
 - **Single player**: hra se pozastaví. Tlačítka: Pokračovat, Nastavení, Ukončit hru (návrat do hlavního menu, rozehraná hra se zahodí).
 - **Multiplayer**: hra běží dál. Tlačítka: Pokračovat, Nastavení, Odejít ze hry (hráč prohrává, viz [multiplayer.md](multiplayer.md)).
 

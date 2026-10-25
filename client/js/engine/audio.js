@@ -546,7 +546,9 @@ export class AudioEngine {
         seen.add(b.type);
         if (b.type === 'castle' && !b.complete) continue;
         if (!b.complete) {
-          if (Math.random() < 0.5) this.play('hammer', { volume: factor * 0.7, throttle: 700 });
+          if (session.getBuilderInfo(b).active > 0 && Math.random() < 0.5) {
+            this.play('hammer', { volume: factor * 0.7, throttle: 700 });
+          }
           continue;
         }
         if (Math.random() > 0.45) continue;

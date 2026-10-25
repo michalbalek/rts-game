@@ -8,7 +8,7 @@
 
 ## Zvuky prostředí a budov
 - **Budovy**: praskání ohně u hradu, šumění vody u sadu, údery sekery u dřevorubce, drcení kamene v kamenolomu.
-- **Stavba**: údery kladiv na staveništi.
+- **Stavba**: údery kladiv na staveništi, když na něm pracují poddaní.
 - **Zánik budovy**: řinčení sutě a krátké zahřmění.
 - **Oprava**: údery kladiv a skřípání kladky.
 - **Bourání**: hlasité sesouvání sutě.

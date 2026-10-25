@@ -221,8 +221,8 @@ export function helpContent() {
           <li>Stavět lze kdekoli na mapě, nejméně <strong>20 bloků</strong> od nepřátelských jednotek a budov.</li>
           <li>Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.</li>
           <li>Dřevorubec musí stát na stromě, kamenolom a železný důl celé na ložisku.</li>
-          <li>Poddaní čekají u ohniště. Přiřaďte je do hospodářství, nebo je povolejte jako vojáky.</li>
-          <li>Dělníci nosí suroviny po 10 kusech do Královského hradu. Sýpky a sklady zvyšují kapacitu.</li>
+          <li>Poddaní čekají u ohniště. Přiřaďte je do hospodářství, pošlete na stavbu, nebo je povolejte jako vojáky.</li>
+          <li>Dělníci nosí dřevo, kámen a železo po 10 kusech do Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Sýpky a sklady zvyšují kapacitu.</li>
           <li>Obydlí přidá 8 míst v kapacitě. Hrad sám pojme 20 obyvatel.</li>
         </ul>
       </section>

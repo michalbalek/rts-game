@@ -18,8 +18,8 @@ Projekt se skládá z:
 
 ## 3. Základna, hrad a stavební pravidla
 - Uživatel začíná s centrální pevností (**Královský hrad**).
-- Stavební okruh je neomezený: budovy a opevnění lze stavět kdekoli na mapě.
-- Stavět nelze v okruhu **20 bloků** od nepřátelské jednotky nebo budovy. Stavebníci na takovém místě odmítnou pracovat.
+- Stavební okruh je neomezený: budovy a opevnění lze stavět kdekoli na mapě, jen ne v okruhu **20 bloků** od nepřátelské jednotky nebo budovy.
+- Rozestavěnou stavbu poddaní neopouštějí kvůli nepříteli v okolí; napadený poddaný uteče a práci přeruší.
 
 ---
 
@@ -36,13 +36,13 @@ Projekt se skládá z:
 4. **Kamenolom (Quarry)**:
    - Pískovcový a vápencový lom s těžebním jeřábem na skalních nalezištích.
 5. **Jabloňový sad (Apple Orchard)**:
-   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Zajišťuje stálý přísun jídla do hradu a udržuje vysokou spokojenost lidu.
+   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Zajišťuje stálý přísun jídla do nejbližší sýpky (bez sýpky do hradu) a udržuje vysokou spokojenost lidu.
 6. **Obchod (Market)**:
    - Tržnice, kde hráč nakupuje a prodává suroviny za pevné ceny.
 7. **Obydlí (Dwelling)**:
    - Jednoduchý kamenný dům, přidá 8 obyvatel do kapacity panství.
 8. **Sýpka (Granary)**:
-   - Zvyšuje kapacitu pro jídlo o 300 jednotek. Kapacitu pro suroviny nezvyšuje.
+   - Zvyšuje kapacitu pro jídlo o 300 jednotek. Kapacitu pro suroviny nezvyšuje. Je cílem odnosu jídla z jabloňového sadu.
 9. **Sklad (Warehouse)**:
    - Zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Kapacitu pro jídlo nezvyšuje.
 10. **Železný důl (Iron Mine)**:
@@ -55,8 +55,9 @@ Projekt se skládá z:
 - Hrad má na začátku **20 volných obyvatel**. Každá budova Obydlí přidá do kapacity dalších **8 obyvatel**.
 - Tyto obyvatele může pán panství:
   - **Přiřadit jako dělníky** do hospodářských budov (Dřevorubec, Kamenolom, Jabloňový sad, Železný důl) pro automatický sběr surovin.
+  - **Poslat na staveniště**: vyberte poddané a v jejich panelu klikněte na stavbu v sekci Stavět. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi.
   - **Rekrutovat jako vojáky** (Pěšáci v Hradu, Lučištníci v Kasárnách).
-- **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Nasbírané suroviny nosí do hradu. Přiřazení není pasivní přičtení k budově.
+- **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Chodí po okolí zdroje, sbírá suroviny a nosí je do cíle odnosu: dřevo, kámen a železo do hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Dělník, který nese náklad, ho nejdřív odevzdá. Přiřazení není pasivní přičtení k budově.
 - Spokojenost lidu (Popularita) závisí na dostupnosti jídla a zásobách. Když jsou lidé šťastní, hrad vzkvétá!
 
 ---
@@ -72,7 +73,7 @@ Projekt se skládá z:
 ---
 
 ## 7. Boti (hra s boty)
-- **Stavba**: bot staví v pořadí hrad, Dřevorubec, Kamenolom, Obydlí, Jabloňový sad, Kasárna, Sklad, Sýpka, Železný důl, Obchod. Dbá na volný pruh mezi budovami.
+- **Stavba**: bot staví v pořadí hrad, Dřevorubec, Kamenolom, Obydlí, Jabloňový sad, Kasárna, Sklad, Sýpka, Železný důl, Obchod. Dbá na volný pruh mezi budovami. Na staveniště posílá volné poddané stejně jako hráč.
 - **Obrana**: bot drží u hradu alespoň třetinu vojska, zbytek posílá na útok.
 - **Útok**: bot zaútočí, když má aspoň 15 vojáků. Útočí na nejbližší budovu soupeře.
 - **Počet botů**: 1 až 3, výchozí 1. Mapa musí mít dostatek startovních pozic.

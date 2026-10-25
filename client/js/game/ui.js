@@ -1,6 +1,6 @@
 import {
   BUILDING_DEFS, UNIT_DEFS, BUILD_MENU, TAX_LEVELS, MARKET_PRICES,
-  RESOURCE_TYPES, PLAYER_COLORS
+  RESOURCE_TYPES, PLAYER_COLORS, BUILD, buildSpeedFactor
 } from '../sim/constants.js';
 import {
   Modals, settingsForm, bindSettingsForm, helpContent, creditsContent, escapeHtml
@@ -383,6 +383,13 @@ export class GameUI {
           if (building) this.issue({ op: 'repair', buildingId: building.id });
           audio.play('repair');
           break;
+        case 'construct': {
+          const unitIds = this.selectedVillagerIds();
+          if (!unitIds.length) break;
+          const result = this.issue({ op: 'construct', buildingId: Number(el.dataset.buildingId), unitIds });
+          if (!result || result.ok) audio.play('ack', { volume: 0.5 });
+          break;
+        }
         case 'demolish':
           if (building) this.confirmDemolish(building);
           break;
@@ -407,16 +414,82 @@ export class GameUI {
 
   releaseSelectedVillagers() {
     if (!this.session || !this.session.local) return;
-    const byBuilding = new Map();
-    for (const unit of this.session.selection) {
-      if (unit.work && unit.work.buildingId) {
-        byBuilding.set(unit.work.buildingId, (byBuilding.get(unit.work.buildingId) || 0) + 1);
-      }
+    const unitIds = this.session.selection
+      .filter(unit => unit.work || unit.build)
+      .map(unit => unit.id);
+    const result = this.issue({ op: 'release', unitIds });
+    if (result && result.ok) audio.play('ack');
+  }
+
+  selectedVillagerIds() {
+    const s = this.session;
+    if (!s) return [];
+    return s.selection
+      .filter(u => u.isVillager && u.ownerId === s.selfId)
+      .map(u => u.id);
+  }
+
+  constructionSites() {
+    const s = this.session;
+    if (!s) return [];
+    return s.state.buildings.filter(b => {
+      if (b.ownerId !== s.selfId || b.complete) return false;
+      const def = b.config || BUILDING_DEFS[b.type];
+      return !!def && def.buildTime > 0;
+    });
+  }
+
+  siteStats(b) {
+    const def = b.config || BUILDING_DEFS[b.type];
+    const info = this.session.getBuilderInfo(b);
+    const active = info.active || 0;
+    const total = info.total || 0;
+    const factor = buildSpeedFactor(active);
+    return {
+      progress: Math.round(b.progress * 100),
+      active,
+      total,
+      builders: `${active} na místě · ${total} přiřazeno`,
+      speed: `${Math.round(factor * 100)} %`,
+      left: factor > 0 ? `~${Math.ceil((1 - b.progress) * def.buildTime / factor)} s` : 'čeká na stavitele'
+    };
+  }
+
+  siteLabel(b) {
+    const { progress, active, total } = this.siteStats(b);
+    return total ? `${progress} % · stavitelů ${active}/${total}` : `${progress} % · nikdo nestaví`;
+  }
+
+  siteInfoHtml(b) {
+    const stats = this.siteStats(b);
+    return `
+      <div class="sel-rows" data-site-info>
+        <div class="sel-row"><span>👷 Stavitelé</span><b data-site-builders>${stats.builders}</b></div>
+        <div class="sel-row"><span>Rychlost stavby</span><b data-site-speed>${stats.speed}</b></div>
+        <div class="sel-row"><span>Zbývá</span><b data-site-left>${stats.left}</b></div>
+      </div>
+      <p class="sel-desc">Vyberte poddané a v jejich panelu klikněte na tuto stavbu (sekce Stavět). Každý další stavitel přidá ${Math.round(BUILD.extraBuilderSpeed * 100)} % základní rychlosti.</p>`;
+  }
+
+  constructSectionHtml(units) {
+    const s = this.session;
+    if (!units.some(u => u.isVillager && u.ownerId === s.selfId)) return '';
+    const sites = this.constructionSites();
+    if (!sites.length) return '';
+    let html = '<div class="train-section"><div class="sub-heading">Stavět</div><div class="train-buttons">';
+    for (const site of sites) {
+      const def = site.config || BUILDING_DEFS[site.type];
+      html += `
+        <button class="train-button" data-action="construct" data-building-id="${site.id}">
+          <span class="train-icon">${def.icon}</span>
+          <span class="train-info">
+            <strong>${escapeHtml(def.name)}</strong>
+            <span data-site-label>${escapeHtml(this.siteLabel(site))}</span>
+          </span>
+        </button>`;
     }
-    for (const [buildingId, count] of byBuilding) {
-      this.issue({ op: 'unassign', buildingId, count });
-    }
-    audio.play('ack');
+    html += '</div><p class="sel-desc">Vybraní poddaní půjdou na zvolenou stavbu a začnou stavět.</p></div>';
+    return html;
   }
 
   updateSelectionPanel() {
@@ -436,7 +509,9 @@ export class GameUI {
       return `b:${b.id}:${b.complete}:${b.workers}:${assignedWorkers(b)}:${b.queue ? b.queue.length : 0}:${!!b.repair}:${b.ownerId}`;
     }
     if (s.selection.length) {
-      return `u:${s.selection.map(u => `${u.id}:${u.type}`).sort().join(',')}`;
+      const sites = this.constructionSites().map(b => b.id).join(',');
+      // Stav práce určuje tlačítko Uvolnit, takže musí být v podpisu výběru.
+      return `u:${s.selection.map(u => `${u.id}:${u.type}:${u.work || u.build ? 'job' : ''}`).sort().join(',')}|s:${sites}`;
     }
     return 'none';
   }
@@ -488,6 +563,7 @@ export class GameUI {
           <div class="bar"><div class="fill build" data-build-progress style="width:${Math.round(b.progress * 100)}%"></div></div>
           <span data-build-label>${Math.round(b.progress * 100)} %</span>
         </div>`;
+      if (def.buildTime > 0) body += this.siteInfoHtml(b);
     }
 
     if (def.workers) {
@@ -621,8 +697,9 @@ export class GameUI {
         </div>`;
     }
 
-    const hasWorking = units.some(u => u.work);
-    const canRelease = hasWorking && this.session.local && singleMine;
+    const hasJob = units.some(u => u.work || u.build);
+    const ownedSelection = units.every(u => u.ownerId === this.session.selfId);
+    const canRelease = hasJob && ownedSelection && this.session.local;
     return `
       <div class="sel-head">
         <span class="sel-icon">${single ? UNIT_DEFS[single.type].icon : '⚔️'}</span>
@@ -634,6 +711,7 @@ export class GameUI {
         </div>
       </div>
       ${details}
+      ${this.constructSectionHtml(units)}
       <div class="building-actions">
         ${canRelease ? '<button class="btn btn-secondary btn-small" data-action="release-villagers">🏠 Uvolnit z práce</button>' : ''}
         <button class="btn btn-secondary btn-small" data-action="clear-selection">✖ Zrušit výběr</button>
@@ -643,6 +721,11 @@ export class GameUI {
   refreshDynamic() {
     if (!this.session || !this.el.selectionPanel) return;
     const panel = this.el.selectionPanel;
+    panel.querySelectorAll('[data-action="construct"]').forEach(button => {
+      const site = this.session.state.buildings.find(x => x.id === Number(button.dataset.buildingId));
+      const label = button.querySelector('[data-site-label]');
+      if (site && label) label.textContent = this.siteLabel(site);
+    });
     const b = this.session.selectedBuilding;
     if (b) {
       const hp = panel.querySelector('[data-hp]');
@@ -663,6 +746,16 @@ export class GameUI {
         const enRoute = Math.max(0, assignedWorkers(b) - b.workers);
         workers.textContent = workerLabel(b, def);
         workers.title = enRoute ? `${enRoute} na cestě do budovy` : '';
+      }
+      const siteInfo = panel.querySelector('[data-site-info]');
+      if (siteInfo) {
+        const stats = this.siteStats(b);
+        const builders = siteInfo.querySelector('[data-site-builders]');
+        const speed = siteInfo.querySelector('[data-site-speed]');
+        const left = siteInfo.querySelector('[data-site-left]');
+        if (builders) builders.textContent = stats.builders;
+        if (speed) speed.textContent = stats.speed;
+        if (left) left.textContent = stats.left;
       }
       const queue = panel.querySelector('[data-queue-progress]');
       if (queue && b.queue && b.queue[0]) {
