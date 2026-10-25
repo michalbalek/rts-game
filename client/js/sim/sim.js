@@ -17,6 +17,7 @@ const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
 // a jednotky by u něj natrvalo uvízly (tlačení je zase odsouvalo zpět).
 const WAYPOINT_REACH = 0.45;
 const SIDE_STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const NAV_MAX_NODES = 12000;
 
 /** Čtvercová vzdálenost k obdélníku budovy. */
 export function distanceToBuilding(x, y, b) {
@@ -103,6 +104,7 @@ export class GameSim {
         capacity: 20,
         spawnTimer: 5,
         foodShortage: false,
+        foodDebt: 0,
         stats: { destroyed: 0, trained: 0, gathered: 0, lost: 0, damage: 0 },
         bot: { nextBuild: 0, attackTimer: 0, armyTarget: 8, lastAttack: -999, guardSet: false }
       };
@@ -237,6 +239,15 @@ export class GameSim {
     return p ? p.resources.wood + p.resources.stone + p.resources.iron : 0;
   }
 
+  // Volné místo ve skladech po celých jednotkách.
+  freeStorage(playerId, type) {
+    const p = this.getPlayer(playerId);
+    if (!p) return 0;
+    const caps = this.getStorageCaps(playerId);
+    if (type === 'food') return Math.floor(Math.max(0, caps.food - p.resources.food));
+    return Math.floor(Math.max(0, caps.resources - this.getStoredResources(playerId)));
+  }
+
   addResource(playerId, type, amount) {
     const p = this.getPlayer(playerId);
     if (!p || amount <= 0) return 0;
@@ -244,15 +255,7 @@ export class GameSim {
       p.resources.money += amount;
       return amount;
     }
-    const caps = this.getStorageCaps(playerId);
-    if (type === 'food') {
-      const free = Math.max(0, caps.food - p.resources.food);
-      const accepted = Math.min(amount, free);
-      p.resources.food += accepted;
-      return accepted;
-    }
-    const free = Math.max(0, caps.resources - this.getStoredResources(playerId));
-    const accepted = Math.min(amount, free);
+    const accepted = Math.min(amount, this.freeStorage(playerId, type));
     p.resources[type] += accepted;
     return accepted;
   }
@@ -797,26 +800,7 @@ export class GameSim {
     const player = this.getPlayer(unit.ownerId);
     if (!player) return null;
     const def = b.config;
-    if (def.produce === 'wood') {
-      let best = null;
-      let bestD = Infinity;
-      const r = 9;
-      const cx = Math.floor(b.centerX);
-      const cy = Math.floor(b.centerY);
-      for (let y = Math.max(0, cy - r); y <= Math.min(this.map.size - 1, cy + r); y++) {
-        for (let x = Math.max(0, cx - r); x <= Math.min(this.map.size - 1, cx + r); x++) {
-          if (this.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-          const approach = findNearestWalkable(this.map, this.blockGrid, x, y, 2);
-          if (!approach) continue;
-          const d = dist(approach.x, approach.y, unit.x, unit.y) + dist(x, y, b.centerX, b.centerY) * 0.3;
-          if (d < bestD) {
-            bestD = d;
-            best = { sx: x, sy: y, px: approach.x, py: approach.y };
-          }
-        }
-      }
-      return best;
-    }
+    if (def.produce === 'wood') return this.findTreeSource(unit, b);
     if (def.produce === 'stone' || def.produce === 'iron') {
       const dep = this.map.deposits.find(d => d.id === b.depositId);
       if (!dep || !dep.active) return null;
@@ -836,6 +820,56 @@ export class GameSim {
       return { sx, sy, px: spot.x, py: spot.y };
     }
     return null;
+  }
+
+  // Nejbližší strom od budovy, ne od dělníka: jinak by po každém doručení k hradu kácel
+  // stromy u hradu. Hledá se po celé mapě, stromy v jiné oblasti (za vodou, skálou nebo
+  // budovou) se přeskočí. Nejlepší kandidáty se ještě ověří A*.
+  findTreeSource(unit, b) {
+    const regions = this.unitRegions(unit);
+    if (regions.length === 0) return null;
+    const size = this.map.size;
+    const candidates = [];
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (this.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
+        const approach = this.findTreeApproach(x, y, regions);
+        if (!approach) continue;
+        candidates.push({
+          toBuilding: dist(x, y, b.centerX, b.centerY),
+          toUnit: dist(approach.x, approach.y, unit.x, unit.y),
+          sx: x,
+          sy: y,
+          px: approach.x,
+          py: approach.y
+        });
+      }
+    }
+    candidates.sort((p, q) => p.toBuilding - q.toBuilding || p.toUnit - q.toUnit);
+    for (const c of candidates.slice(0, 8)) {
+      if (findPath(this.map, this.blockGrid, unit.x, unit.y, c.px, c.py, NAV_MAX_NODES)) {
+        return { sx: c.sx, sy: c.sy, px: c.px, py: c.py };
+      }
+    }
+    return null;
+  }
+
+  findTreeApproach(x, y, regions) {
+    const size = this.map.size;
+    let best = null;
+    let bestD = Infinity;
+    for (let ty = Math.max(0, y - 2); ty <= Math.min(size - 1, y + 2); ty++) {
+      for (let tx = Math.max(0, x - 2); tx <= Math.min(size - 1, x + 2); tx++) {
+        if (!this.isWalkableTile(tx, ty)) continue;
+        if (!regions.includes(this.regionGrid[ty * size + tx])) continue;
+        const d = dist(tx, ty, x, y);
+        if (d < bestD) {
+          bestD = d;
+          best = { x: tx, y: ty };
+        }
+      }
+    }
+    return best;
   }
 
   harvest(unit, b) {
@@ -875,12 +909,12 @@ export class GameSim {
 
   findStorage(playerId, resource, unit) {
     const castle = this.getCastle(playerId);
-    const type = DELIVERY[resource];
-    if (!type || type === 'castle') return castle;
+    const types = DELIVERY[resource];
+    if (!types) return castle;
     let best = null;
     let bestD = Infinity;
     for (const b of this.buildings) {
-      if (b.ownerId !== playerId || !b.complete || b.type !== type) continue;
+      if (b.ownerId !== playerId || !b.complete || !types.includes(b.type)) continue;
       const d = dist(unit.x, unit.y, b.centerX, b.centerY);
       // Sklad, do kterého dělník nedojde (jiná oblast), nevybírat.
       if (d < bestD && this.findBuildingApproach(unit, b)) {
@@ -888,7 +922,7 @@ export class GameSim {
         best = b;
       }
     }
-    // Když cílová budova chybí, náklad jde do hradu.
+    // Když žádná cílová budova není dosažitelná, náklad jde do hradu.
     return best || castle;
   }
 
@@ -967,7 +1001,7 @@ export class GameSim {
     return best;
   }
 
-  navigateTo(unit, tx, ty, maxNodes = 12000) {
+  navigateTo(unit, tx, ty, maxNodes = NAV_MAX_NODES) {
     const path = findPath(this.map, this.blockGrid, unit.x, unit.y, tx, ty, maxNodes);
     if (!path) {
       unit.setPath([]);
@@ -1025,7 +1059,8 @@ export class GameSim {
       work.depleted = true;
       if (work.phase !== 'toStorage' && work.phase !== 'waitStorage') work.phase = 'toSource';
     }
-    if (player.foodShortage) {
+    // Sad pracuje i při nedostatku jídla, jinak by se zásoba z nuly nikdy neobnovila.
+    if (player.foodShortage && work.produce !== 'food') {
       unit.workPaused = true;
       unit.setPath([]);
       return;
@@ -1146,25 +1181,23 @@ export class GameSim {
           break;
         }
         if (this.unitAt(unit, approach.x, approach.y, 0.9)) {
-          const accepted = this.addResource(unit.ownerId, work.produce, work.carry);
-          if (accepted > 0) {
-            work.carry -= accepted;
-            player.stats.gathered += accepted;
+          // Náklad se složí celý, nebo vůbec. Když se celý nevejde, dělník ho drží a čeká.
+          if (this.freeStorage(unit.ownerId, work.produce) >= work.carry) {
+            this.addResource(unit.ownerId, work.produce, work.carry);
+            player.stats.gathered += work.carry;
             this.emit('gather', {
               playerId: unit.ownerId,
               resource: work.produce,
-              amount: accepted,
+              amount: work.carry,
               x: storage.centerX,
               y: storage.centerY
             });
-          }
-          if (work.carry <= 0) {
             work.carry = 0;
             work.source = null;
             work.fullStorage = false;
             work.phase = 'toSource';
           } else {
-            // Sklad je plný, dělník drží náklad a zkusí to za chvíli znovu.
+            // Sklad je plný, dělník drží celý náklad a zkusí to za chvíli znovu.
             work.phase = 'waitStorage';
             work.waitTimer = 3;
             if (!work.fullStorage && this.slowTimer <= 0) {
@@ -1676,22 +1709,25 @@ export class GameSim {
       for (const u of this.units) {
         if (u.ownerId !== player.id) continue;
         if (u.isVillager) {
-          if ((u.work || u.build) && !u.workPaused) workers++;
+          // Při nedostatku se počítají i dělníci s pozastavenou prací, jinak by stav každý tik kmital.
+          if ((u.work || u.build) && (!u.workPaused || player.foodShortage)) workers++;
         } else if (u.isMilitary) soldiers++;
       }
       const needPerSec = (workers * WORK.foodPerWorkerMinute + soldiers * WORK.foodPerSoldierMinute) / 60;
       const need = needPerSec * dt;
       if (need > 0) {
-        if (p.food >= need) {
-          p.food -= need;
-          player.foodShortage = false;
-        } else {
-          p.food = 0;
-          player.foodShortage = true;
-          if (this.foodWarnTimer <= 0 && player.id === this.humanId) {
-            this.emit('toast', { playerId: player.id, text: 'Sýpka je prázdná! Dělníci přestali pracovat.', kind: 'error' });
-            this.foodWarnTimer = 12;
-          }
+        // Spotřeba se počítá průběžně, ze zásob se ale odečítají jen celé jednotky.
+        player.foodDebt += need;
+        const due = Math.floor(player.foodDebt);
+        if (due > 0) {
+          player.foodDebt -= due;
+          p.food = Math.max(0, p.food - due);
+        }
+        // Stav se počítá v každém tiku, jinak by pozastavení trvalo i po doplnění jídla.
+        player.foodShortage = p.food < 1;
+        if (player.foodShortage && this.foodWarnTimer <= 0 && player.id === this.humanId) {
+          this.emit('toast', { playerId: player.id, text: 'Sýpka je prázdná! Dělníci přestali pracovat, kromě sadu.', kind: 'error' });
+          this.foodWarnTimer = 12;
         }
       } else {
         player.foodShortage = false;
@@ -2347,7 +2383,8 @@ export class GameSim {
       resources: { ...(p.resources || {}) },
       stats: { ...(p.stats || {}) },
       bot: { ...(p.bot || {}) },
-      alive: p.alive !== false
+      alive: p.alive !== false,
+      foodDebt: Number(p.foodDebt) || 0
     }));
     this.playerById = new Map(this.players.map(p => [p.id, p]));
 

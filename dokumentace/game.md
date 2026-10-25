@@ -44,9 +44,9 @@ Projekt se skládá z:
 8. **Sýpka (Granary)**:
    - Zvyšuje kapacitu pro jídlo o 300 jednotek. Kapacitu pro suroviny nezvyšuje. Je cílem odnosu jídla z jabloňového sadu.
 9. **Sklad (Warehouse)**:
-   - Zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Kapacitu pro jídlo nezvyšuje.
+   - Zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Kapacitu pro jídlo nezvyšuje. Dělníci sem odnášejí suroviny, pokud je z jejich místa blíž než hrad.
 10. **Železný důl (Iron Mine)**:
-   - Těží železnou rudu z ložiska, kterou dělníci nosí do Královského hradu.
+   - Těží železnou rudu z ložiska, kterou dělníci nosí do nejbližšího dosažitelného hotového skladu nebo hradu.
 
 ---
 
@@ -57,7 +57,7 @@ Projekt se skládá z:
   - **Přiřadit jako dělníky** do hospodářských budov (Dřevorubec, Kamenolom, Jabloňový sad, Železný důl) pro automatický sběr surovin.
   - **Poslat na staveniště**: vyberte poddané a v jejich panelu klikněte na stavbu v sekci Stavět. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi.
   - **Rekrutovat jako vojáky** (Pěšáci v Hradu, Lučištníci v Kasárnách).
-- **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Chodí po okolí zdroje, sbírá suroviny a nosí je do cíle odnosu: dřevo, kámen a železo do hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Dělník, který nese náklad, ho nejdřív odevzdá. Přiřazení není pasivní přičtení k budově.
+- **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Chodí po okolí zdroje, sbírá suroviny a nosí je do cíle odnosu: dřevo, kámen a železo do nejbližšího dosažitelného hotového skladu nebo hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Dřevorubec nejdřív přijde k budově, najde nejbližší dosažitelný strom, pokácí ho a rozřeže. Náklady jsou vždy celé jednotky. Pokud se náklad nevejde do zásob, dělník čeká, až se uvolní místo, a odevzdá ho celý najednou. Dělník, který nese náklad, ho nejdřív odevzdá. Přiřazení není pasivní přičtení k budově.
 - Spokojenost lidu (Popularita) závisí na dostupnosti jídla a zásobách. Když jsou lidé šťastní, hrad vzkvétá!
 
 ---

@@ -160,12 +160,12 @@ export const WORK = {
   roamPause: [1, 3]     // pauza mezi jednotlivými toulkami v sekundách [min, max]
 };
 
-// Kam se která surovina odnáší. Jídlo jde do nejbližší sýpky, bez sýpky do hradu.
+// Jídlo jde do nejbližší sýpky (bez sýpky do hradu), ostatní do nejbližšího skladu nebo hradu.
 export const DELIVERY = {
-  food: 'granary',
-  wood: 'castle',
-  stone: 'castle',
-  iron: 'castle'
+  food: ['granary'],
+  wood: ['castle', 'warehouse'],
+  stone: ['castle', 'warehouse'],
+  iron: ['castle', 'warehouse']
 };
 
 export const BUILD = {
@@ -275,7 +275,7 @@ export const BUILDING_DEFS = {
     workers: 4,
     produce: 'wood',
     requires: 'tree',
-    desc: 'Dřevorubecký tábor. Musí stát na stromě. Dělníci nosí dřevo do hradu.'
+    desc: 'Dřevorubecký tábor. Musí stát na stromě. Dělníci nosí dřevo do nejbližšího skladu nebo hradu.'
   },
   quarry: {
     key: 'quarry',
@@ -362,7 +362,7 @@ export const BUILDING_DEFS = {
     workers: 4,
     produce: 'iron',
     requires: 'iron',
-    desc: 'Šachta na ložisku železné rudy (1000 jednotek). Dělníci nosí rudu do hradu.'
+    desc: 'Šachta na ložisku železné rudy (1000 jednotek). Dělníci nosí rudu do nejbližšího skladu nebo hradu.'
   }
 };
 

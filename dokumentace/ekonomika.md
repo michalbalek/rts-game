@@ -2,8 +2,9 @@
 
 ## Suroviny a zásoby
 - **Suroviny**: dřevo, kámen, jídlo, železo. Železo se těží z ložisek železné rudy v Železném dole.
-- **Hrad**: místo, kam dělníci odevzdávají dřevo, kámen a železo. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla.
-- **Sklad**: zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek.
+- **Celé jednotky**: dřevo, kámen, železo a jídlo se nosí, skladují i odečítají jen v celých kusech. Peníze jsou výjimka, počítají se průběžně.
+- **Hrad**: místo, kam dělníci odevzdávají dřevo, kámen a železo, pokud je z jejich místa nejblíž mezi hradem a sklady. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla.
+- **Sklad**: zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Dělníci sem odevzdávají suroviny, pokud je z jejich místa nejblíž mezi hradem a sklady.
 - **Sýpka**: zvyšuje kapacitu jen pro jídlo, o 300 jednotek. Je cílem odnosu jídla z jabloňového sadu.
 - **Stavba**: budova se hradí ze zásob panství v okamžiku položení základů. Stavbu dokončí přidělení poddaných na staveniště. Náklady jednotlivých budov jsou v [budovy.md](budovy.md).
 - **Měna**: peníze, utrácí se v budově Obchodu. Nákup omezuje jen peníze a volná kapacita (sklad pro suroviny, sýpka pro jídlo). Prodej omezuje zásoba.
@@ -23,22 +24,22 @@
 - **Kapacita**: 20 obyvatel z hradu a 8 dalších za každé obydlí.
 - **Přiřazení**: volné obyvatele lze přiřadit jako dělníky do Dřevorubce, Kamenolomu, Jabloňového sadu a Železného dolu, nebo rekrutovat jako vojáky (pěšáci v Královském hradu, lučištníci v Kasárnách).
 - **Stavění**: po zakoupení budovy vznikne staveniště. Vybrané volné obyvatele přidělíte tlačítkem stavby v sekci Stavět v jejich panelu. Pracují na něm, dokud není budova hotová. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi (viz [budovy.md](budovy.md)).
-- **Práce dělníka**: dělník přiřazený k budově nejdřív přijde ke zdroji a chodí kolem něj (zhruba do 3 dlaždic), sbírá suroviny a pak je nese do cíle odnosu. V místní hře je na mapě vidět čára od dělníka k jeho cíli, například k sadu.
-- **Nosnost**: dělník nese 10 jednotek najednou.
+- **Práce dělníka**: dělník přiřazený k budově nejdřív přijde k této budově. Pak jde ke zdroji, chodí kolem něj (zhruba do 3 dlaždic) a sbírá suroviny. U dřevorubce je zdrojem nejbližší dosažitelný strom od budovy, bez pevného limitu vzdálenosti. V místní hře je na mapě vidět čára od dělníka k jeho cíli, například k sadu.
+- **Nosnost**: dělník nese 10 jednotek najednou. U botů se nosnost řídí obtížností.
 - **Doba sběru**: 10 kusů trvá 20 s.
-- **Produkce**: jeden dělník dá nejvýše 30 jednotek za minutu. S rostoucí vzdáleností od cíle produkce klesá.
-- **Odnos**: naplněný dělník nese zásobu do cíle odnosu (viz níže) a odevzdá ji. Pak se cyklus opakuje.
-- **Cíl odnosu**: dřevo, kámen a železo se odnášejí do Královského hradu, jídlo do nejbližší hotové sýpky (bez sýpky do hradu). Sklad cílem odnosu není.
-- **Bez cíle**: pokud Královský hrad chybí, dělník čeká s plnou zásobou.
-- **Plná kapacita**: dělník s nákladem čeká, dokud v zásobách nevznikne místo.
+- **Produkce**: jeden dělník dá nejvýše 30 jednotek za minutu (10 za 20 s). Skutečně dá méně, protože cesta k cíli a zpět trvá. Čím je cíl dál, tím je produkce nižší.
+- **Odnos**: naplněný dělník nese zásobu do cíle odnosu (viz níže) a odevzdá ji celou najednou. Pak se vrátí ke zdroji a cyklus se opakuje.
+- **Cíl odnosu**: dřevo, kámen a železo se odnášejí do nejbližšího dosažitelného hotového skladu nebo Královského hradu. Cíl se vybírá podle vzdálenosti od dělníka, když je náklad naplněn, a při každém dalším pokusu. Jídlo se odnáší do nejbližší hotové sýpky (bez sýpky do hradu).
+- **Bez přístupu**: pokud k žádnému cíli nevede přístup z místa dělníka, dělník drží náklad, čeká 3 s a cíl hledá znovu.
+- **Plná kapacita**: pokud se celý náklad nevejde do zásob, dělník s ním čeká u cíle a zhruba každé 3 s to zkouší znovu (cíl se přitom vybírá znovu). Jakmile se celý náklad vejde, odevzdá ho najednou. Částečné odevzdání se nedělá. Hráč dostane upozornění „Sklady jsou plné, dělníci čekají.“ (u jídla „Sýpky jsou plné, dělníci čekají.“)
 - **Úmrtí**: zemřelý dělník nebo voják uvolní místo v kapacitě, ale nevrací se. Kapacitu lze doplnit jen novým Obydlím.
 
 ## Spotřeba jídla
-- **Dělník**: spotřebuje 2 jídla za minutu, jen když pracuje nebo staví.
+- **Dělník**: spotřebuje 2 jídla za minutu, jen když pracuje nebo staví. I dělníci, které nedostatek jídla pozastavil, se do spotřeby počítají. Pokud je zásoba jídla na nule, nic se neodečte a nepřenáší se to jako dluh.
 - **Voják**: spotřebuje 1 jídlo za minutu.
 - **Nepracující obyvatelé**: jídlo nespotřebovávají.
-- **Zdroj**: jídlo se odebírá z celkových zásob panství.
-- **Nedostatek**: když v zásobách není dost jídla, spokojenost klesá a dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní.
+- **Zdroj**: jídlo se odebírá z celkových zásob panství. Spotřeba se počítá průběžně, ze zásob se odečítají celé jednotky.
+- **Nedostatek**: když v zásobách není dost jídla, spokojenost klesá a dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní. Výjimkou jsou dělníci v jabloňovém sadu: ti dál sbírají jablka a odnášejí je do nejbližší sýpky (bez sýpky do hradu), takže se zásoba jídla obnoví i z nuly.
 
 ## Spokojenost lidu a popularita
 - Spokojenost závisí na dostupnosti jídla a zásobách.
@@ -48,4 +49,4 @@
 
 ## Hospodářské řetězce
 - Jabloňový sad zajišťuje jídlo. Dělníci ho odnášejí do nejbližší sýpky, bez sýpky do hradu. Každá sýpka zvyšuje kapacitu jídla o 300 jednotek.
-- Železný důl těží železnou rudu z ložiska. Dělníci ji odnášejí do Královského hradu, kde se eviduje jako železo.
+- Železný důl těží železnou rudu z ložiska. Dělníci ji odnášejí do nejbližšího dosažitelného hotového skladu nebo hradu, kde se eviduje jako železo.

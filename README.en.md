@@ -105,7 +105,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 - **Construction time** depends on size: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. The time applies to one subject. Each additional subject adds half of the base speed, with no upper limit (a 2×2 site takes 40 s with two subjects, 24 s with four).
 - **Construction site** – buying a building creates a construction site. The player selects subjects and clicks the site's button in their panel's Construction section. It progresses only while they work on it. When it is finished, they return to the campfire.
 - **Woodcutter** must stand on a tree, **Quarry** on a stone deposit and **Iron Mine** on an iron deposit.
-- **Subjects** gather resources in batches of 10 and carry them to the castle; food goes to the nearest granary (castle if there is none). A stone deposit holds 2000 units and an iron deposit 1000; once depleted, a new deposit appears after 3 minutes.
+- **Subjects** gather resources in batches of 10 and carry them to the nearest completed warehouse or the castle; food goes to the nearest granary (castle if there is none). A stone deposit holds 2000 units and an iron deposit 1000; once depleted, a new deposit appears after 3 minutes.
 - **Insufficient resources** mean the order is not carried out and the scribe reports it. The full cost is paid when the order is given.
 - **Training** uses a free subject at the campfire. Footman = 60 money + 20 food / 40 s, Archer = 70 money + 20 food / 45 s.
 - **Victory** – destroy all enemy Royal Castles. **Defeat** – your castle falls; remaining buildings become neutral.

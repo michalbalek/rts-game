@@ -40,7 +40,7 @@
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: zdarma, vzniká při spuštění hry.
 - **Vzhled**: pískovcová pevnost a sídlo lorda. Před hradem plane táborové ohniště, u kterého čekají nezaměstnaní poddaní.
-- **Funkce**: centrální správa panství a místo, kam dělníci odevzdávají dřevo, kámen a železo. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla. Na začátku hry má 20 volných obyvatel.
+- **Funkce**: centrální správa panství a místo, kam dělníci odevzdávají dřevo, kámen a železo, pokud je z jejich místa nejblíž mezi hradem a sklady. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla. Na začátku hry má 20 volných obyvatel.
 - **Výroba jednotek**: těžcí pěšáci (bojovníci s mečem a štítem).
 
 ### 2. Kasárna
@@ -54,7 +54,7 @@
 - **Náklady**: 50 peněz, 20 dřeva.
 - **Umístění**: v oblasti se stromy. Alespoň jedna dlaždice pod budovou musí být strom.
 - **Vzhled**: dřevorubecký tábor.
-- **Funkce**: těžba cenného dřeva v oázách a hájích. Do budovy lze přiřadit dělníky z hradu.
+- **Funkce**: těžba cenného dřeva v oázách a hájích. Dělníci přiřazení k budově nejdřív přijdou k ní, najdou nejbližší dosažitelný strom, pokácejí ho a rozřežou. Dřevo nesou po 10 kusech do nejbližšího dosažitelného hotového skladu nebo hradu. Pokud se náklad nevejde do zásob, počkají, až se uvolní místo, a odevzdají ho celý najednou. Do budovy lze přiřadit dělníky z hradu.
 
 ### 4. Kamenolom
 - **Velikost na mřížce**: 3×3 bloky
@@ -68,7 +68,7 @@
 - **Velikost na mřížce**: 4×4 bloky
 - **Náklady**: 120 peněz, 60 dřeva.
 - **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě.
-- **Funkce**: stálý přísun jídla (dělníci chodí mezi stromy a nosí jablka do nejbližší sýpky, bez sýpky do hradu) a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu.
+- **Funkce**: stálý přísun jídla (dělníci chodí mezi stromy a nosí jablka do nejbližší sýpky, bez sýpky do hradu) a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu. Při nedostatku jídla dělníci sadu pracují dál, takže se zásoba obnoví.
 
 ### 6. Obchod
 - **Velikost na mřížce**: 2×2 bloky
@@ -95,14 +95,14 @@
 ### 8. Sýpka
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 100 dřeva, 50 kamene.
-- **Funkce**: zvyšuje kapacitu pro jídlo. Dělníci odnášejí jídlo z Jabloňového sadu do nejbližší hotové sýpky po 10 kusech (bez sýpky do hradu).
+- **Funkce**: zvyšuje kapacitu pro jídlo. Dělníci odnášejí jídlo z Jabloňového sadu do nejbližší hotové sýpky po 10 kusech (bez sýpky do hradu). Pokud se náklad jídla nevejde do zásob, dělník čeká a odevzdá ho celý najednou.
 - **Kapacita**: 300 jednotek jídla na jednu sýpku. Kapacitu pro suroviny nezvyšuje.
 - **Vzhled**: vysoká kulatá sýpka s dřevěnou střechou a kamennými základy.
 
 ### 9. Sklad
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 120 dřeva, 60 kamene.
-- **Funkce**: zvyšuje kapacitu pro dřevo, kámen a železo. Dělníci suroviny odnášejí do Královského hradu.
+- **Funkce**: zvyšuje kapacitu pro dřevo, kámen a železo. Dělníci sem odnášejí suroviny, pokud je z jejich místa blíž než hrad.
 - **Kapacita**: 500 jednotek na jeden sklad (dřevo, kámen a železo dohromady). Kapacity všech skladů se sčítají.
 - **Vzhled**: dlouhá pískovcová hala s otevřenými vraty a dřevěnými regály.
 
@@ -110,7 +110,7 @@
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 80 dřeva, 40 kamene.
 - **Umístění**: pouze na ložisko železné rudy. Celá plocha budovy musí ležet na ložisku.
-- **Funkce**: dělníci z hradu těží železnou rudu a nosí ji po 10 kusech do Královského hradu, kde se eviduje jako železo. Do dolu lze přiřadit dělníky z hradu.
+- **Funkce**: dělníci z hradu těží železnou rudu a nosí ji po 10 kusech do nejbližšího dosažitelného hotového skladu nebo hradu, kde se eviduje jako železo. Do dolu lze přiřadit dělníky z hradu.
 - **Zásoba ložiska**: 1000 jednotek rudy. Po vyčerpání se důl uzavře a nové ložisko se objeví jinde na mapě (viz [mapa.md](mapa.md)).
 - **Vzhled**: šachta s dřevěnou konstrukcí, vozíky na kolejnicích a hromada železné rudy před vchodem.
 
