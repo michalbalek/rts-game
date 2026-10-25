@@ -1,46 +1,60 @@
 /**
- * Matematika pro izometrickou projekci (úhel 45 stupňů)
+ * Matematika izometrické projekce – symetrická dlaždice 64×32 px (úhel 26,6°).
  */
 
 export const TILE_WIDTH = 64;
 export const TILE_HEIGHT = 32;
+export const HALF_TILE_WIDTH = TILE_WIDTH / 2;
+export const HALF_TILE_HEIGHT = TILE_HEIGHT / 2;
 
 // Maximální stavební rádius od hradu podle game.md (100 bloků)
 export const MAX_BUILD_RADIUS = 100;
 
-/**
- * Převod z dlaždicových souřadnic (x, y) na souřadnice obrazovky
- */
+/** Převod dlaždicových souřadnic (x, y) na světové/obrazovkové souřadnice. */
 export function tileToScreen(tileX, tileY) {
   return {
-    x: (tileX - tileY) * (TILE_WIDTH / 2),
-    y: (tileX + tileY) * (TILE_HEIGHT / 2)
+    x: (tileX - tileY) * HALF_TILE_WIDTH,
+    y: (tileX + tileY) * HALF_TILE_HEIGHT
   };
 }
 
-/**
- * Převod ze souřadnic obrazovky na dlaždicové souřadnice (x, y)
- */
-export function screenToTile(screenX, screenY) {
-  const halfW = TILE_WIDTH / 2;
-  const halfH = TILE_HEIGHT / 2;
-  
-  const tileX = Math.floor((screenX / halfW + screenY / halfH) / 2);
-  const tileY = Math.floor((screenY / halfH - screenX / halfW) / 2);
-  
-  return { x: tileX, y: tileY };
+/** Zpětný převod světových souřadnic na (nezaokrouhlené) dlaždice. */
+export function worldToTile(worldX, worldY) {
+  return {
+    x: worldY / TILE_HEIGHT + worldX / TILE_WIDTH,
+    y: worldY / TILE_HEIGHT - worldX / TILE_WIDTH
+  };
 }
 
-/**
- * Výpočet eukleidovské vzdálenosti mezi dvěma bloky na mapě
- */
+/** Zpětný převod se zaokrouhlením dolů. */
+export function screenToTile(worldX, worldY) {
+  const t = worldToTile(worldX, worldY);
+  return { x: Math.floor(t.x), y: Math.floor(t.y) };
+}
+
 export function getDistance(x1, y1, x2, y2) {
   return Math.hypot(x1 - x2, y1 - y2);
 }
 
 /**
- * Kontrola, zda je zadaná dlaždice v povoleném stavebním rádiusu od hradu (100 bloků)
+ * Stín pod budovou v lokálních izometrických souřadnicích.
+ * Střed leží ve středu půdorysu, ne na předním rohu – jinak stín odjíždí
+ * před budovu a ta působí, jako by se vznášela nad zemí.
  */
+export function buildingShadow(width, height) {
+  const span = width + height;
+  return {
+    cx: (width - height) * HALF_TILE_WIDTH / 2,
+    cy: span * HALF_TILE_HEIGHT / 2,
+    rx: span * HALF_TILE_WIDTH * 0.53,
+    ry: span * HALF_TILE_HEIGHT * 0.53
+  };
+}
+
 export function isWithinBuildRadius(tileX, tileY, castleX, castleY) {
   return getDistance(tileX, tileY, castleX, castleY) <= MAX_BUILD_RADIUS;
+}
+
+export function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
 }

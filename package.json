@@ -1,10 +1,14 @@
 {
   "name": "rts-game",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "2D Izometrická Real-Time Strategie",
+  "type": "module",
   "scripts": {
     "start": "node server/src/index.js",
-    "dev": "node --watch server/src/index.js"
+    "dev": "node --watch server/src/index.js",
+    "test": "node tools/test-sim.js && node tools/test-client.js",
+    "test:sim": "node tools/test-sim.js",
+    "test:client": "node tools/test-client.js"
   },
   "keywords": ["rts", "game", "isometric", "strategy"],
   "author": "",

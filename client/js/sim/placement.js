@@ -1,0 +1,84 @@
+import {
+  BUILDING_DEFS, TILE_TYPES, RESOURCE_TYPES, BUILD_RADIUS
+} from './constants.js';
+
+/**
+ * Ověření umístění budovy nezávisle na simulaci.
+ * Používá ho klient pro náhled stavby i server/simulace jako autoritu.
+ */
+export function validatePlacement(map, buildings, playerId, type, x, y, opts = {}) {
+  const def = BUILDING_DEFS[type];
+  if (!def) return { valid: false, reason: 'Neznámá stavba, sire!' };
+  if (type === 'castle') return { valid: false, reason: 'Královský hrad nelze postavit.' };
+  if (opts.alive === false) return { valid: false, reason: 'Vaše panství již padlo.' };
+
+  const castle = opts.castle || buildings.find(b => b.type === 'castle' && b.ownerId === playerId && b.complete);
+  if (!castle) return { valid: false, reason: 'Nemáte Královský hrad.' };
+
+  if (x < 1 || y < 1 || x + def.w > map.size - 1 || y + def.h > map.size - 1) {
+    return { valid: false, reason: 'Sem nelze stavět, můj pane!' };
+  }
+
+  const cx = castle.tileX + castle.width / 2;
+  const cy = castle.tileY + castle.height / 2;
+  const d = Math.hypot(x + def.w / 2 - cx, y + def.h / 2 - cy);
+  if (d > BUILD_RADIUS) {
+    return { valid: false, reason: `Stavebníci odmítají pracovat tak daleko od hradu! (${Math.round(d)}/100 bloků)` };
+  }
+
+  let treeTiles = 0;
+  let stoneTiles = 0;
+  let ironTiles = 0;
+  for (let dy = 0; dy < def.h; dy++) {
+    for (let dx = 0; dx < def.w; dx++) {
+      const tile = map.getTile(x + dx, y + dy);
+      if (tile === TILE_TYPES.WATER_DEEP || tile === TILE_TYPES.WATER_SHALLOW) {
+        return { valid: false, reason: 'Na vodě nelze stavět, sire!' };
+      }
+      const res = map.getResource(x + dx, y + dy);
+      if (res === RESOURCE_TYPES.TREE) treeTiles++;
+      if (res === RESOURCE_TYPES.STONE) stoneTiles++;
+      if (res === RESOURCE_TYPES.IRON) ironTiles++;
+    }
+  }
+
+  if (!def.requires && (stoneTiles > 0 || ironTiles > 0)) {
+    return { valid: false, reason: 'Na ložisku mohou stát jen kamenolom a železný důl.' };
+  }
+  if (def.requires === 'tree' && treeTiles === 0) {
+    return { valid: false, reason: 'Dřevorubec musí stát na stromě, můj pane!' };
+  }
+  if (def.requires === 'stone') {
+    if (stoneTiles !== def.w * def.h) {
+      return { valid: false, reason: 'Kamenolom musí celý ležet na ložisku kamene.' };
+    }
+    const dep = map.getDepositAt(x, y);
+    if (!dep || dep.amount <= 0) return { valid: false, reason: 'Ložisko kamene je vyčerpané.' };
+  }
+  if (def.requires === 'iron') {
+    if (ironTiles !== def.w * def.h) {
+      return { valid: false, reason: 'Železný důl musí celý ležet na ložisku železné rudy.' };
+    }
+    const dep = map.getDepositAt(x, y);
+    if (!dep || dep.amount <= 0) return { valid: false, reason: 'Ložisko železné rudy je vyčerpané.' };
+  }
+
+  for (const b of buildings) {
+    const overlap = x < b.tileX + b.width && x + def.w > b.tileX &&
+                    y < b.tileY + b.height && y + def.h > b.tileY;
+    if (overlap) return { valid: false, reason: 'Místo je již zabráno jinou stavbou, sire!' };
+
+    const gapOverlap = x - 1 < b.tileX + b.width && x + def.w + 1 > b.tileX &&
+                       y - 1 < b.tileY + b.height && y + def.h + 1 > b.tileY;
+    const bothWarehouses = type === 'warehouse' && b.type === 'warehouse';
+    if (gapOverlap && !bothWarehouses) {
+      return { valid: false, reason: 'Mezi budovami musí zůstat volný pruh pro povozy!' };
+    }
+  }
+
+  if (opts.canAfford === false) {
+    return { valid: false, reason: 'Pokladna a sklady nemají dostatek surovin, můj pane!' };
+  }
+
+  return { valid: true };
+}
