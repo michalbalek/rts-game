@@ -12,7 +12,7 @@ Projekt se skládá z:
 ## 2. Vizuální styl a prostředí (Poušť a Oáza)
 - **Prostředí**: Horká pouštní krajina s písečnými dunami, skalními masivy a úrodnými oázami s palmami, trávou a vodními plochami.
 - **Vizuál**: Pískovcová středověká architektura, cimbuří, hradební věže s vlajícími zástavami a pergamenově-pískovcový heraldický HUD.
-- **Hlášky a atmosféra**: Hlášení poddaných a písaře (*"K vašim službám, sire!"*, *"Lidé jsou spokojeni, můj pane."*, *"Na toto místo nelze stavět!"*).
+- **Hlášky a atmosféra**: Hlášení poddaných a písaře (*"K vašim službám, sire!"*, *"Na toto místo nelze stavět!"*).
 
 ---
 
@@ -36,17 +36,17 @@ Projekt se skládá z:
 4. **Kamenolom (Quarry)**:
    - Pískovcový a vápencový lom s těžebním jeřábem na skalních nalezištích.
 5. **Jabloňový sad (Apple Orchard)**:
-   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Zajišťuje stálý přísun jídla pro sýpku a udržuje vysokou spokojenost lidu.
+   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Zajišťuje stálý přísun jídla do hradu a udržuje vysokou spokojenost lidu.
 6. **Obchod (Market)**:
    - Tržnice, kde hráč nakupuje a prodává suroviny za pevné ceny.
 7. **Obydlí (Dwelling)**:
    - Jednoduchý kamenný dům, přidá 8 obyvatel do kapacity panství.
 8. **Sýpka (Granary)**:
-   - Skladuje jídlo z jabloňového sadu, až 300 jednotek.
+   - Zvyšuje kapacitu pro jídlo o 300 jednotek. Kapacitu pro suroviny nezvyšuje.
 9. **Sklad (Warehouse)**:
-   - Centrální sklad dřeva, kamene a železa, až 500 jednotek.
+   - Zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Kapacitu pro jídlo nezvyšuje.
 10. **Železný důl (Iron Mine)**:
-   - Těží železnou rudu z ložiska, kterou dělníci nosí do skladu.
+   - Těží železnou rudu z ložiska, kterou dělníci nosí do Královského hradu.
 
 ---
 
@@ -67,7 +67,7 @@ Projekt se skládá z:
 - **Multiplayer**: hra končí, když zůstane jediný hráč s hradem. Ostatní prohrávají.
 - **Hra s boty**: stejná podmínka platí pro boty.
 - **Vlastní stavba**: bez botů a bez vítězné podmínky. Hru hráč ukončí v herním menu.
-- **Ukládání**: rozehranou hru lze uložit do local storage prohlížeče. Každé uložení je označeno datem a časem zahájení hry.
+- **Ukládání**: rozehranou singleplayerovou hru lze uložit do local storage prohlížeče. Ukládá se vždy jeden slot, nové uložení přepíše předchozí. Uložení je označeno datem a časem zahájení hry.
 
 ---
 

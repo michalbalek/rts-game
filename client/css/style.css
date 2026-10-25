@@ -531,6 +531,16 @@ input[type="checkbox"] {
   border-color: rgba(150, 218, 228, 0.6);
 }
 
+.menu-entry.load {
+  border-color: rgba(214, 190, 132, 0.48);
+  background: linear-gradient(135deg, rgba(72, 64, 45, 0.82), rgba(43, 37, 26, 0.9));
+}
+
+.menu-entry.load:hover {
+  border-color: rgba(242, 220, 160, 0.75);
+  background: linear-gradient(135deg, rgba(98, 84, 56, 0.92), rgba(56, 47, 32, 0.95));
+}
+
 .entry-icon {
   width: 46px;
   height: 46px;

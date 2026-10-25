@@ -1,6 +1,6 @@
 import {
   BOT_BUILD_ORDER, BUILDING_DEFS, UNIT_DEFS, BOT_DIFFICULTIES,
-  RESOURCE_TYPES, BUILD_RADIUS
+  RESOURCE_TYPES
 } from './constants.js';
 
 /**
@@ -42,7 +42,12 @@ function assignWorkers(sim, player, castle) {
   if (player.resources.food > 120) priority.sort((a, b) => orderIndex(a) - orderIndex(b));
 
   for (const type of priority) {
-    const b = production.find(x => x.type === type && x.workers < x.config.workers);
+    // Na cestě do budovy už dělník zabírá místo, i když se do b.workers
+    // započítá až po příchodu.
+    const b = production.find(x =>
+      x.type === type &&
+      (x.assignedWorkerIds ? x.assignedWorkerIds.length : x.workers) < x.config.workers
+    );
     if (!b) continue;
     if (b.type === 'ironmine' || b.type === 'quarry') {
       const dep = sim.map.deposits.find(d => d.id === b.depositId);
@@ -57,7 +62,13 @@ function assignWorkers(sim, player, castle) {
   // Pokud je dělníků málo a jídlo dochází, přesuň jednoho z dřeva na sad.
   const orchard = production.find(b => b.type === 'orchard');
   const lumber = production.find(b => b.type === 'lumberjack');
-  if (orchard && lumber && orchard.workers === 0 && player.resources.food < player.population && lumber.workers > 1) {
+  const orchardWorkers = orchard
+    ? (orchard.assignedWorkerIds ? orchard.assignedWorkerIds.length : orchard.workers)
+    : 0;
+  const lumberWorkers = lumber
+    ? (lumber.assignedWorkerIds ? lumber.assignedWorkerIds.length : lumber.workers)
+    : 0;
+  if (orchard && lumber && orchardWorkers === 0 && player.resources.food < player.population && lumberWorkers > 1) {
     sim.command(player.id, { op: 'unassign', buildingId: lumber.id, count: 1 });
     sim.command(player.id, { op: 'assign', buildingId: orchard.id, count: 1 });
   }
@@ -150,7 +161,6 @@ function findBuildSpot(sim, player, castle, type) {
       .filter(d => d.active && d.type === wanted)
       .sort((a, b) => depositDistance(a, castle, sim.map.size) - depositDistance(b, castle, sim.map.size));
     for (const dep of deposits) {
-      if (depositDistance(dep, castle, sim.map.size) > BUILD_RADIUS - 4) continue;
       for (const idx of dep.tiles) {
         const x = idx % sim.map.size;
         const y = Math.floor(idx / sim.map.size);

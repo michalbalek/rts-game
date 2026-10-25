@@ -5,7 +5,7 @@
 
 export const MAP_SIZE = 200;
 export const TICK_RATE = 20; // server simuluje 20 ticků za sekundu
-export const BUILD_RADIUS = 100;
+export const ENEMY_BUILD_DISTANCE = 20;
 export const MAX_PLAYERS = 4;
 
 export const TILE_TYPES = {
@@ -253,7 +253,7 @@ export const BUILDING_DEFS = {
     workers: 4,
     produce: 'wood',
     requires: 'tree',
-    desc: 'Dřevorubecký tábor. Musí stát na stromě. Dělníci nosí dřevo do skladu.'
+    desc: 'Dřevorubecký tábor. Musí stát na stromě. Dělníci nosí dřevo do hradu.'
   },
   quarry: {
     key: 'quarry',
@@ -278,7 +278,7 @@ export const BUILDING_DEFS = {
     cost: cost(120, 60, 0),
     workers: 4,
     produce: 'food',
-    desc: 'Zavlažovaný sad v oázové půdě. Dělníci nosí jablka do sýpky. Jablka jsou nevyčerpatelná.'
+    desc: 'Zavlažovaný sad v oázové půdě. Dělníci nosí jablka do hradu. Jablka jsou nevyčerpatelná.'
   },
   market: {
     key: 'market',
@@ -339,7 +339,7 @@ export const BUILDING_DEFS = {
     workers: 4,
     produce: 'iron',
     requires: 'iron',
-    desc: 'Šachta na ložisku železné rudy (1000 jednotek). Dělníci nosí rudu do skladu.'
+    desc: 'Šachta na ložisku železné rudy (1000 jednotek). Dělníci nosí rudu do hradu.'
   }
 };
 

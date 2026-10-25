@@ -218,11 +218,11 @@ export function helpContent() {
       <section class="help-section">
         <h4>🏰 Základní pravidla</h4>
         <ul>
-          <li>Stavět lze pouze v okruhu <strong>100 bloků</strong> od Královského hradu.</li>
+          <li>Stavět lze kdekoli na mapě, nejméně <strong>20 bloků</strong> od nepřátelských jednotek a budov.</li>
           <li>Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.</li>
           <li>Dřevorubec musí stát na stromě, kamenolom a železný důl celé na ložisku.</li>
           <li>Poddaní čekají u ohniště. Přiřaďte je do hospodářství, nebo je povolejte jako vojáky.</li>
-          <li>Dělníci nosí suroviny po 10 kusech. Jídlo patří do sýpky, ostatní suroviny do skladu.</li>
+          <li>Dělníci nosí suroviny po 10 kusech do Královského hradu. Sýpky a sklady zvyšují kapacitu.</li>
           <li>Obydlí přidá 8 míst v kapacitě. Hrad sám pojme 20 obyvatel.</li>
         </ul>
       </section>
@@ -232,7 +232,7 @@ export function helpContent() {
           <li>Nejprve postavte Dřevorubce a Kamenolom, poté Jabloňový sad a Kasárna.</li>
           <li>Kasárna vyrábějí lučištníky, Královský hrad těžké pěšáky.</li>
           <li>Lučištníci útočí z dálky a jejich šípy mohou minout pohybující se cíl.</li>
-          <li>Plný sklad zastaví dělníky. Postavte další Sklad nebo Sýpku včas.</li>
+          <li>Plná kapacita zastaví dělníky. Postavte včas další Sklad (suroviny) nebo Sýpku (jídlo).</li>
           <li>Vysoká daň vynáší více peněz, ale snižuje spokojenost lidu.</li>
           <li>Vyčerpané ložisko se po 3 minutách objeví jinde na mapě.</li>
         </ul>

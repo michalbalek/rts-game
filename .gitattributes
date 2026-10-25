@@ -1,0 +1,2 @@
+# Hooky musí mít LF konce řádků; s core.autocrlf=true by se jinak uložily s CRLF a shell by je nespustil.
+.githooks/* text eol=lf

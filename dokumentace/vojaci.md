@@ -22,7 +22,7 @@
 - **Doba výcviku**: 45 s.
 
 ### 3. Poddaný / Dělník
-- Chodí pro suroviny k budovám a odnášejí je do cílové budovy po 10 kusech (viz [ekonomika.md](ekonomika.md)).
+- Chodí pro suroviny k budovám a odnášejí je do Královského hradu po 10 kusech (viz [ekonomika.md](ekonomika.md)).
 - **Úloha**: čeká u ohniště před hradem, dokud ho nepřiřadí hráč k budově.
 - **Útok**: dělník nebojuje. Při napadení uteče do hradu.
 

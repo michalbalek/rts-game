@@ -3,6 +3,7 @@ import {
 } from '../sim/constants.js';
 import { GameMap } from '../sim/mapgen.js';
 import { isValidNick } from './settings.js';
+import { readSaveInfo, formatSaveLabel } from './save.js';
 import {
   settingsForm, bindSettingsForm, helpContent, creditsContent, escapeHtml
 } from './modals.js';
@@ -41,7 +42,7 @@ const MINI_COLORS = {
 export class Menu {
   constructor({
     root, modals, getSettings, applySettings,
-    onStartSingle, onStartMultiplayer, onCancelSearch, onLeaveLobby, onQuit
+    onStartSingle, onStartMultiplayer, onLoadGame, onCancelSearch, onLeaveLobby, onQuit
   }) {
     this.root = root;
     this.modals = modals;
@@ -49,6 +50,7 @@ export class Menu {
     this.applySettings = applySettings || (() => {});
     this.onStartSingle = onStartSingle || (() => {});
     this.onStartMultiplayer = onStartMultiplayer || (() => {});
+    this.onLoadGame = onLoadGame || (() => {});
     this.onCancelSearch = onCancelSearch || (() => {});
     this.onLeaveLobby = onLeaveLobby || (() => {});
     this.onQuit = onQuit || (() => {});
@@ -126,6 +128,13 @@ export class Menu {
   showMain() {
     const settings = this.getSettings();
     const nick = settings.nick ? `<span class="menu-note">Nick: ${escapeHtml(settings.nick)}</span>` : '';
+    const saveInfo = readSaveInfo();
+    const loadEntry = saveInfo ? `
+            <button class="menu-entry load" data-action="load">
+              <span class="entry-icon">📜</span>
+              <span class="entry-text"><strong>Načíst hru</strong><small>${escapeHtml(formatSaveLabel(saveInfo))}</small></span>
+              <span class="entry-arrow">›</span>
+            </button>` : '';
     this.show(`
       <div class="menu-screen main-menu">
         ${this.backdrop()}
@@ -150,6 +159,7 @@ export class Menu {
               <span class="entry-text"><strong>Single player</strong><small>Hra s boty nebo vlastní stavba</small></span>
               <span class="entry-arrow">›</span>
             </button>
+            ${loadEntry}
             <button class="menu-entry multiplayer" data-action="multiplayer">
               <span class="entry-icon">🌐</span>
               <span class="entry-text"><strong>Multiplayer</strong><small>Až 4 hráči na jednom serveru</small></span>
@@ -169,6 +179,7 @@ export class Menu {
       </div>`);
 
     this.bind('[data-action="single"]', 'click', () => { audio.play('click'); this.showSingle(); });
+    this.bind('[data-action="load"]', 'click', () => { audio.play('click'); this.onLoadGame(); });
     this.bind('[data-action="multiplayer"]', 'click', () => { audio.play('click'); this.showMultiplayer(); });
     this.bind('[data-action="settings"]', 'click', () => { audio.play('click'); this.openSettings(); });
     this.bind('[data-action="help"]', 'click', () => { audio.play('click'); this.openHelp(); });

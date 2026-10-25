@@ -26,6 +26,15 @@ function pct(a, b) {
   return Math.max(0, Math.min(1, a / b));
 }
 
+function assignedWorkers(b) {
+  return Array.isArray(b.assignedWorkerIds) ? b.assignedWorkerIds.length : b.workers;
+}
+
+function workerLabel(b, def) {
+  const enRoute = Math.max(0, assignedWorkers(b) - b.workers);
+  return `${b.workers}/${def.workers}${enRoute ? ` +${enRoute}` : ''}`;
+}
+
 function timeLabel(seconds) {
   const s = Math.max(0, Math.floor(seconds));
   const m = Math.floor(s / 60);
@@ -220,7 +229,6 @@ export class GameUI {
 
   scribeLine(popularity, player) {
     if (player.foodShortage) return 'Sýpka je prázdná, lidé mají hlad!';
-    if (popularity >= 80) return 'Lidé jsou spokojeni, můj pane.';
     if (popularity >= 55) return 'Panství vzkvétá, sire.';
     if (popularity >= 35) return 'Lid si stěžuje na daň, můj pane.';
     return 'Lidé jsou nespokojeni a hrozí vzpoura!';
@@ -288,7 +296,7 @@ export class GameUI {
         </button>`;
     }).join('');
     this.el.buildDock.innerHTML = `
-      <div class="dock-heading">Stavby <span>stavební okruh 100 bloků</span></div>
+      <div class="dock-heading">Stavby <span>odstup 20 bloků od nepřítele</span></div>
       <div class="dock-cards">${cards}</div>`;
 
     this.el.buildDock.querySelectorAll('.build-card').forEach(card => {
@@ -425,7 +433,7 @@ export class GameUI {
     if (!s) return 'none';
     if (s.selectedBuilding) {
       const b = s.selectedBuilding;
-      return `b:${b.id}:${b.complete}:${b.workers}:${b.queue ? b.queue.length : 0}:${!!b.repair}:${b.ownerId}`;
+      return `b:${b.id}:${b.complete}:${b.workers}:${assignedWorkers(b)}:${b.queue ? b.queue.length : 0}:${!!b.repair}:${b.ownerId}`;
     }
     if (s.selection.length) {
       return `u:${s.selection.map(u => `${u.id}:${u.type}`).sort().join(',')}`;
@@ -483,14 +491,16 @@ export class GameUI {
     }
 
     if (def.workers) {
+      const assigned = assignedWorkers(b);
+      const enRoute = Math.max(0, assigned - b.workers);
       body += `
         <div class="sel-rows">
           <div class="sel-row">
             <span>👤 Poddaní</span>
             <div class="worker-controls">
-              <button class="icon-btn" data-action="unassign" title="Odebrat dělníka" ${!mine || b.workers <= 0 ? 'disabled' : ''}>−</button>
-              <b data-workers>${b.workers}/${def.workers}</b>
-              <button class="icon-btn" data-action="assign" title="Přiřadit dělníka" ${!mine || !b.complete || b.workers >= def.workers ? 'disabled' : ''}>+</button>
+              <button class="icon-btn" data-action="unassign" title="Odebrat dělníka" ${!mine || assigned <= 0 ? 'disabled' : ''}>−</button>
+              <b data-workers title="${enRoute ? `${enRoute} na cestě do budovy` : ''}">${workerLabel(b, def)}</b>
+              <button class="icon-btn" data-action="assign" title="Přiřadit dělníka" ${!mine || !b.complete || assigned >= def.workers ? 'disabled' : ''}>+</button>
             </div>
           </div>
           <div class="sel-row"><span>Produkce</span><b>${resourceName(def.produce)}</b></div>
@@ -648,7 +658,12 @@ export class GameUI {
       const progressLabel = panel.querySelector('[data-build-label]');
       if (progressLabel) progressLabel.textContent = `${Math.round(b.progress * 100)} %`;
       const workers = panel.querySelector('[data-workers]');
-      if (workers) workers.textContent = `${b.workers}/${(b.config || BUILDING_DEFS[b.type]).workers}`;
+      if (workers) {
+        const def = b.config || BUILDING_DEFS[b.type];
+        const enRoute = Math.max(0, assignedWorkers(b) - b.workers);
+        workers.textContent = workerLabel(b, def);
+        workers.title = enRoute ? `${enRoute} na cestě do budovy` : '';
+      }
       const queue = panel.querySelector('[data-queue-progress]');
       if (queue && b.queue && b.queue[0]) {
         const item = b.queue[0];
@@ -758,21 +773,31 @@ export class GameUI {
     });
   }
 
-  showPause({ multiplayer = false, onResume, onSettings, onQuit }) {
+  showPause({ multiplayer = false, onSave, onResume, onSettings, onQuit }) {
     const body = multiplayer
       ? `<p class="modal-paragraph">Hra v multiplayeru běží dál, i když je toto menu otevřené. Odejitím ze hry okamžitě prohráváte.</p>`
       : `<p class="modal-paragraph">Hra je pozastavena. Čas se zastavil a nic se neděje, dokud nebudete pokračovat.</p>`;
+    const actions = [
+      { label: 'Pokračovat', kind: 'btn-primary', onClick: (m) => { m.close(); if (onResume) onResume(); } }
+    ];
+    if (!multiplayer && onSave) {
+      actions.push({
+        label: 'Uložit hru',
+        kind: 'btn-secondary',
+        onClick: (m) => { m.close(); onSave(); }
+      });
+    }
+    actions.push(
+      { label: 'Nastavení', kind: 'btn-secondary', onClick: (m) => { if (onSettings) onSettings(); else this.openSettings(); } },
+      { label: multiplayer ? 'Odejít ze hry' : 'Ukončit hru', kind: 'btn-danger', onClick: (m) => { m.close(); if (onQuit) onQuit(); } }
+    );
     this.modals.open({
       title: 'Herní menu',
       icon: '✠',
       body,
       className: 'modal-pause',
       dismissable: true,
-      actions: [
-        { label: 'Pokračovat', kind: 'btn-primary', onClick: (m) => { m.close(); if (onResume) onResume(); } },
-        { label: 'Nastavení', kind: 'btn-secondary', onClick: (m) => { if (onSettings) onSettings(); else this.openSettings(); } },
-        { label: multiplayer ? 'Odejít ze hry' : 'Ukončit hru', kind: 'btn-danger', onClick: (m) => { m.close(); if (onQuit) onQuit(); } }
-      ],
+      actions,
       onClose: () => { if (onResume) onResume(); }
     });
   }
@@ -833,7 +858,7 @@ export class GameUI {
           <span>Surovina</span><span>Sklad</span><span>Nákup</span><span>Prodej</span><span></span>
         </div>
         <div class="market-list">${rows}</div>
-        <p class="form-hint">Nákup i prodej probíhá okamžitě. Nákup omezuje pokladna a volné místo ve skladu, prodej zásoba suroviny.</p>`,
+        <p class="form-hint">Nákup i prodej probíhá okamžitě. Nákup omezuje pokladna a volné místo (sklad pro suroviny, sýpka pro jídlo), prodej zásoba suroviny.</p>`,
       actions: [{ label: 'Zavřít', kind: 'btn-primary', onClick: (m) => m.close() }],
       onClose: () => { this.marketOpen = false; }
     });

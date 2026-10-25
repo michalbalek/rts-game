@@ -92,13 +92,15 @@ export class LocalSession extends BaseSession {
   constructor(opts = {}) {
     super();
     this.local = true;
-    this.sim = new GameSim(opts);
+    this.sim = opts.sim || new GameSim(opts);
     this.state = this.sim;
     this.selfId = this.sim.humanId;
     this.playerId = this.selfId;
     this.mode = this.sim.mode;
     this.fogEnabled = this.sim.fogEnabled;
     this.lastEvent = 0;
+    this.startedAt = opts.startedAt || new Date().toISOString();
+    this.startOptions = opts.startOptions ? { ...opts.startOptions } : null;
   }
 
   tick(dt) {
@@ -384,6 +386,7 @@ export class RemoteSession extends BaseSession {
     return validatePlacement(this.map, this.state.buildings, this.selfId, type, x, y, {
       alive: player ? player.alive : true,
       castle: this.castle,
+      units: this.state.units,
       canAfford
     });
   }

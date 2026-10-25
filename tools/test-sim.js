@@ -1,6 +1,7 @@
 import { GameSim } from '../client/js/sim/sim.js';
 import { GameMap } from '../client/js/sim/mapgen.js';
 import { START_POSITIONS, RESOURCE_TYPES, TILE_TYPES } from '../client/js/sim/constants.js';
+import { formatSaveLabel } from '../client/js/game/save.js';
 
 let failures = 0;
 function assert(cond, msg) {
@@ -85,6 +86,26 @@ const lumber = sim.buildings.find(b => b.ownerId === 1 && b.type === 'lumberjack
 assert(lumber && lumber.complete, 'dřevorubec dokončen');
 const assignRes = sim.command(1, { op: 'assign', buildingId: lumber.id, count: 4 });
 assert(assignRes.ok, 'přiřazeni dělníci');
+const lumberWorkers = () => sim.units.filter(u => u.work && u.work.buildingId === lumber.id);
+assert(lumberWorkers().length === 4, 'čtyři poddaní mají přiřazenou práci');
+assert(lumber.workers === 0, 'přiřazení samo o sobě nezvýší počet dělníků v budově');
+assert(lumberWorkers().every(u => u.work.phase === 'toBuilding'),
+  'přiřazený poddaný nejprve odchází k budově');
+const castleDestination = sim.getCastle(1);
+assert(sim.findStorage(1, 'wood', lumberWorkers()[0]).id === castleDestination.id,
+  'dřevo se nosí do Královského hradu');
+const fakeWarehouse = { id: -1, type: 'warehouse', ownerId: 1, complete: true };
+sim.buildings.push(fakeWarehouse);
+assert(sim.findStorage(1, 'wood', lumberWorkers()[0]).id === castleDestination.id,
+  'i při postaveném skladu se suroviny nosí do hradu');
+sim.buildings.splice(sim.buildings.indexOf(fakeWarehouse), 1);
+let arrivalTicks = 0;
+while (lumber.workers === 0 && arrivalTicks < 20 * 40) {
+  sim.tick(1 / 20);
+  arrivalTicks++;
+}
+assert(lumber.workers > 0, 'poddaný se po příchodu do budovy započítá jako dělník');
+assert(lumberWorkers().some(u => u.work.arrived), 'stav práce označí dělníka, který dorazil');
 const t0 = Date.now();
 for (let tick = 0; tick < 20 * 150; tick++) sim.tick(1 / 20);
 console.log(`  simulace 160 s: ${Date.now() - t0} ms, tick ${sim.tickCount}`);
@@ -268,6 +289,101 @@ assert(own6.attackTargetId === null && !!own6.moveTarget,
   'blízký nepřítel během přesunu nezruší povel');
 for (let i = 0; i < 20 * 2; i++) sim6.tick(1 / 20);
 assert(own6.x < moveStartX - 0.8, 'jednotka se po povelu skutečně vzdálila od nepřítele');
+
+console.log('\n--- Ukládání a načtení rozehrané hry ---');
+const startedAt = '2026-10-25T14:32:00';
+const saved = sim.toSaveState({
+  startedAt,
+  options: { mode: 'bots', mapType: 'desert', bots: 1, difficulty: 'easy', capital: 'medium', fog: false }
+});
+const serialized = JSON.stringify(saved);
+console.log(`  velikost uložení: ${(serialized.length / 1024).toFixed(1)} kB`);
+assert(saved.meta.startedAt === startedAt, 'uložení nese čas zahájení hry');
+assert(formatSaveLabel(saved.meta).includes('25. 10. 2026 14:32'), 'popisek uložení obsahuje datum a čas zahájení');
+
+const restored = GameSim.fromSaveState(JSON.parse(serialized));
+assert(restored.time === sim.time && restored.tickCount === sim.tickCount, 'načtený čas simulace odpovídá uložení');
+assert(restored.buildings.length === sim.buildings.length, 'načtený počet budov odpovídá uložení');
+assert(restored.units.length === sim.units.length, 'načtený počet jednotek odpovídá uložení');
+assert(restored.players.length === sim.players.length, 'načtený počet hráčů odpovídá uložení');
+assert(restored.players[0].resources.wood === sim.players[0].resources.wood,
+  'načtené suroviny odpovídají uložení');
+assert(restored.players[0].resources.money === sim.players[0].resources.money,
+  'načtené peníze odpovídají uložení');
+
+const savedLumber = restored.buildings.find(b => b.type === 'lumberjack' && b.ownerId === 1);
+const originalLumber = sim.buildings.find(b => b.type === 'lumberjack' && b.ownerId === 1);
+assert(savedLumber && savedLumber.workers === originalLumber.workers, 'načtený stav dělníků budovy odpovídá uložení');
+assert(savedLumber.assignedWorkerIds.length === originalLumber.assignedWorkerIds.length,
+  'načtené přiřazené dělníky odpovídají uložení');
+const originalWorker = sim.units.find(u => u.work && u.work.buildingId === originalLumber.id);
+const restoredWorker = restored.units.find(u => u.id === originalWorker.id);
+assert(restoredWorker && restoredWorker.work && restoredWorker.work.phase === originalWorker.work.phase,
+  'rozdělaná práce dělníka se obnoví');
+
+let mapDiff = 0;
+for (let i = 0; i < sim.map.tiles.length; i++) {
+  if (sim.map.tiles[i] !== restored.map.tiles[i] ||
+      sim.map.resources[i] !== restored.map.resources[i] ||
+      sim.map.depositAt[i] !== restored.map.depositAt[i]) {
+    mapDiff++;
+  }
+}
+assert(mapDiff === 0, 'terén, zdroje i ložiska se obnoví beze změny');
+assert(restored.map.deposits.length === sim.map.deposits.length, 'načtená ložiska odpovídají uložení');
+assert(restored.map.treeTimers.length === sim.map.treeTimers.length, 'načtené čekající stromy odpovídají uložení');
+
+const restoredTime = restored.time;
+for (let i = 0; i < 20 * 5; i++) restored.tick(1 / 20);
+assert(restored.time > restoredTime, 'načtená hra dál běží');
+
+const fogSaved = JSON.parse(JSON.stringify(sim4.toSaveState({ startedAt })));
+const fogRestored = GameSim.fromSaveState(fogSaved);
+assert(fogRestored.isVisible(1, ownCastle.centerX, ownCastle.centerY), 'po načtení zůstává vlastní hrad viditelný');
+assert(!fogRestored.isVisible(1, enemyCastle.centerX, enemyCastle.centerY), 'po načtení zůstává nepřátelský hrad skrytý');
+
+console.log('\n--- Stavební okruh a odstup od nepřítele ---');
+const placementSim = new GameSim({
+  seed: 99,
+  mapType: 'desert',
+  mode: 'bots',
+  capital: 'rich',
+  players: [
+    { name: 'Hráč', isBot: false },
+    { name: 'Bot', isBot: true, difficulty: 'medium' }
+  ]
+});
+const ownCastle8 = placementSim.getCastle(1);
+const enemyCastle8 = placementSim.getCastle(2);
+let farSpot = null;
+for (let y = 2; y < placementSim.map.size - 4 && !farSpot; y++) {
+  for (let x = 2; x < placementSim.map.size - 4 && !farSpot; x++) {
+    if (Math.hypot(x - ownCastle8.centerX, y - ownCastle8.centerY) <= 100) continue;
+    if (Math.hypot(x - enemyCastle8.centerX, y - enemyCastle8.centerY) <= 40) continue;
+    if (placementSim.canPlaceBuilding(1, 'dwelling', x, y).valid) farSpot = { x, y };
+  }
+}
+assert(!!farSpot, 'lze stavět dál než 100 bloků od vlastního hradu');
+
+const ownUnit8 = placementSim.addUnit('swordsman', 1, farSpot.x + 3, farSpot.y + 1);
+assert(placementSim.canPlaceBuilding(1, 'dwelling', farSpot.x, farSpot.y).valid,
+  'vlastní jednotka u místa stavby ji neblokuje');
+placementSim.units.splice(placementSim.units.indexOf(ownUnit8), 1);
+
+const enemyUnit8 = placementSim.addUnit('swordsman', 2, farSpot.x + 3, farSpot.y + 1);
+const blockedByUnit = placementSim.canPlaceBuilding(1, 'dwelling', farSpot.x, farSpot.y);
+assert(!blockedByUnit.valid && blockedByUnit.reason.includes('nepřátel'),
+  'nepřátelská jednotka do 20 bloků stavbu zakáže');
+placementSim.units.splice(placementSim.units.indexOf(enemyUnit8), 1);
+assert(placementSim.canPlaceBuilding(1, 'dwelling', farSpot.x, farSpot.y).valid,
+  'po odchodu nepřátelské jednotky je místo opět volné');
+
+const blockedByCastle = placementSim.canPlaceBuilding(1, 'dwelling', enemyCastle8.tileX - 4, enemyCastle8.tileY);
+assert(!blockedByCastle.valid && blockedByCastle.reason.includes('nepřátel'),
+  'nepřátelský hrad do 20 bloků stavbu zakáže');
+const beyondEnemyRange = placementSim.canPlaceBuilding(1, 'dwelling', enemyCastle8.tileX - 27, enemyCastle8.tileY);
+assert(!beyondEnemyRange.reason || !beyondEnemyRange.reason.includes('nepřátel'),
+  've vzdálenosti přes 20 bloků od nepřítele pravidlo neplatí');
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');
 process.exit(failures ? 1 : 0);

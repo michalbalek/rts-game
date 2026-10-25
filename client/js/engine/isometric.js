@@ -7,9 +7,6 @@ export const TILE_HEIGHT = 32;
 export const HALF_TILE_WIDTH = TILE_WIDTH / 2;
 export const HALF_TILE_HEIGHT = TILE_HEIGHT / 2;
 
-// Maximální stavební rádius od hradu podle game.md (100 bloků)
-export const MAX_BUILD_RADIUS = 100;
-
 /** Převod dlaždicových souřadnic (x, y) na světové/obrazovkové souřadnice. */
 export function tileToScreen(tileX, tileY) {
   return {
@@ -49,10 +46,6 @@ export function buildingShadow(width, height) {
     rx: span * HALF_TILE_WIDTH * 0.53,
     ry: span * HALF_TILE_HEIGHT * 0.53
   };
-}
-
-export function isWithinBuildRadius(tileX, tileY, castleX, castleY) {
-  return getDistance(tileX, tileY, castleX, castleY) <= MAX_BUILD_RADIUS;
 }
 
 export function clamp(v, min, max) {

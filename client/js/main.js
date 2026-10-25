@@ -5,9 +5,13 @@ import { GameUI } from './game/ui.js';
 import { Input } from './game/input.js';
 import { Menu } from './game/menu.js';
 import { LocalSession, RemoteSession } from './game/session.js';
+import { GameSim } from './sim/sim.js';
 import { NetClient } from './net.js';
 import { Modals, escapeHtml } from './game/modals.js';
 import { loadSettings, saveSettings } from './game/settings.js';
+import {
+  readSave, saveLocalSession, formatDateTime, formatSaveLabel
+} from './game/save.js';
 
 const TOKEN_KEY = 'kralovstvi_mp_token';
 const NICK_KEY = 'kralovstvi_mp_nick';
@@ -49,6 +53,7 @@ const menu = new Menu({
   applySettings,
   onStartSingle: startSingle,
   onStartMultiplayer: startMultiplayer,
+  onLoadGame: loadSavedGame,
   onCancelSearch: cancelSearch,
   onLeaveLobby: leaveLobby,
   onQuit: quitApp
@@ -117,13 +122,16 @@ async function startSingle(options) {
     await delay(140);
     menu.setLoading(56);
     await delay(130);
+    const startedAt = new Date().toISOString();
     const newSession = new LocalSession({
       seed: seed(),
       mapType: options.mapType,
       mode: options.mode,
       capital: options.capital,
       fog: options.fog,
-      players
+      players,
+      startedAt,
+      startOptions: { ...options }
     });
     menu.setLoading(84);
     await delay(160);
@@ -136,6 +144,52 @@ async function startSingle(options) {
     audio.setMusicMode('game');
   } catch (err) {
     console.error('Hru se nepodařilo spustit', err);
+    menu.showLoadingError(`Hru se nepodařilo načíst: ${err.message || err}`);
+  }
+}
+
+async function loadSavedGame() {
+  if (screen !== 'menu') return;
+  const saved = readSave();
+  if (!saved) {
+    modals.open({
+      title: 'Uložená hra',
+      icon: '📜',
+      body: '<p class="modal-paragraph">V prohlížeči není žádná uložená hra. Rozehranou hru můžete uložit v jejím menu.</p>',
+      actions: [{ label: 'Rozumím', kind: 'btn-primary', onClick: (m) => m.close() }]
+    });
+    return;
+  }
+
+  searchCancelled = true;
+  screen = 'loading';
+  paused = false;
+  menu.showLoading(() => {
+    screen = 'menu';
+    audio.setMusicMode('menu');
+    menu.showMain();
+  });
+
+  try {
+    menu.setLoading(12);
+    await delay(120);
+    menu.setLoading(45);
+    const sim = GameSim.fromSaveState(saved);
+    menu.setLoading(82);
+    await delay(140);
+    const restored = new LocalSession({
+      sim,
+      startedAt: saved.meta.startedAt,
+      startOptions: saved.meta.options
+    });
+    lastSingleOptions = saved.meta.options ? { ...saved.meta.options } : null;
+    menu.setLoading(100);
+    await delay(130);
+    enterGame(restored, { mapType: sim.mapType, center: true });
+    audio.setMusicMode('game');
+    ui.toast(`Hra načtena. Zahájena ${formatDateTime(saved.meta.startedAt)}.`, 'success');
+  } catch (err) {
+    console.error('Načtení hry se nepodařilo', err);
     menu.showLoadingError(`Hru se nepodařilo načíst: ${err.message || err}`);
   }
 }
@@ -210,6 +264,17 @@ function openGameMenu() {
 
   ui.showPause({
     multiplayer: isMultiplayer,
+    onSave: isMultiplayer ? null : () => {
+      try {
+        const meta = saveLocalSession(session);
+        ui.toast(`Hra uložena. ${formatSaveLabel(meta)}.`, 'success');
+        audio.play('success');
+      } catch (err) {
+        console.error('Uložení hry se nepodařilo', err);
+        ui.toast('Hru se nepodařilo uložit. Zkontrolujte volné místo v prohlížeči.', 'error');
+        audio.play('error');
+      }
+    },
     onResume: () => {
       paused = false;
       audio.duck(false);
@@ -258,9 +323,7 @@ function showSingleResults() {
       stats: p.stats
     })),
     winnerId: sim.winnerId,
-    onRestart: () => {
-      if (lastSingleOptions) startSingle(lastSingleOptions);
-    },
+    onRestart: lastSingleOptions ? () => startSingle(lastSingleOptions) : null,
     onMenu: () => leaveToMenu()
   });
 }

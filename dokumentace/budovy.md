@@ -8,7 +8,7 @@
 - **Uchycení na mřížku (Snap to Grid)**: Umístění budovy se automaticky přichytává k celočíselným souřadnicím dlaždic. Není možné umístit budovu „mezi“ bloky.
 - **Výchozí izometrická orientace (symetrická dlaždice 2:1)**: Všechny budovy jsou výchozím způsobem vykreslovány i kolizně orientovány na symetrické mřížce 64×32 px v souladu s celou herní mapou. Základna každé budovy na mřížce tvoří izometrický kosočtverec/polygon.
 - **Stavební okruh**: Stavba je neomezená, nelze ji však provést v okruhu **20 bloků** od nepřátelské jednotky nebo budovy.
-- **Materiál na stavbu**: suroviny se berou ze skladu a dělníci je odnášejí na staviště. Náklady jsou u každé budovy v jejím popisu.
+- **Materiál na stavbu**: stavba se hradí ze zásob panství v okamžiku položení základů. Náklady jsou u každé budovy v jejím popisu.
 - **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s.
 - **Kolize a terén**: 
   - Žádné dvě budovy se nesmí překrývat.
@@ -20,14 +20,14 @@
 - **Zdraví budov**: 1×1 500, 2×2 800, 3×3 1200, 4×4 1500, Královský hrad 2000.
 - **Poškození**: nepřátelské jednotky ubírají budově zdraví. Hradby a věže chrání budovy za nimi.
 - **Rozestavěná budova**: zdraví roste úměrně postupu stavby. Při zničení se vrátí 50 % surovin.
-- **Zánik**: při nule zdraví budova zanikne a je zničena. Zásoby v ní uložené se ztratí a dělníci se vrací do hradu k ohništi.
+- **Zánik**: při nule zdraví budova zanikne a je zničena. Dělníci se vrací do hradu k ohništi.
 - **Dobytí**: budovy nelze obsadit, lze je jen zničit.
 - **Obydlí**: při zániku ztratí 8 míst v kapacitě. Přebytečné volné obyvatele odejdou.
-- **Sklad a sýpka**: zásoby nad kapacitou zbývajících skladů se ztratí.
+- **Sklad a sýpka**: zásoby nad kapacitou zbylých skladů (suroviny) nebo sýpek (jídlo) se ztratí.
 - **Oprava**: volní obyvatelé z hradu opravují budovu za 20 % jejích nákladů. Oprava trvá 1 s na 10 zdraví. Zdraví se jinak neobnovuje.
 - **Královský hrad**: lze opravit stejně. Jeho zánik znamená prohru.
 - **Ložiska a stromy**: zničením budovy nezanikají.
-- **Býrání**: hráč může vlastní budovu zbýrat. Vrátí se 50 % nákladů, zásoby uvnitř se ztratí a dělníci se uvolní do hradu. Královský hrad nelze zbýrat.
+- **Býrání**: hráč může vlastní budovu zbýrat. Vrátí se 50 % nákladů, zásoby se ztratí jen nad zbylou kapacitou a dělníci se uvolní do hradu. Královský hrad nelze zbýrat.
 
 ---
 
@@ -37,7 +37,7 @@
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: zdarma, vzniká při spuštění hry.
 - **Vzhled**: pískovcová pevnost a sídlo lorda. Před hradem plane táborové ohniště, u kterého čekají nezaměstnaní poddaní.
-- **Funkce**: centrální správa panství. Na začátku hry má 20 volných obyvatel.
+- **Funkce**: centrální správa panství a jediné místo, kam dělníci odevzdávají suroviny i jídlo. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla. Na začátku hry má 20 volných obyvatel.
 - **Výroba jednotek**: těžcí pěšáci (bojovníci s mečem a štítem).
 
 ### 2. Kasárna
@@ -65,7 +65,7 @@
 - **Velikost na mřížce**: 4×4 bloky
 - **Náklady**: 120 peněz, 60 dřeva.
 - **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě.
-- **Funkce**: stálý přísun jídla pro sýpku a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu.
+- **Funkce**: stálý přísun jídla do hradu a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu.
 
 ### 6. Obchod
 - **Velikost na mřížce**: 2×2 bloky
@@ -92,22 +92,22 @@
 ### 8. Sýpka
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 100 dřeva, 50 kamene.
-- **Funkce**: skladuje jídlo. Dělníci z Jabloňového sadu sem odnášejí jídlo po 10 kusech.
-- **Kapacita**: 300 jednotek jídla.
+- **Funkce**: zvyšuje kapacitu pro jídlo. Dělníci odnášejí jídlo z Jabloňového sadu do Královského hradu po 10 kusech.
+- **Kapacita**: 300 jednotek jídla na jednu sýpku. Kapacitu pro suroviny nezvyšuje.
 - **Vzhled**: vysoká kulatá sýpka s dřevěnou střechou a kamennými základy.
 
 ### 9. Sklad
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 120 dřeva, 60 kamene.
-- **Funkce**: centrální sklad dřeva, kámene a železa. Dělníci sem suroviny nosí a odtud je berou na stavbu.
-- **Kapacita**: 500 jednotek na jeden sklad (dřevo, kámen a železo dohromady). Sklady stojící vedle sebe se sčítají.
+- **Funkce**: zvyšuje kapacitu pro dřevo, kámen a železo. Dělníci suroviny odnášejí do Královského hradu.
+- **Kapacita**: 500 jednotek na jeden sklad (dřevo, kámen a železo dohromady). Kapacity všech skladů se sčítají.
 - **Vzhled**: dlouhá pískovcová hala s otevřenými vraty a dřevěnými regály.
 
 ### 10. Železný důl
 - **Velikost na mřížce**: 3×3 bloky
 - **Náklady**: 150 peněz, 80 dřeva, 40 kamene.
 - **Umístění**: pouze na ložisko železné rudy. Celá plocha budovy musí ležet na ložisku.
-- **Funkce**: dělníci z hradu těží železnou rudu a nosí ji po 10 kusech do skladu, kde se eviduje jako železo. Do dolu lze přiřadit dělníky z hradu.
+- **Funkce**: dělníci z hradu těží železnou rudu a nosí ji po 10 kusech do Královského hradu, kde se eviduje jako železo. Do dolu lze přiřadit dělníky z hradu.
 - **Zásoba ložiska**: 1000 jednotek rudy. Po vyčerpání se důl uzavře a nové ložisko se objeví jinde na mapě (viz [mapa.md](mapa.md)).
 - **Vzhled**: šachta s dřevěnou konstrukcí, vozíky na kolejnicích a hromada železné rudy před vchodem.
 

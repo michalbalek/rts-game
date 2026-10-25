@@ -1,6 +1,13 @@
 import {
-  BUILDING_DEFS, TILE_TYPES, RESOURCE_TYPES, BUILD_RADIUS
+  BUILDING_DEFS, TILE_TYPES, RESOURCE_TYPES, ENEMY_BUILD_DISTANCE
 } from './constants.js';
+
+/** Nejkratší vzdálenost mezi dvěma obdélníky (bod má w = h = 0). */
+function rectGap(x, y, w, h, rx, ry, rw, rh) {
+  const dx = Math.max(0, rx - (x + w), x - (rx + rw));
+  const dy = Math.max(0, ry - (y + h), y - (ry + rh));
+  return Math.hypot(dx, dy);
+}
 
 /**
  * Ověření umístění budovy nezávisle na simulaci.
@@ -19,11 +26,13 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
     return { valid: false, reason: 'Sem nelze stavět, můj pane!' };
   }
 
-  const cx = castle.tileX + castle.width / 2;
-  const cy = castle.tileY + castle.height / 2;
-  const d = Math.hypot(x + def.w / 2 - cx, y + def.h / 2 - cy);
-  if (d > BUILD_RADIUS) {
-    return { valid: false, reason: `Stavebníci odmítají pracovat tak daleko od hradu! (${Math.round(d)}/100 bloků)` };
+  const isEnemyOwner = ownerId => ownerId !== 0 && ownerId !== playerId;
+  const enemyBuilding = buildings.some(b => isEnemyOwner(b.ownerId) &&
+    rectGap(x, y, def.w, def.h, b.tileX, b.tileY, b.width, b.height) < ENEMY_BUILD_DISTANCE);
+  const enemyUnit = (opts.units || []).some(u => isEnemyOwner(u.ownerId) &&
+    rectGap(x, y, def.w, def.h, u.x, u.y, 0, 0) < ENEMY_BUILD_DISTANCE);
+  if (enemyBuilding || enemyUnit) {
+    return { valid: false, reason: `Stavět nelze do ${ENEMY_BUILD_DISTANCE} bloků od nepřátelské jednotky nebo budovy, sire!` };
   }
 
   let treeTiles = 0;

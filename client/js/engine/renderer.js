@@ -4,7 +4,8 @@ import {
 } from './isometric.js';
 import { visibleTileRows } from './viewport.js';
 import {
-  TILE_TYPES, RESOURCE_TYPES, BUILDING_DEFS, PLAYER_COLORS, BUILD_RADIUS
+  TILE_TYPES, RESOURCE_TYPES, BUILDING_DEFS, PLAYER_COLORS,
+  ENEMY_BUILD_DISTANCE
 } from '../sim/constants.js';
 
 const TILE_COLORS = {
@@ -202,7 +203,6 @@ export class Renderer {
     const bounds = this.getVisibleBounds(camera);
     const rows = this.getVisibleRows(camera);
     this.drawTerrain(ctx, rows);
-    this.drawBuildRadius(ctx, ui);
     this.drawResources(ctx, rows);
 
     const renderList = [];
@@ -413,28 +413,6 @@ export class Renderer {
       }
       ctx.stroke(waves);
     }
-  }
-
-  drawBuildRadius(ctx, ui) {
-    if (!this.session) return;
-    const castle = this.session.castle || this.session.state.buildings.find(
-      b => b.type === 'castle' && b.ownerId === this.session.selfId
-    );
-    if (!castle) return;
-    const p = tileToScreen(castle.centerX, castle.centerY);
-    const active = !!ui.buildMode;
-    const rx = BUILD_RADIUS * HALF_TILE_WIDTH * 1.414;
-    const ry = BUILD_RADIUS * HALF_TILE_HEIGHT * 1.414;
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = active ? 'rgba(240, 192, 90, 0.6)' : 'rgba(240, 192, 90, 0.16)';
-    ctx.lineWidth = active ? 2.5 : 2;
-    ctx.setLineDash([14, 14]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
   }
 
   // ------------------------------------------------------------------
@@ -2025,6 +2003,8 @@ export class Renderer {
       ctx.drawImage(this.minimapFog, 0, 0, w, h);
     }
 
+    if (ui && ui.buildMode) this.drawMinimapBuildZone(ctx, scale);
+
     // Budovy – hrad jako barevný kosočtverec se světlým středem, ostatní
     // jako drobné pevnosti.
     for (const b of this.session.state.buildings) {
@@ -2100,6 +2080,33 @@ export class Renderer {
     ctx.strokeStyle = 'rgba(240, 192, 90, 0.45)';
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  }
+
+  // Zóna odstupu od nepřátel; kreslí se jen viditelní, aby mlha nic neprozradila.
+  drawMinimapBuildZone(ctx, scale) {
+    const r = ENEMY_BUILD_DISTANCE * scale;
+    const isEnemy = ownerId => ownerId !== 0 && ownerId !== this.session.selfId;
+    ctx.beginPath();
+    for (const b of this.session.state.buildings) {
+      if (!isEnemy(b.ownerId) || !this.isVisible(b.centerX, b.centerY)) continue;
+      const x = b.tileX * scale;
+      const y = b.tileY * scale;
+      const w = (b.width || 1) * scale;
+      const h = (b.height || 1) * scale;
+      ctx.rect(x - r, y, w + 2 * r, h);
+      ctx.rect(x, y - r, w, h + 2 * r);
+      for (const [cx, cy] of [[x, y], [x + w, y], [x, y + h], [x + w, y + h]]) {
+        ctx.moveTo(cx + r, cy);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      }
+    }
+    for (const u of this.session.state.units) {
+      if (!isEnemy(u.ownerId) || !this.isVisible(u.x, u.y)) continue;
+      ctx.moveTo((u.x * scale) + r, u.y * scale);
+      ctx.arc(u.x * scale, u.y * scale, r, 0, Math.PI * 2);
+    }
+    ctx.fillStyle = 'rgba(226, 72, 58, 0.26)';
+    ctx.fill();
   }
 
   renderMinimapBase() {

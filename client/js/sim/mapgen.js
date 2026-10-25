@@ -360,6 +360,47 @@ export class GameMap {
       }
     }
   }
+
+  // ------------------------------------------------------------------
+  //  Ukládání místního světa
+  // ------------------------------------------------------------------
+
+  toSaveState() {
+    return {
+      seed: this.seed,
+      type: this.type,
+      size: this.size,
+      tiles: Array.from(this.tiles),
+      resources: Array.from(this.resources),
+      depositAt: Array.from(this.depositAt),
+      deposits: this.deposits.map(d => ({ ...d, tiles: d.tiles.slice() })),
+      nextDepositId: this.nextDepositId,
+      treeTimers: this.treeTimers.map(t => ({ ...t }))
+    };
+  }
+
+  static fromSaveState(data) {
+    if (!data) throw new Error('Chybí uložená mapa.');
+    const size = data.size || MAP_SIZE;
+    const expected = size * size;
+    if (!Array.isArray(data.tiles) || data.tiles.length !== expected ||
+        !Array.isArray(data.resources) || data.resources.length !== expected ||
+        !Array.isArray(data.depositAt) || data.depositAt.length !== expected) {
+      throw new Error('Uložená mapa má neplatná data.');
+    }
+    const map = new GameMap(data.seed, data.type, size);
+    map.tiles = Uint8Array.from(data.tiles);
+    map.resources = Uint8Array.from(data.resources);
+    map.depositAt = Uint16Array.from(data.depositAt);
+    map.deposits = (data.deposits || []).map(d => ({
+      ...d,
+      tiles: Array.isArray(d.tiles) ? d.tiles.slice() : []
+    }));
+    map.nextDepositId = data.nextDepositId || (map.deposits.length + 1);
+    map.treeTimers = (data.treeTimers || []).map(t => ({ ...t }));
+    map.onChange = null;
+    return map;
+  }
 }
 
 function nearAnyStart(x, y, radius) {

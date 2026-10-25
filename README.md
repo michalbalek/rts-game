@@ -1,5 +1,7 @@
 # 🏰 Království – izometrická RTS
 
+Anglická verze: [README.en.md](README.en.md)
+
 > **Verze 2.0.0** · Webová real-time strategie v pouštním království, postavená na HTML5 Canvasu a Node.js. Hra běží přímo v prohlížeči bez instalace pluginů a bez jakýchkoli závislostí.
 
 ---
@@ -98,7 +100,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 ## ⚔️ Pravidla
 
-- **Stavění** je povoleno do **100 dlaždic** od Královského hradu. Budovy se přichytávají na mřížku a nesmějí se překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice (výjimka: sklady vedle sebe).
+- **Stavění** je povoleno kdekoli na mapě, nejméně **20 dlaždic** od nepřátelských jednotek a budov. Budovy se přichytávají na mřížku a nesmějí se překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice (výjimka: sklady vedle sebe).
 - **Doba stavby** odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s.
 - **Dřevorubec** musí stát na stromě, **Kamenolom** na ložisku kamene a **Železný důl** na ložisku železa.
 - **Poddaní** odnášejí suroviny po 10 kusech. Ložisko kamene má 2000 jednotek, železa 1000; po vyčerpání se po 3 minutách objeví nové.
@@ -127,9 +129,10 @@ Mapu, startovní kapitál a mlhu války určuje server. Multiplayer neobsahuje b
 Testy pokrývají simulaci i klientskou logiku:
 
 ```bash
-npm test              # simulace + kamera a výběr jednotek
+npm test              # simulace, klient a formát zpráv commitů
 npm run test:sim      # generování map, ekonomika, obchod, výcvik, opravy, bourání, mlha, sklady, boj, pathfinding
 npm run test:client   # meze zoomu, výběr kliknutím i obdélníkem, hitboxy
+npm run test:commit   # validátor zpráv commitů (Conventional Commits)
 ```
 
 Testy nevyžadují běžící server ani prohlížeč.
@@ -140,6 +143,7 @@ Testy nevyžadují běžící server ani prohlížeč.
 
 ```
 rts-game/
+├─ .githooks/               # Git hook kontrolující zprávy commitů
 ├─ client/                  # Klientská aplikace
 │  ├─ index.html            # DOM kostra HUD, menu a modálů
 │  ├─ css/style.css         # Pouštní pískovcový vizuální styl
@@ -162,8 +166,11 @@ rts-game/
 │     └─ websocket.js       # Minimální RFC 6455 WebSocket server
 ├─ tools/
 │  ├─ test-sim.js           # Simulační testy
-│  └─ test-client.js        # Testy kamery, zoomu a výběru
+│  ├─ test-client.js        # Testy kamery, zoomu a výběru
+│  ├─ check-commit-msg.js   # Validátor zpráv commitů
+│  └─ test-commit-msg.js    # Testy validátoru zpráv
 ├─ dokumentace/             # Herní specifikace
+├─ CONTRIBUTING.md          # Pravidla pro přispívání a commity
 └─ package.json
 ```
 
@@ -182,6 +189,12 @@ Kompletní specifikace je ve složce [`dokumentace/`](dokumentace/):
 - [multiplayer.md](dokumentace/multiplayer.md) – síťový model a párování
 - [ovladani.md](dokumentace/ovladani.md) – ovládání a HUD
 - [audio.md](dokumentace/audio.md) – hudba a zvuky
+
+---
+
+## 🤝 Přispívání
+
+Commity se řídí [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Pravidla a aktivaci kontroly zpráv najdeš v [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

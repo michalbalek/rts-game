@@ -1,5 +1,5 @@
 import {
-  MAP_SIZE, TILE_TYPES, RESOURCE_TYPES, START_POSITIONS, BUILD_RADIUS,
+  MAP_SIZE, TILE_TYPES, RESOURCE_TYPES, START_POSITIONS,
   PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, TAX_LEVELS, MARKET_PRICES,
   BOT_DIFFICULTIES, BUILDING_DEFS, UNIT_DEFS, WORK, STORAGE, DEPOSITS,
   FOG_RANGES, GAME_MODES, MILITARY_TYPES
@@ -374,6 +374,7 @@ export class GameSim {
     return validatePlacement(this.map, this.buildings, playerId, type, x, y, {
       alive: player ? player.alive : false,
       castle: this.getCastle(playerId),
+      units: this.units,
       canAfford: player && def ? this.canAfford(playerId, def.cost) : false
     });
   }
@@ -565,11 +566,24 @@ export class GameSim {
     let assigned = 0;
     for (const u of free) {
       if (assigned >= count) break;
-      if (b.workers >= b.config.workers) break;
-      b.workers++;
+      // Do kapacity se počítají i dělníci na cestě. Do budovy se započítají
+      // až ve chvíli, kdy skutečně dorazí (fáze toBuilding).
+      if (b.assignedWorkerIds.length >= b.config.workers) break;
       b.assignedWorkerIds.push(u.id);
-      u.work = { buildingId: b.id, phase: 'toSource', carry: 0, timer: 0, source: null, waitTimer: 0 };
+      u.work = {
+        buildingId: b.id,
+        phase: 'toBuilding',
+        carry: 0,
+        timer: 0,
+        source: null,
+        storageId: null,
+        waitTimer: 0,
+        arrived: false
+      };
       u.autoAttack = false;
+      u.workPaused = false;
+      const approach = this.findBuildingApproach(u, b);
+      if (approach) this.navigateTo(u, approach.x, approach.y);
       assigned++;
     }
     if (!assigned) {
@@ -596,8 +610,12 @@ export class GameSim {
     if (!unit || !unit.work) return;
     const b = this.buildings.find(x => x.id === unit.work.buildingId);
     if (b) {
-      b.workers = Math.max(0, b.workers - 1);
+      const wasAssigned = b.assignedWorkerIds.includes(unit.id);
       b.assignedWorkerIds = b.assignedWorkerIds.filter(id => id !== unit.id);
+      // Dělník na cestě do budovy se do jejího stavu ještě nepočítal.
+      if (wasAssigned && unit.work.arrived) {
+        b.workers = Math.max(0, b.workers - 1);
+      }
     }
     unit.work = null;
     unit.workPaused = false;
@@ -701,28 +719,9 @@ export class GameSim {
   }
 
   findStorage(playerId, resource, unit) {
-    if (resource === 'food') {
-      const granaries = this.buildings.filter(b => b.ownerId === playerId && b.complete && b.type === 'granary');
-      if (granaries.length) {
-        return this.nearestBuilding(unit, granaries);
-      }
-    } else {
-      const warehouses = this.buildings.filter(b => b.ownerId === playerId && b.complete && b.type === 'warehouse');
-      if (warehouses.length) {
-        return this.nearestBuilding(unit, warehouses);
-      }
-    }
+    // Podle pravidel nosí dělníci veškeré nasbírané suroviny do Královského
+    // hradu. Sýpky a sklady zvyšují kapacitu, ale nejsou místem odevzdání.
     return this.getCastle(playerId);
-  }
-
-  nearestBuilding(unit, list) {
-    let best = null;
-    let bestD = Infinity;
-    for (const b of list) {
-      const d = dist(unit.x, unit.y, b.centerX, b.centerY);
-      if (d < bestD) { bestD = d; best = b; }
-    }
-    return best;
   }
 
   findBuildingApproach(unit, b) {
@@ -771,6 +770,30 @@ export class GameSim {
     const work = unit.work;
 
     switch (work.phase) {
+      case 'toBuilding': {
+        // Dělník nejprve dojde k přiřazené hospodářské budově. Teprve tam
+        // se započítá mezi její pracovníky a začne hledat zdroj surovin.
+        const approach = this.findBuildingApproach(unit, b);
+        if (!approach) {
+          work.phase = 'wait';
+          work.waitTimer = 2;
+          return;
+        }
+        if (this.unitAt(unit, approach.x, approach.y, 1.2)) {
+          unit.setPath([]);
+          if (!work.arrived) {
+            work.arrived = true;
+            b.workers = Math.min(b.config.workers, b.workers + 1);
+          }
+          work.phase = 'toSource';
+          return;
+        }
+        if (unit.path.length === 0 && !this.navigateTo(unit, approach.x, approach.y)) {
+          work.phase = 'wait';
+          work.waitTimer = 2;
+        }
+        break;
+      }
       case 'toSource': {
         if (!work.source) {
           work.source = this.findSource(unit, b);
@@ -852,7 +875,10 @@ export class GameSim {
             work.phase = 'wait';
             work.waitTimer = 2;
             if (this.slowTimer <= 0) {
-              this.emit('toast', { playerId: unit.ownerId, text: 'Sklad je plný, dělníci čekají.', kind: 'error' });
+              const text = b.config.produce === 'food'
+                ? 'Sýpky jsou plné, dělníci čekají.'
+                : 'Sklady jsou plné, dělníci čekají.';
+              this.emit('toast', { playerId: unit.ownerId, text, kind: 'error' });
             }
           }
         } else if (approach && unit.path.length === 0 &&
@@ -865,12 +891,12 @@ export class GameSim {
         work.waitTimer -= dt;
         if (work.waitTimer <= 0) {
           work.source = null;
-          work.phase = 'toSource';
+          work.phase = work.arrived ? 'toSource' : 'toBuilding';
         }
         break;
       }
       default:
-        work.phase = 'toSource';
+        work.phase = work.arrived ? 'toSource' : 'toBuilding';
     }
   }
 
@@ -1063,7 +1089,9 @@ export class GameSim {
       if (!castle) return;
       if (this.unitAt(unit, castle.centerX, castle.centerY, Math.max(castle.width, castle.height) + 1)) {
         unit.fleeing = false;
-        if (unit.work) unit.work.phase = 'toSource';
+        if (unit.work) {
+          unit.work.phase = unit.work.arrived ? 'toSource' : 'toBuilding';
+        }
         unit.workPaused = false;
       } else if (unit.path.length === 0 && unit.repathTimer <= 0) {
         this.navigateTo(unit, castle.centerX, castle.tileY + castle.height + 1.5);
@@ -1636,7 +1664,10 @@ export class GameSim {
       const free = resource === 'food'
         ? caps.food - player.resources.food
         : caps.resources - this.getStoredResources(playerId);
-      if (free < amount) return { ok: false, reason: 'Ve skladu není dost místa.' };
+      if (free < amount) {
+        const where = resource === 'food' ? 'V sýpkách' : 'Ve skladech';
+        return { ok: false, reason: `${where} není dost místa.` };
+      }
       player.resources.money -= total;
       player.resources[resource] += amount;
       return { ok: true, spent: total };
@@ -1822,5 +1853,192 @@ export class GameSim {
   getMapChangesSince(seq) {
     const changes = this.mapChanges.filter(c => c.seq > seq);
     return { changes, seq: this.mapChangeSeq };
+  }
+
+  // ------------------------------------------------------------------
+  //  Ukládání a načtení místní hry
+  // ------------------------------------------------------------------
+
+  /** Kompletní stav simulace pro localStorage (na rozdíl od síťového snímku). */
+  toSaveState(meta = {}) {
+    const savedAt = meta.savedAt || new Date().toISOString();
+    return {
+      version: 1,
+      meta: {
+        startedAt: meta.startedAt || savedAt,
+        savedAt,
+        options: meta.options ? { ...meta.options } : null
+      },
+      sim: {
+        seed: this.seed,
+        mapType: this.mapType,
+        mode: this.mode,
+        fogEnabled: this.fogEnabled,
+        capitalKey: this.capitalKey,
+        humanId: this.humanId,
+        nextId: this.nextId,
+        time: this.time,
+        tickCount: this.tickCount,
+        ended: this.ended,
+        winnerId: this.winnerId,
+        endTime: this.endTime,
+        fogTimer: this.fogTimer,
+        botTimer: this.botTimer,
+        slowTimer: this.slowTimer,
+        foodWarnTimer: this.foodWarnTimer,
+        eventSeq: this.eventSeq,
+        mapChangeSeq: this.mapChangeSeq,
+        pendingDeposits: this.pendingDeposits.map(p => ({ ...p })),
+        players: this.players.map(p => ({
+          ...p,
+          resources: { ...p.resources },
+          stats: { ...p.stats },
+          bot: { ...p.bot }
+        })),
+        buildings: this.buildings.map(b => ({
+          ...b,
+          queue: b.queue.map(q => ({ ...q })),
+          repair: b.repair ? { ...b.repair } : null,
+          assignedWorkerIds: (b.assignedWorkerIds || []).slice()
+        })),
+        units: this.units.map(u => ({
+          ...u,
+          path: (u.path || []).map(p => ({ x: p.x, y: p.y })),
+          moveTarget: u.moveTarget ? { ...u.moveTarget } : null,
+          work: u.work
+            ? { ...u.work, source: u.work.source ? { ...u.work.source } : null }
+            : null
+        })),
+        projectiles: this.projectiles.map(p => ({ ...p })),
+        fogData: [...this.fogData.entries()].map(([id, data]) => ({
+          id,
+          explored: Array.from(data.explored),
+          visible: Array.from(data.visible)
+        })),
+        map: this.map.toSaveState()
+      }
+    };
+  }
+
+  static fromSaveState(saved) {
+    const state = saved && saved.sim ? saved.sim : saved;
+    if (!state || !Array.isArray(state.players) || !state.map) {
+      throw new Error('Uložená hra je poškozená.');
+    }
+    const map = GameMap.fromSaveState(state.map);
+    const sim = new GameSim({
+      seed: state.seed,
+      mapType: state.mapType,
+      mode: state.mode,
+      capital: state.capitalKey,
+      fog: !!state.fogEnabled,
+      map,
+      players: state.players
+    });
+    sim.restoreSaveState(state);
+    return sim;
+  }
+
+  restoreSaveState(state) {
+    this.seed = (state.seed >>> 0) || 1;
+    this.mapType = state.mapType || this.mapType;
+    this.mode = state.mode || this.mode;
+    this.fogEnabled = !!state.fogEnabled;
+    this.capitalKey = state.capitalKey || this.capitalKey;
+    this.humanId = state.humanId || this.humanId;
+    this.nextId = state.nextId || 1;
+    this.time = Number(state.time) || 0;
+    this.tickCount = state.tickCount || 0;
+    this.ended = !!state.ended;
+    this.winnerId = state.winnerId ?? null;
+    this.endTime = Number(state.endTime) || 0;
+    this.fogTimer = Number(state.fogTimer) || 0;
+    this.botTimer = Number(state.botTimer) || 1;
+    this.slowTimer = Number(state.slowTimer) || 0;
+    this.foodWarnTimer = Number(state.foodWarnTimer) || 0;
+    this.eventSeq = state.eventSeq || 0;
+    this.mapChangeSeq = state.mapChangeSeq || 0;
+    this.pendingDeposits = (state.pendingDeposits || []).map(p => ({ ...p }));
+
+    this.rng = createRng((this.seed ^ 0x9e3779b9) >>> 0);
+    this.events = [];
+    this.mapChanges = [];
+    this.map.onChange = (idx, res) => {
+      this.mapChanges.push({ seq: ++this.mapChangeSeq, i: idx, r: res });
+      if (this.mapChanges.length > 6000) this.mapChanges.splice(0, 1000);
+    };
+
+    this.players = (state.players || []).map(p => ({
+      ...p,
+      resources: { ...(p.resources || {}) },
+      stats: { ...(p.stats || {}) },
+      bot: { ...(p.bot || {}) },
+      alive: p.alive !== false
+    }));
+    this.playerById = new Map(this.players.map(p => [p.id, p]));
+
+    // Jednotky obnovíme první – podle jejich práce se dopočítají dělníci budov.
+    this.units = (state.units || []).map(raw => {
+      const unit = new Unit(raw.id, raw.type, raw.ownerId, raw.x, raw.y);
+      Object.assign(unit, raw);
+      unit.path = Array.isArray(raw.path)
+        ? raw.path.map(p => ({ x: p.x, y: p.y }))
+        : [];
+      unit.pathIndex = raw.pathIndex || 0;
+      unit.moveTarget = raw.moveTarget ? { ...raw.moveTarget } : null;
+      unit.work = raw.work
+        ? { ...raw.work, source: raw.work.source ? { ...raw.work.source } : null }
+        : null;
+      return unit;
+    });
+
+    const assignedByBuilding = new Map();
+    for (const u of this.units) {
+      if (!u.work) continue;
+      if (!assignedByBuilding.has(u.work.buildingId)) assignedByBuilding.set(u.work.buildingId, []);
+      assignedByBuilding.get(u.work.buildingId).push(u.id);
+    }
+
+    this.buildings = (state.buildings || []).map(raw => {
+      const building = new Building(
+        raw.id, raw.type, raw.ownerId || 0, raw.tileX, raw.tileY, raw.complete !== false
+      );
+      Object.assign(building, raw);
+      building.width = building.config.w;
+      building.height = building.config.h;
+      building.queue = (raw.queue || []).map(q => ({ ...q }));
+      building.repair = raw.repair ? { ...raw.repair } : null;
+      building.depositId = raw.depositId ?? null;
+      building.assignedWorkerIds = assignedByBuilding.get(building.id) || [];
+      building.workers = this.units.filter(u =>
+        u.work && u.work.buildingId === building.id && u.work.arrived
+      ).length;
+      if (raw.isCastle) building.isCastle = true;
+      return building;
+    });
+
+    this.projectiles = (state.projectiles || []).map(p => ({ ...p }));
+
+    const size = this.map.size * this.map.size;
+    const savedFog = new Map((state.fogData || []).map(f => [f.id, f]));
+    this.fogData = new Map();
+    for (const p of this.players) {
+      const fog = savedFog.get(p.id);
+      const explored = fog && fog.explored && fog.explored.length === size
+        ? Uint8Array.from(fog.explored)
+        : new Uint8Array(size);
+      const visible = fog && fog.visible && fog.visible.length === size
+        ? Uint8Array.from(fog.visible)
+        : new Uint8Array(size);
+      this.fogData.set(p.id, { explored, visible });
+    }
+
+    this.blockGrid = new Uint8Array(size);
+    this.rebuildBlockGrid();
+    this.updateAllCapacities();
+    if (this.fogEnabled) this.recomputeFog();
+    else this.markAllVisible();
+
+    return this;
   }
 }
