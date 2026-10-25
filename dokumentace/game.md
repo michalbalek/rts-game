@@ -55,6 +55,7 @@ Projekt se skládá z:
 - Tyto obyvatele může pán panství:
   - **Přiřadit jako dělníky** do hospodářských budov (Dřevorubec, Kamenolom, Jabloňový sad, Železný důl) pro automatický sběr surovin.
   - **Rekrutovat jako vojáky** (Pěšáci v Hradu, Lučištníci v Kasárnách).
+- **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Nasbírané suroviny nosí do hradu. Přiřazení není pasivní přičtení k budově.
 - Spokojenost lidu (Popularita) závisí na dostupnosti jídla a zásobách. Když jsou lidé šťastní, hrad vzkvétá!
 
 ---
@@ -65,7 +66,7 @@ Projekt se skládá z:
 - **Multiplayer**: hra končí, když zůstane jediný hráč s hradem. Ostatní prohrávají.
 - **Hra s boty**: stejná podmínka platí pro boty.
 - **Vlastní stavba**: bez botů a bez vítězné podmínky. Hru hráč ukončí v herním menu.
-- **Ukládání**: rozehraná hra se neukládá. Ukončením hry se stav zahodí a nelze ho obnovit.
+- **Ukládání**: rozehranou hru lze uložit do local storage prohlížeče. Každé uložení je označeno datem a časem zahájení hry.
 
 ---
 
