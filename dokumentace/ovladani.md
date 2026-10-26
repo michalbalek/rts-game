@@ -16,7 +16,7 @@
 - **Delete**: býrání vybrané vlastní budovy (po potvrzení).
 
 ## Herní panely (HUD)
-- **Horní lišta**: peníze, dřevo, kámen, jídlo, železo a počet obyvatel.
+- **Horní lišta**: kompaktní přehled peněz, dřeva, kamene, jídla a železa. Vedle zásob ukazuje obsazenost skladu a sýpky i počet obyvatel vůči kapacitě. Tlačítko Menu otevře herní menu. Na užších obrazovkách se zásoby přesunou do druhého řádku, kapacity zůstávají viditelné.
 - **Spodní dok**: nabídka staveb.
 - **Výběrový panel**: informace a příkazy pro vybranou budovu, staveniště nebo jednotky.
 - **Minimapa**: přehled celé mapy v pravém dolním rohu, zobrazuje i mlhu války. V režimu stavby ukazuje červeně oblasti, kde nelze stavět (20 bloků od viditelných nepřátel).

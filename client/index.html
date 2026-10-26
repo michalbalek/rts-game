@@ -19,16 +19,15 @@
 
   <!-- Herní HUD -->
   <div id="hud" class="hidden">
-    <header class="hud-top">
-      <div class="hud-brand">
-        <div class="crusader-crest"><span class="crest-cross">✠</span></div>
+    <header class="hud-top" aria-label="Přehled panství">
+      <div class="hud-brand" title="Království">
+        <div class="crusader-crest" aria-hidden="true"><span class="crest-cross">✠</span></div>
         <div class="hud-brand-text">
           <h1>KRÁLOVSTVÍ</h1>
-          <span>IZOMETRICKÁ RTS</span>
         </div>
       </div>
 
-      <div class="hud-resources">
+      <div class="hud-resources" role="group" aria-label="Zásoby panství">
         <div class="res-card" title="Peníze v královské pokladně">
           <span class="res-icon">🪙</span>
           <div class="res-info">
@@ -64,22 +63,29 @@
             <span class="res-value" id="res-iron">0</span>
           </div>
         </div>
-        <div class="storage-chips">
-          <span class="storage-chip" title="Obsazenost skladu dřevem, kamenem a železem">📦 <b id="store-value">0/500</b></span>
-          <span class="storage-chip" title="Obsazenost sýpky">🍎 <b id="food-store-value">0/300</b></span>
-        </div>
       </div>
 
-      <div class="hud-status">
+      <div class="hud-status" role="group" aria-label="Kapacity panství">
+        <div class="storage-chips">
+          <div class="storage-chip" title="Obsazenost skladu dřevem, kamenem a železem">
+            <span aria-hidden="true">📦</span>
+            <div class="res-info"><span class="res-label">SKLAD</span><b id="store-value">0/500</b></div>
+          </div>
+          <div class="storage-chip" title="Obsazenost sýpky">
+            <span aria-hidden="true">🌾</span>
+            <div class="res-info"><span class="res-label">SÝPKA</span><b id="food-store-value">0/300</b></div>
+          </div>
+        </div>
         <div class="population-badge" title="Počet poddaných a kapacita panství">
-          <span>👥</span><b id="pop-value">20/20</b>
+          <span aria-hidden="true">👥</span>
+          <div class="res-info"><span class="res-label">OBYVATELÉ</span><b id="pop-value">20/20</b></div>
         </div>
       </div>
 
       <div class="hud-controls">
         <span id="fps-counter" class="fps-counter hidden">0 FPS</span>
         <button id="menu-button" class="hud-menu-btn" type="button" title="Herní menu (ESC)">
-          <span>✠</span> Menu
+          <span aria-hidden="true">☰</span> Menu <kbd>Esc</kbd>
         </button>
       </div>
     </header>

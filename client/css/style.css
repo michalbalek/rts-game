@@ -1475,6 +1475,7 @@ input[type="checkbox"] {
    ========================================================= */
 
 #hud {
+  --hud-top-height: 56px;
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -1486,71 +1487,69 @@ input[type="checkbox"] {
   top: 0;
   left: 0;
   right: 0;
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  height: var(--hud-top-height);
+  padding: 7px 14px;
   pointer-events: auto;
   background:
-    linear-gradient(180deg, rgba(16, 11, 6, 0.96) 0%, rgba(27, 18, 10, 0.9) 70%, rgba(27, 18, 10, 0) 100%);
-  border-bottom: 1px solid rgba(222, 179, 112, 0.18);
+    linear-gradient(180deg, rgba(43, 30, 18, 0.98), rgba(22, 15, 9, 0.96));
+  border-bottom: 1px solid rgba(222, 179, 112, 0.35);
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 231, 186, 0.05);
 }
 
 .hud-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 2px 8px 2px 2px;
-  flex: 0 0 auto;
+  gap: 8px;
+  padding-right: 12px;
+  border-right: 1px solid rgba(222, 179, 112, 0.18);
 }
 
 .hud-brand .crusader-crest {
-  width: 40px;
-  height: 46px;
+  width: 28px;
+  height: 32px;
 }
 
 .hud-brand .crest-cross {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .hud-brand-text h1 {
   font-family: var(--font-title);
-  font-size: 18px;
-  letter-spacing: 0.12em;
+  font-size: 13px;
+  letter-spacing: 0.08em;
   line-height: 1.1;
   color: #f8e5bc;
 }
 
-.hud-brand-text span {
-  display: block;
-  font-size: 8.5px;
-  letter-spacing: 0.22em;
-  color: var(--text-dim);
-}
-
 .hud-resources {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1px;
   min-width: 0;
-  flex-wrap: wrap;
+  height: 40px;
+  border: 1px solid rgba(222, 179, 112, 0.16);
+  border-radius: var(--radius-sm);
+  background: rgba(222, 179, 112, 0.1);
+  overflow: hidden;
 }
 
 .res-card {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 9px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(222, 179, 112, 0.22);
-  background: linear-gradient(180deg, rgba(72, 49, 28, 0.8), rgba(35, 23, 13, 0.82));
-  min-width: 82px;
-  box-shadow: inset 0 1px 0 rgba(255, 231, 186, 0.08);
+  padding: 3px 10px;
+  min-width: 0;
+  background: linear-gradient(180deg, #302316, #24190f);
 }
 
 .res-icon {
-  font-size: 17px;
+  font-size: 18px;
+  flex: 0 0 auto;
   line-height: 1;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
@@ -1563,10 +1562,11 @@ input[type="checkbox"] {
 }
 
 .res-label {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.13em;
-  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .res-value {
@@ -1574,49 +1574,55 @@ input[type="checkbox"] {
   font-weight: 700;
   color: #f8e8c8;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.res-card:first-child .res-value {
+  color: var(--money-color);
 }
 
 .storage-chips {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-left: 2px;
+  gap: 12px;
 }
 
 .storage-chip {
-  font-size: 10.5px;
-  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
   white-space: nowrap;
 }
 
 .storage-chip b {
   color: #e6cda3;
   font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  line-height: 1.2;
 }
 
 .hud-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 0 1 auto;
+  gap: 12px;
+  padding: 0 12px 0 0;
+  border-right: 1px solid rgba(222, 179, 112, 0.18);
 }
 
 .population-badge {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 9px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(222, 179, 112, 0.22);
-  background: linear-gradient(180deg, rgba(63, 43, 25, 0.82), rgba(31, 20, 11, 0.84));
-  font-size: 12px;
+  font-size: 16px;
   white-space: nowrap;
 }
 
 .population-badge b {
-  font-size: 13.5px;
+  font-size: 12px;
   color: #f8e8c8;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 .hud-controls {
@@ -1640,18 +1646,34 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 14px;
+  height: 34px;
+  padding: 0 10px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(222, 179, 112, 0.36);
   background: linear-gradient(180deg, rgba(94, 64, 36, 0.9), rgba(48, 31, 17, 0.92));
   color: #f4dfba;
   font-weight: 600;
+  font-size: 12px;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.hud-menu-btn:hover {
+.hud-menu-btn:hover,
+.hud-menu-btn:focus-visible {
   border-color: rgba(250, 214, 150, 0.65);
   background: linear-gradient(180deg, rgba(120, 82, 46, 0.95), rgba(62, 41, 22, 0.95));
+}
+
+.hud-menu-btn:focus-visible {
+  outline: 2px solid var(--sandstone-bright);
+  outline-offset: 2px;
+}
+
+.hud-menu-btn kbd {
+  padding: 1px 4px;
+  border: 1px solid rgba(222, 179, 112, 0.25);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font: 10px var(--font-ui);
 }
 
 .hud-menu-btn span {
@@ -1662,7 +1684,7 @@ input[type="checkbox"] {
 
 .connection-banner {
   position: absolute;
-  top: 78px;
+  top: calc(var(--hud-top-height) + 12px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1735,7 +1757,7 @@ input[type="checkbox"] {
 
 .build-banner {
   position: absolute;
-  top: 84px;
+  top: calc(var(--hud-top-height) + 12px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1774,7 +1796,7 @@ input[type="checkbox"] {
 
 .toast-root {
   position: absolute;
-  top: 84px;
+  top: calc(var(--hud-top-height) + 12px);
   right: 14px;
   display: flex;
   flex-direction: column;
@@ -3006,7 +3028,20 @@ input[type="checkbox"] {
   .map-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .lobby-grid { grid-template-columns: 1fr; }
   .help-grid { grid-template-columns: 1fr; }
-  .storage-chips { display: none; }
+}
+
+@media (max-width: 1120px) {
+  #hud { --hud-top-height: 96px; }
+  .hud-top {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 30px 38px;
+    gap: 8px 12px;
+    padding: 9px 12px;
+  }
+  .hud-resources { grid-row: 2; grid-column: 1 / -1; height: 38px; }
+  .hud-status { justify-content: flex-end; padding-right: 0; border-right: 0; }
+  .hud-controls { justify-content: flex-end; }
+  .hud-menu-btn { height: 30px; }
 }
 
 @media (max-width: 860px) {
@@ -3026,11 +3061,6 @@ input[type="checkbox"] {
   .build-dock { min-height: 0; }
   .dock-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .minimap-panel { grid-row: 2; }
-  .hud-resources { flex-wrap: nowrap; overflow-x: auto; }
-  .res-card { min-width: 62px; padding: 4px 6px; }
-  .res-label { display: none; }
-  .res-value { font-size: 13px; }
-  .toast-root { top: 74px; }
 }
 
 @media (max-width: 620px) {
@@ -3048,9 +3078,37 @@ input[type="checkbox"] {
   .results-table th:nth-child(n+4),
   .results-table td:nth-child(n+4) { display: none; }
   .hud-brand { display: none; }
+  .hud-top { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 9px 8px; }
+  .hud-status { justify-content: flex-start; gap: 10px; }
+  .storage-chips { gap: 10px; }
+  .res-card {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    grid-template-rows: 12px 16px;
+    gap: 0 3px;
+    padding: 3px 6px;
+  }
+  .res-card .res-info { display: contents; }
+  .res-icon { font-size: 12px; }
+  .res-card .res-label { grid-column: 2; }
+  .res-value { grid-column: 1 / -1; }
+  .storage-chip > span, .population-badge > span { display: none; }
+  .res-value { font-size: 13px; }
+  .res-label { font-size: 8px; letter-spacing: 0.02em; }
+  .hud-menu-btn kbd { display: none; }
+  .fps-counter { font-size: 9px; padding: 2px 4px; }
+  .hud-controls { gap: 4px; }
   .hud-bottom { grid-template-columns: 1fr; }
   .minimap-panel { display: none; }
   .selection-panel { max-height: 150px; min-height: 0; }
+}
+
+@media (max-width: 380px) {
+  .hud-status, .storage-chips { gap: 6px; }
+  .storage-chip, .population-badge { gap: 3px; }
+  .storage-chip b, .population-badge b { font-size: 10px; }
+  .res-card { padding: 3px 4px; }
+  .hud-menu-btn { gap: 4px; padding: 0 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
