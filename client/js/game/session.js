@@ -310,6 +310,7 @@ export class RemoteSession extends BaseSession {
     // Plynulé dolaďování pozic mezi snímky.
     const k = Math.min(1, dt * 12);
     for (const u of this.state.units) {
+      u.cooldown = Math.max(0, (u.cooldown || 0) - dt);
       if (u.targetX === undefined) continue;
       const dx = u.targetX - u.x;
       const dy = u.targetY - u.y;

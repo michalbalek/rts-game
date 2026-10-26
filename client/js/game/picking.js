@@ -11,8 +11,8 @@ import { tileToScreen, HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from '../engine/isome
 // Jednotka je kreslená od základny nahoru, proto je hitbox posunutý vzhůru.
 const UNIT_HIT = {
   rx: 13,
-  ry: 20,
-  centerY: -8
+  ry: 22,
+  centerY: -10
 };
 
 // Přibližná výška kreslené budovy v pixelech (bez střechy/pochodně).
@@ -20,12 +20,12 @@ const BUILDING_HEIGHTS = {
   castle: 78,
   barracks: 58,
   market: 34,
-  dwelling: 32,
+  dwelling: 42,
   warehouse: 36,
   ironmine: 38,
-  granary: 30,
-  lumberjack: 26,
-  quarry: 20,
+  granary: 78,
+  lumberjack: 32,
+  quarry: 44,
   orchard: 16
 };
 const DEFAULT_BUILDING_HEIGHT = 34;

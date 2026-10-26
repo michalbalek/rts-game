@@ -1,5 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { GameUI } from '../client/js/game/ui.js';
+import { Renderer } from '../client/js/engine/renderer.js';
+import { unitAnimation } from '../client/js/engine/unit-animation.js';
+import { Building, Unit, unitActivity } from '../client/js/sim/entities.js';
+import { BUILDING_DEFS } from '../client/js/sim/constants.js';
 import { Camera, MIN_ZOOM, MAX_ZOOM } from '../client/js/engine/camera.js';
 import { tileToScreen, worldToTile, buildingShadow, HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from '../client/js/engine/isometric.js';
 import { visibleTileRows } from '../client/js/engine/viewport.js';
@@ -306,6 +310,116 @@ console.log('\n--- Hloubkové řazení (z-ordering) budov a jednotek ---');
   const unitBehind = { x: 19.5, y: 20.5 };
   const unitBehindDepth = unitBehind.x + unitBehind.y + 0.35;
   assert(unitBehindDepth < bDepth, 'jednotka za severozápadní stěnou budovy je cloněna budovou');
+}
+
+console.log('\n--- Animace podle pohybu a činnosti ---');
+{
+  const unit = new Unit(42, 'villager', 1, 10, 10);
+  unit.path = [{ x: 11, y: 10 }];
+  let pose = unitAnimation(unit, 0);
+  assert(!pose.moving && pose.stride === 0, 'samotná naplánovaná cesta nerozhýbe stojící postavu');
+  unit.x += 0.1;
+  pose = unitAnimation(unit, 0.05, pose);
+  assert(pose.moving && pose.stride !== 0, 'skutečný přesun rozhýbe nohy');
+  const phase = pose.phase;
+  pose = unitAnimation(unit, 0.3, pose);
+  assert(!pose.moving && pose.phase === phase && pose.stride === 0,
+    'zablokovaná postava přestane přešlapovat');
+  unit.pathIndex = unit.path.length;
+  pose = unitAnimation(unit, 0.35, pose);
+  assert(!pose.moving, 'dokončená cesta se nepovažuje za chůzi');
+  unit.work = { phase: 'toSource', carry: 0, produce: 'wood' };
+  assert(unitActivity(unit) === 'idle', 'cesta ke zdroji není práce nástrojem');
+  unit.work.phase = 'gather';
+  assert(unitAnimation(unit, 1, pose).activity === 'work', 'dělník těží jen ve fázi sběru');
+  unit.workPaused = true;
+  assert(unitAnimation(unit, 1, pose).effort === 0, 'pozastavená práce nemává nástrojem');
+  unit.workPaused = false;
+  unit.work.produce = 'food';
+  assert(unitActivity(unit) === 'harvest', 'sadař při sběru ovoce nepoužívá krumpáč');
+  unit.work.phase = 'pick';
+  assert(unitActivity(unit) === 'harvest', 'sběr ovoce má samostatnou animaci');
+  unit.work.phase = 'toStorage';
+  unit.work.carry = 10;
+  assert(unitActivity(unit) === 'idle', 'nosící dělník nepoužívá nástroj');
+  unit.work = null;
+  unit.build = { arrived: false };
+  assert(unitActivity(unit) === 'idle', 'stavitel nezačne stavět před příchodem');
+  unit.build.arrived = true;
+  assert(unitActivity(unit) === 'build', 'přítomný stavitel používá stavební animaci');
+  const remote = { ...unit, work: false, build: true, activity: 'build' };
+  assert(unitAnimation(remote, 1).activity === 'build', 'síťový stav stavitele má stejnou animaci');
+  const fighter = new Unit(43, 'swordsman', 1, 0, 0);
+  fighter.cooldown = fighter.config.cooldown - 0.15;
+  assert(unitAnimation(fighter, 1).attack > 0.8, 'švih meče navazuje na skutečný útok');
+  fighter.cooldown = 0;
+  assert(unitAnimation(fighter, 1).attack === 0, 'bez útoku není bojový švih');
+
+  const strideAt = fps => {
+    const walker = new Unit(44, 'villager', 1, 0, 0);
+    let state = unitAnimation(walker, 0);
+    for (let i = 1; i <= fps; i++) {
+      walker.x = i / fps;
+      state = unitAnimation(walker, i / fps, state);
+    }
+    return state.phase;
+  };
+  assert(Math.abs(strideAt(30) - strideAt(144)) < 1e-9,
+    'délka kroku je stejná při 30 i 144 FPS');
+  const turning = new Unit(45, 'villager', 1, 0, 0);
+  turning.angle = Math.PI / 2;
+  assert(unitAnimation(turning, 1).facing === -1, 'natočení respektuje izometrickou projekci směru');
+  const initial = unitAnimation(turning, 0);
+  turning.x -= 1 / 144;
+  assert(unitAnimation(turning, 1 / 144, initial).facing === -1,
+    'i malý krok při vysokém FPS správně otočí postavu');
+}
+
+console.log('\n--- Vykreslení budov a postav ---');
+{
+  let depth = 0, invalid = false, clips = 0;
+  const ctx = new Proxy({
+    save() { depth++; },
+    restore() { depth--; if (depth < 0) invalid = true; },
+    clip() { clips++; },
+    createLinearGradient() { return { addColorStop() {} }; },
+    createRadialGradient() { return { addColorStop() {} }; }
+  }, {
+    get(target, key) {
+      if (key in target) return target[key];
+      return (...args) => {
+        if (args.some(arg => typeof arg === 'number' && !Number.isFinite(arg))) invalid = true;
+      };
+    }
+  });
+  const renderer = Object.create(Renderer.prototype);
+  renderer.time = 2;
+  renderer.quality = 'high';
+  renderer.unitAnimations = new WeakMap();
+  renderer.session = { state: { buildings: [] } };
+  for (const type of Object.keys(BUILDING_DEFS)) {
+    const building = new Building(1, type, 1, 0, 0);
+    for (const progress of [0, 0.35, 0.8, 1]) {
+      building.progress = progress;
+      building.complete = progress === 1;
+      renderer.drawBuilding(ctx, building, {}, null, true);
+      if (type === 'orchard') {
+        renderer.drawOrchardGround(ctx, building);
+        renderer.drawOrchardTree(ctx, building, 0, 0, 0.62, 0.62);
+        renderer.drawOrchardBasket(ctx, building);
+      }
+    }
+    assert(!invalid && depth === 0, `${type}: hotová i rozestavěná budova kreslí platné souřadnice a obnoví kontext`);
+  }
+  assert(clips >= 30, 'konstrukce se odhaluje ořezem od základů, nikoli průhledností');
+  for (const type of ['villager', 'archer', 'swordsman']) {
+    const unit = new Unit(1, type, 1, 0, 0);
+    for (const phase of ['toSource', 'gather', 'pick', 'toStorage']) {
+      unit.work = { phase, carry: phase === 'toStorage' ? 10 : 0 };
+      renderer.drawUnit(ctx, unit, { selectedIds: new Set([1]) }, null);
+    }
+    assert(!invalid && depth === 0, `${type}: pózy a náklad nepoškodí kreslicí kontext`);
+  }
 }
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy klienta prošly.');

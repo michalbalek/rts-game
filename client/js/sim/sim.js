@@ -5,7 +5,7 @@ import {
   FOG_RANGES, GAME_MODES, MILITARY_TYPES, BUILD, buildSpeedFactor, DELIVERY
 } from './constants.js';
 import { GameMap } from './mapgen.js';
-import { Building, Unit } from './entities.js';
+import { Building, Unit, unitActivity } from './entities.js';
 import { findPath, findNearestWalkable, isTileWalkable } from './pathfinding.js';
 import { validatePlacement } from './placement.js';
 import { createRng, randomSeed } from './rng.js';
@@ -2203,8 +2203,13 @@ export class GameSim {
         work: !!u.work,
         build: !!u.build,
         carry: u.work ? u.work.carry : 0,
+        carryResource: u.work ? u.work.produce : null,
+        angle: u.angle,
+        activity: unitActivity(u),
+        cooldown: Math.round(u.cooldown * 100) / 100,
+        workPaused: u.workPaused,
         fleeing: u.fleeing,
-        moving: u.path.length > 0
+        moving: u.pathIndex < u.path.length
       });
     }
 

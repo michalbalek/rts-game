@@ -1,5 +1,16 @@
 import { BUILDING_DEFS, UNIT_DEFS } from './constants.js';
 
+export function unitActivity(unit) {
+  if (unit.fleeing || unit.workPaused) return 'idle';
+  if (unit.type !== 'villager') return unit.cooldown > 0 ? 'attack' : 'idle';
+  if (typeof unit.work === 'boolean') return unit.activity || 'idle';
+  if (unit.build?.arrived || unit.repairBuildingId) return 'build';
+  if (unit.work?.phase === 'gather' || unit.work?.phase === 'pick') {
+    return unit.work.produce === 'food' ? 'harvest' : 'work';
+  }
+  return 'idle';
+}
+
 export class Building {
   constructor(id, type, ownerId, tileX, tileY, complete = true) {
     const def = BUILDING_DEFS[type];

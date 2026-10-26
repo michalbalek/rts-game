@@ -12,6 +12,8 @@ Projekt se skládá z:
 ## 2. Vizuální styl a prostředí (Poušť a Oáza)
 - **Prostředí**: Horká pouštní krajina s písečnými dunami, skalními masivy a úrodnými oázami s palmami, trávou a vodními plochami.
 - **Vizuál**: Pískovcová středověká architektura, cimbuří, hradební věže s vlajícími zástavami a pergamenově-pískovcový heraldický HUD.
+- **Budovy a animace**: procedurální kresba rozlišuje spárované zdivo, střešní tašky, dřevo a skálu. Staveniště odhaluje konstrukci postupně od základů a má lešení se žebříkem; v sadu se nejdříve objeví sazenice. Kouř plynule stoupá a zástavy se vlní.
+- **Postavy**: poddaní mají světlé oděvy a pokrývky hlavy, lučištníci zelené kápě a toulce, pěšáci zbroj a štíty. Barva hráče zůstává na oděvu nebo štítu. Kroky sledují skutečně uraženou vzdálenost; sběr, stavění, nošení a útok mají odlišné pózy. Stejné animace se používají v místní hře i multiplayeru.
 - **Hlášky a atmosféra**: Hlášení poddaných a písaře (*"K vašim službám, sire!"*, *"Na toto místo nelze stavět!"*).
 
 ---

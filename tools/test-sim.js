@@ -2,6 +2,7 @@ import { GameSim } from '../client/js/sim/sim.js';
 import { GameMap } from '../client/js/sim/mapgen.js';
 import { START_POSITIONS, RESOURCE_TYPES, TILE_TYPES, buildSpeedFactor } from '../client/js/sim/constants.js';
 import { formatSaveLabel } from '../client/js/game/save.js';
+import { unitActivity } from '../client/js/sim/entities.js';
 
 let failures = 0;
 function assert(cond, msg) {
@@ -265,6 +266,22 @@ const snapshot = sim4.serialize(1);
 assert(snapshot.buildings.some(b => b.type === 'castle' && b.ownerId === 1), 'snímek obsahuje vlastní hrad');
 assert(!snapshot.buildings.some(b => b.type === 'castle' && b.ownerId === 2), 'snímek neobsahuje skrytý hrad');
 assert(snapshot.fog === true, 'snímek nese příznak mlhy');
+assert(snapshot.units.every(raw => {
+  const unit = sim4.units.find(u => u.id === raw.id);
+  return raw.angle === unit.angle && raw.activity === unitActivity(unit) &&
+    raw.cooldown === Math.round(unit.cooldown * 100) / 100 &&
+    raw.workPaused === unit.workPaused;
+}), 'síťový snímek nese směr, činnost a časování animací viditelných jednotek');
+const visualWorker = sim.units.find(u => u.work && u.work.buildingId === lumber.id);
+const oldPhase = visualWorker.work.phase;
+const oldCarry = visualWorker.work.carry;
+visualWorker.work.phase = 'toStorage';
+visualWorker.work.carry = 10;
+const carryingSnapshot = sim.serialize(1).units.find(u => u.id === visualWorker.id);
+assert(carryingSnapshot.carry === 10 && carryingSnapshot.carryResource === 'wood' &&
+  carryingSnapshot.activity === 'idle', 'síťový nosič má správný druh nákladu a netěží cestou');
+visualWorker.work.phase = oldPhase;
+visualWorker.work.carry = oldCarry;
 
 const caps = sim4.getStorageCaps(1);
 assert(caps.resources === 500 && caps.food === 300, 'hrad poskytuje sklad 500 a sýpku 300');

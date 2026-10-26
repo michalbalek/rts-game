@@ -2,6 +2,7 @@
 
 ## Obecná mechanika jednotek
 - **Pohyb**: hledání cesty (A*) po dlaždicích. Brody jsou průchodné, hluboká voda ne.
+- **Animace**: střídání kroků a pohyb paží odpovídají uražené vzdálenosti a směru chůze. Čekající postavy pouze jemně dýchají. Dělník používá nástroj až při práci, sbírá ovoce zvednutím ruky a náklad nese v košíku. Pěšák při útoku seká mečem, lučištník natahuje luk. Animace nemění rychlost pohybu, produkci ani pravidla zásahů.
 - **Útok**: jednotka se k cíli v dosahu přiblíží a zaútočí sama.
 - **Zdraví**: každá jednotka má zdraví, při nule zemře. Mrtvá jednotka zmizí z mapy.
 - **Obrana**: nečinná jednotka se po napadení sama brání a zaútočí na útočníka.

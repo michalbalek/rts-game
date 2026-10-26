@@ -3,6 +3,7 @@ import {
   tileToScreen, worldToTile, clamp, buildingShadow
 } from './isometric.js';
 import { visibleTileRows } from './viewport.js';
+import { unitAnimation } from './unit-animation.js';
 import {
   TILE_TYPES, RESOURCE_TYPES, BUILDING_DEFS, PLAYER_COLORS,
   ENEMY_BUILD_DISTANCE
@@ -20,7 +21,7 @@ const TILE_COLORS = {
 
 const BUILDING_TOP = {
   castle: 72, barracks: 38, lumberjack: 30, quarry: 42, orchard: 16,
-  market: 30, dwelling: 34, granary: 58, warehouse: 38, ironmine: 34
+  market: 30, dwelling: 40, granary: 76, warehouse: 38, ironmine: 34
 };
 
 const RESOURCE_ICONS = { wood: '🪵', stone: '🪨', food: '🍎', iron: '⛓️', money: '🪙' };
@@ -87,6 +88,7 @@ export class Renderer {
 
     this.effects = [];
     this.texts = [];
+    this.unitAnimations = new WeakMap();
 
     this.minimapBase = document.createElement('canvas');
     this.minimapBaseCtx = this.minimapBase.getContext('2d');
@@ -110,6 +112,7 @@ export class Renderer {
     this.map = session.state.map || session.map;
     this.effects.length = 0;
     this.texts.length = 0;
+    this.unitAnimations = new WeakMap();
     this.minimapFogTimer = 0;
     this.fogMaskTimer = 0;
     this.cachedMapSeq = -1;
@@ -754,6 +757,78 @@ export class Renderer {
     }
   }
 
+  isoMasonry(ctx, u1, v1, u2, v2, z1, z2, colors) {
+    this.isoBox(ctx, u1, v1, u2, v2, z1, z2, colors);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(65, 43, 24, 0.24)';
+    ctx.lineWidth = 0.65;
+    ctx.beginPath();
+    const line = (a, b) => { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); };
+    let row = 0;
+    for (let z = z1 + 6; z < z2; z += 7, row++) {
+      line(this.isoPoint(u1, v2, z), this.isoPoint(u2, v2, z));
+      line(this.isoPoint(u2, v1, z), this.isoPoint(u2, v2, z));
+      if (this.quality === 'low') continue;
+      for (let u = u1 + 0.18 + (row % 2) * 0.25; u < u2; u += 0.5) {
+        line(this.isoPoint(u, v2, z), this.isoPoint(u, v2, Math.min(z + 7, z2)));
+      }
+      for (let v = v1 + 0.18 + (row % 2) * 0.25; v < v2; v += 0.5) {
+        line(this.isoPoint(u2, v, z), this.isoPoint(u2, v, Math.min(z + 7, z2)));
+      }
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255, 232, 184, 0.35)';
+    ctx.beginPath();
+    line(this.isoPoint(u1, v2, z2), this.isoPoint(u2, v2, z2));
+    line(this.isoPoint(u2, v2, z2), this.isoPoint(u2, v1, z2));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  isoRoof(ctx, u1, v1, u2, v2, z, rise) {
+    const mid = (u1 + u2) / 2;
+    const a = this.isoPoint(u1, v1, z);
+    const b = this.isoPoint(u2, v1, z);
+    const c = this.isoPoint(u2, v2, z);
+    const d = this.isoPoint(u1, v2, z);
+    const back = this.isoPoint(mid, v1 + 0.18, z + rise);
+    const front = this.isoPoint(mid, v2 - 0.18, z + rise);
+    this.isoPoly(ctx, [a, b, back], '#b16c47', '#73482f');
+    this.isoPoly(ctx, [a, d, front, back], '#885038', '#633b2a');
+    this.isoPoly(ctx, [b, c, front, back], '#b5754f', '#73482f');
+    this.isoPoly(ctx, [d, c, front], '#975a3b', '#633b2a');
+    const mix = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    ctx.strokeStyle = 'rgba(65, 34, 22, 0.3)';
+    ctx.lineWidth = 0.65;
+    ctx.beginPath();
+    for (let t = 0.2; t < 1; t += 0.2) {
+      const left = mix(b, back, t), right = mix(c, front, t);
+      ctx.moveTo(left.x, left.y); ctx.lineTo(right.x, right.y);
+      const end = mix(d, front, t);
+      ctx.lineTo(end.x, end.y);
+    }
+    for (let t = 0.12; t < 1; t += 0.14) {
+      const eave = mix(b, c, t), ridge = mix(back, front, t);
+      ctx.moveTo(eave.x, eave.y); ctx.lineTo(ridge.x, ridge.y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#d29b6a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(back.x, back.y); ctx.lineTo(front.x, front.y); ctx.stroke();
+  }
+
+  drawSmoke(ctx, x, y, seed) {
+    if (this.quality === 'low') return;
+    for (let i = 0; i < 4; i++) {
+      const age = (this.time * 0.28 + seed * 0.17 + i / 4) % 1;
+      const drift = Math.sin(age * 3 + seed) * 3 + age * 8;
+      ctx.fillStyle = `rgba(231, 220, 200, ${0.2 * Math.sin(age * Math.PI)})`;
+      ctx.beginPath();
+      ctx.ellipse(x + drift, y - age * 28, 2 + age * 5, 1.5 + age * 3, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   isoPoly(ctx, pts, fill, stroke = null) {
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -841,28 +916,46 @@ export class Renderer {
     if (!b.complete) {
       ctx.globalAlpha = clamp(0.28 + b.progress * 0.6, 0.28, 0.9);
     }
+    if (!b.complete && b.progress < 0.7) {
+      const p = this.isoPoint(u, v);
+      ctx.strokeStyle = '#7c623d'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 5);
+      ctx.lineTo(p.x + 3, p.y - 7); ctx.stroke();
+    } else {
+      this.drawAppleTree(ctx, u, v, gx + gy * 3);
+    }
+    ctx.restore();
+  }
+
+  drawAppleTree(ctx, u, v, seed) {
     const base = this.isoPoint(u, v, 0);
-    const top = this.isoPoint(u, v, 13);
+    const top = this.isoPoint(u, v, 18);
     ctx.fillStyle = 'rgba(16, 36, 10, 0.3)';
     ctx.beginPath(); ctx.ellipse(base.x + 2, base.y + 1, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#6b4423';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y); ctx.stroke();
-    const sway = Math.sin(this.time * 1.5 + gx + gy) * 1.2;
-    ctx.fillStyle = '#2d7a26';
-    ctx.beginPath(); ctx.arc(top.x + sway, top.y - 4, 7.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#3d8f31';
-    ctx.beginPath(); ctx.arc(top.x + sway - 3, top.y - 7, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.arc(top.x + sway + 3, top.y - 3, 1.7, 0, Math.PI * 2);
-    ctx.arc(top.x + sway - 2, top.y - 8, 1.7, 0, Math.PI * 2);
-    ctx.arc(top.x + sway + 1, top.y - 9, 1.7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    const sway = Math.sin(this.time * 1.4 + seed * 1.7) * 0.65;
+    ctx.strokeStyle = '#86653d'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(top.x, top.y + 6); ctx.lineTo(top.x - 5, top.y - 3);
+    ctx.moveTo(top.x, top.y + 4); ctx.lineTo(top.x + 5, top.y - 2); ctx.stroke();
+    for (const [x, y, r, color] of [
+      [3, -2, 8, '#3c5930'], [-4, -3, 7, '#466a35'],
+      [0, -8, 8, '#527b3d'], [-5, -9, 5, '#6e914c'], [5, -6, 5, '#638646']
+    ]) {
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(top.x + x + sway, top.y + y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const [x, y] of [[5, -3], [-5, -6], [1, -10], [-1, 1]]) {
+      ctx.fillStyle = '#ab4534';
+      ctx.beginPath(); ctx.arc(top.x + x + sway, top.y + y, 1.7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e69964';
+      ctx.beginPath(); ctx.arc(top.x + x - 0.4 + sway, top.y + y - 0.5, 0.55, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
   drawOrchardBasket(ctx, b) {
+    if (!b.complete && b.progress < 0.85) return;
     const pos = tileToScreen(b.tileX, b.tileY);
     ctx.save();
     ctx.translate(pos.x, pos.y);
@@ -930,13 +1023,22 @@ export class Renderer {
       }
     }
 
-    if (!b.complete) {
-      ctx.globalAlpha = clamp(0.28 + b.progress * 0.6, 0.28, 0.9);
-    }
     ctx.save();
+    if (!b.complete) {
+      const level = Math.max(2, b.progress * ((BUILDING_TOP[b.type] || 34) + 16));
+      const points = [
+        this.isoPoint(0, 0, level), this.isoPoint(b.width, 0, level),
+        this.isoPoint(b.width, 0, -16), this.isoPoint(b.width, b.height, -16),
+        this.isoPoint(0, b.height, -16), this.isoPoint(0, b.height, level)
+      ];
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (const p of points.slice(1)) ctx.lineTo(p.x, p.y);
+      ctx.closePath();
+      ctx.clip();
+    }
     this.drawBuildingStructure(ctx, b, def);
     ctx.restore();
-    ctx.globalAlpha = 1;
 
     if (!b.complete) {
       this.drawScaffolding(ctx, b);
@@ -991,8 +1093,8 @@ export class Renderer {
       this.isoGround(ctx, 0.35 + i * 0.8, 2.05, 1.05 + i * 0.8, 2.75, 4, i % 2 ? '#bd9051' : '#c99d5d');
     }
 
-    this.isoBox(ctx, 0.32, 0.3, w - 0.32, 1.72, 4, 42,
-      { top: '#dcb271', left: '#946b38', right: '#c99b5c' });
+    this.isoMasonry(ctx, 0.32, 0.3, w - 0.32, 1.72, 4, 42,
+      { top: '#ecd3a0', left: '#a28156', right: '#d4b480' });
     // Cimbuří na hradbách.
     for (let i = 0; i < 7; i++) {
       const u = 0.42 + i * 0.32;
@@ -1023,10 +1125,15 @@ export class Renderer {
       [0.08, 0.08], [w - 0.92, 0.08], [0.08, 1.34], [w - 0.92, 1.34]
     ];
     for (const [u, v] of towers) {
-      this.isoBox(ctx, u, v, u + 0.84, v + 0.84, 4, 58,
-        { top: '#d8ad6c', left: '#8a6132', right: '#c29657' });
+      this.isoMasonry(ctx, u, v, u + 0.84, v + 0.84, 4, 58,
+        { top: '#e3c897', left: '#98764e', right: '#cdb080' });
       this.isoBox(ctx, u - 0.05, v - 0.05, u + 0.89, v + 0.89, 58, 63,
         { top: '#cba162', left: '#795224', right: '#b98e50' });
+      this.isoGround(ctx, u + 0.08, v + 0.08, u + 0.76, v + 0.76, 63, '#816342');
+      for (const [du, dv] of [[0, 0], [0.6, 0], [0, 0.6], [0.6, 0.6]]) {
+        this.isoBox(ctx, u + du - 0.04, v + dv - 0.04, u + du + 0.28, v + dv + 0.28, 63, 69,
+          { top: '#ecd3a0', left: '#9c7a51', right: '#d0ae79' }, null);
+      }
       // Střílny.
       const slit = this.isoPoint(u + 0.42, v + 0.84, 40);
       ctx.fillStyle = '#3a220e';
@@ -1041,13 +1148,10 @@ export class Renderer {
     this.isoBox(ctx, 0, 0, w, h, 0, 2, { top: '#c89b5e', left: '#9a703a', right: '#d2a668' });
 
     // Hlavní síň.
-    this.isoBox(ctx, 0.12, 0.16, 1.2, 1.84, 2, 24,
-      { top: '#deb370', left: '#8d6231', right: '#c69a5a' });
+    this.isoMasonry(ctx, 0.12, 0.16, 1.2, 1.84, 2, 24,
+      { top: '#e6c997', left: '#a08055', right: '#d4b580' });
     // Sedlová střecha.
-    const ridgeBack = this.isoPoint(0.66, 0.1, 38);
-    const ridgeFront = this.isoPoint(0.66, 1.9, 38);
-    this.isoPoly(ctx, [this.isoPoint(0.06, 0.1, 24), this.isoPoint(0.06, 1.9, 24), ridgeFront, ridgeBack], '#8f1d1d');
-    this.isoPoly(ctx, [this.isoPoint(1.26, 0.1, 24), this.isoPoint(1.26, 1.9, 24), ridgeFront, ridgeBack], '#b32626');
+    this.isoRoof(ctx, 0.06, 0.1, 1.26, 1.9, 25, 13);
     // Dveře.
     const d0 = this.isoPoint(1.2, 0.78, 2);
     const d1 = this.isoPoint(1.2, 1.32, 2);
@@ -1099,6 +1203,12 @@ export class Renderer {
     // Srub.
     this.isoBox(ctx, 0.08, 0.08, 0.7, 0.62, 0, 18,
       { top: '#a9712f', left: '#6f4318', right: '#8a5724' });
+    for (let z = 3; z < 18; z += 4) {
+      const a = this.isoPoint(0.08, 0.62, z), b2 = this.isoPoint(0.7, 0.62, z);
+      const c = this.isoPoint(0.7, 0.08, z);
+      ctx.strokeStyle = '#503920'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c.x, c.y); ctx.stroke();
+    }
     // Markýza.
     this.isoPoly(ctx, [
       this.isoPoint(0.02, 0.68, 18), this.isoPoint(0.76, 0.68, 18),
@@ -1109,11 +1219,7 @@ export class Renderer {
     ctx.fillStyle = '#6b7280';
     ctx.fillRect(chim.x - 2.5, chim.y - 9, 5, 9);
     if (b && b.workers > 0) {
-      const smoke = (this.time * 12) % 18;
-      ctx.fillStyle = `rgba(215, 205, 190, ${0.35 * (1 - smoke / 18)})`;
-      ctx.beginPath();
-      ctx.arc(chim.x, chim.y - 12 - smoke, 2 + smoke * 0.15, 0, Math.PI * 2);
-      ctx.fill();
+      this.drawSmoke(ctx, chim.x, chim.y - 10, b.id);
     }
     // Špalek a sekera.
     const stump = this.isoPoint(0.78, 0.35, 0);
@@ -1147,15 +1253,26 @@ export class Renderer {
     const p1 = this.isoPoint(w - 0.28, 0.28, 0);
     const p2 = this.isoPoint(w - 0.28, h - 0.28, 0);
     const p3 = this.isoPoint(0.28, h - 0.28, 0);
-    this.isoPoly(ctx, [p0, p1, p2, p3], '#5c4028');
+    this.isoPoly(ctx, [p0, p1, p2, p3], '#75624b');
 
     const f0 = this.isoPoint(0.48, 0.48, -13);
     const f1 = this.isoPoint(w - 0.48, 0.48, -13);
     const f2 = this.isoPoint(w - 0.48, h - 0.48, -13);
     const f3 = this.isoPoint(0.48, h - 0.48, -13);
-    this.isoPoly(ctx, [f0, f1, f2, f3], '#352313');
-    this.isoPoly(ctx, [p0, p1, f1, f0], '#8a5f31');
-    this.isoPoly(ctx, [p1, p2, f2, f1], '#6d4a25');
+    this.isoPoly(ctx, [f0, f1, f2, f3], '#8d7b5d');
+    this.isoPoly(ctx, [p0, p1, f1, f0], '#bca17b');
+    this.isoPoly(ctx, [p1, p2, f2, f1], '#9c8461');
+    for (let i = 0; i < 5; i++) {
+      const u = 0.65 + (i % 3) * 0.45;
+      const v = 0.8 + Math.floor(i / 3) * 0.65;
+      this.isoBox(ctx, u, v, u + 0.33, v + 0.32, -13, -7 + i % 2 * 2,
+        { top: '#cbb797', left: '#998568', right: '#b5a181' }, null);
+    }
+    for (let z = -3; z > -13; z -= 4) {
+      const a = this.isoPoint(0.32, 0.32, z), b2 = this.isoPoint(w - 0.32, 0.32, z);
+      ctx.strokeStyle = 'rgba(75,59,39,0.35)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
+    }
 
     // Těžební jeřáb.
     const base = this.isoPoint(w - 0.45, 0.4, 0);
@@ -1165,6 +1282,9 @@ export class Renderer {
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y); ctx.lineTo(boom.x, boom.y);
+    ctx.moveTo(base.x - 9, base.y + 3); ctx.lineTo(top.x, top.y - 1);
+    ctx.moveTo(base.x + 7, base.y + 4); ctx.lineTo(top.x, top.y);
+    ctx.moveTo(base.x, base.y - 23); ctx.lineTo(boom.x, boom.y);
     ctx.stroke();
     ctx.strokeStyle = '#d4d4d8';
     ctx.lineWidth = 1;
@@ -1173,6 +1293,12 @@ export class Renderer {
     ctx.stroke();
     ctx.fillStyle = '#deb370';
     ctx.fillRect(boom.x - 4, boom.y + 17, 8, 8);
+    const wheel = this.isoPoint(w - 0.45, 0.4, 15);
+    ctx.strokeStyle = '#604c35'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(wheel.x + 5, wheel.y, 5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(wheel.x, wheel.y); ctx.lineTo(wheel.x + 10, wheel.y);
+    ctx.moveTo(wheel.x + 5, wheel.y - 5); ctx.lineTo(wheel.x + 5, wheel.y + 5); ctx.stroke();
 
     // Otesané kvádry.
     for (let i = 0; i < 3; i++) {
@@ -1202,24 +1328,7 @@ export class Renderer {
       for (let gx = 0; gx < 3; gx++) {
         const u = 0.62 + gx * 1.16;
         const v = 0.62 + gy * 1.16;
-        const base = this.isoPoint(u, v, 0);
-        const top = this.isoPoint(u, v, 13);
-        ctx.fillStyle = 'rgba(16, 36, 10, 0.3)';
-        ctx.beginPath(); ctx.ellipse(base.x + 2, base.y + 1, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#6b4423';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y); ctx.stroke();
-        const sway = Math.sin(this.time * 1.5 + gx + gy) * 1.2;
-        ctx.fillStyle = '#2d7a26';
-        ctx.beginPath(); ctx.arc(top.x + sway, top.y - 4, 7.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#3d8f31';
-        ctx.beginPath(); ctx.arc(top.x + sway - 3, top.y - 7, 4.5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(top.x + sway + 3, top.y - 3, 1.7, 0, Math.PI * 2);
-        ctx.arc(top.x + sway - 2, top.y - 8, 1.7, 0, Math.PI * 2);
-        ctx.arc(top.x + sway + 1, top.y - 9, 1.7, 0, Math.PI * 2);
-        ctx.fill();
+        this.drawAppleTree(ctx, u, v, gx + gy * 3);
       }
     }
 
@@ -1267,8 +1376,8 @@ export class Renderer {
       }
     };
 
-    stall(0.12, 0.18, 0.85, 0.85, '#b91c1c');
-    stall(1.05, 0.55, 1.85, 1.15, '#1d4ed8');
+    stall(0.12, 0.18, 0.85, 0.85, '#a35743');
+    stall(1.05, 0.55, 1.85, 1.15, '#507a7c');
 
     // Bedny a sudy.
     this.isoBox(ctx, 0.25, 1.35, 0.55, 1.65, 2, 10, { top: '#9a6b2f', left: '#6d461c', right: '#865a26' }, null);
@@ -1286,26 +1395,16 @@ export class Renderer {
     this.isoGround(ctx, 0.12, 0.14, 1.86, 1.6, 2, '#a97f47');
 
     // Dům.
-    this.isoBox(ctx, 0.18, 0.16, 1.55, 1.42, 2, 24,
-      { top: '#d6aa6a', left: '#8d6231', right: '#bb8d4e' });
+    this.isoMasonry(ctx, 0.18, 0.16, 1.55, 1.42, 2, 24,
+      { top: '#eed8aa', left: '#ae8d60', right: '#ddc393' });
     // Valbová hliněná střecha.
-    const r0 = this.isoPoint(0.1, 0.08, 24);
-    const r1 = this.isoPoint(1.63, 0.08, 24);
-    const r2 = this.isoPoint(1.63, 1.5, 24);
-    const r3 = this.isoPoint(0.1, 1.5, 24);
-    const peak = this.isoPoint(0.865, 0.79, 38);
-    this.isoPoly(ctx, [r0, r1, peak], '#8c3a1e');
-    this.isoPoly(ctx, [r1, r2, peak], '#a84824');
-    this.isoPoly(ctx, [r2, r3, peak], '#7c3018');
-    this.isoPoly(ctx, [r3, r0, peak], '#a84824');
+    this.isoRoof(ctx, 0.1, 0.08, 1.63, 1.5, 25, 13);
     // Komín.
     const chim = this.isoPoint(1.28, 0.4, 24);
     ctx.fillStyle = '#7c5a3a';
     ctx.fillRect(chim.x - 3, chim.y - 12, 6, 12);
     if (b && b.complete) {
-      const smoke = (this.time * 10 + 3) % 16;
-      ctx.fillStyle = `rgba(220, 210, 195, ${0.28 * (1 - smoke / 16)})`;
-      ctx.beginPath(); ctx.arc(chim.x, chim.y - 16 - smoke, 2.4 + smoke * 0.14, 0, Math.PI * 2); ctx.fill();
+      this.drawSmoke(ctx, chim.x, chim.y - 12, b.id);
     }
     // Dveře a okno.
     const d0 = this.isoPoint(1.55, 0.68, 2);
@@ -1347,7 +1446,11 @@ export class Renderer {
     const ry = 17;
     ctx.fillStyle = '#b8894d';
     ctx.beginPath(); ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#d3a765';
+    const wallLight = ctx.createLinearGradient(c.x - rx, 0, c.x + rx, 0);
+    wallLight.addColorStop(0, '#9b7f56');
+    wallLight.addColorStop(0.6, '#ddc596');
+    wallLight.addColorStop(1, '#baa078');
+    ctx.fillStyle = wallLight;
     ctx.beginPath();
     ctx.moveTo(c.x - rx, c.y);
     ctx.lineTo(c.x - rx, c.y - 42);
@@ -1367,16 +1470,21 @@ export class Renderer {
     }
     // Kuželová došková střecha.
     const roofY = c.y - 42;
-    this.isoPoly(ctx, [
-      { x: c.x - rx - 4, y: roofY },
-      { x: c.x + rx + 4, y: roofY },
-      { x: c.x, y: roofY - 30 }
-    ], '#8a5b26');
-    this.isoPoly(ctx, [
-      { x: c.x - rx - 4, y: roofY },
-      { x: c.x, y: roofY - 30 },
-      { x: c.x - 8, y: roofY - 6 }
-    ], '#a06c2e');
+    ctx.fillStyle = '#ac8850';
+    ctx.beginPath();
+    ctx.moveTo(c.x, roofY - 30);
+    ctx.lineTo(c.x + rx + 4, roofY);
+    ctx.ellipse(c.x, roofY, rx + 4, 12, 0, 0, Math.PI);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#705435'; ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (let a = 0.12; a < Math.PI; a += 0.2) {
+      ctx.moveTo(c.x, roofY - 30);
+      ctx.lineTo(c.x + Math.cos(a) * (rx + 4), roofY + Math.sin(a) * 12);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#d4b474'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(c.x, roofY, rx + 4, 12, 0, 0, Math.PI); ctx.stroke();
 
     // Dveře.
     ctx.fillStyle = '#4a2a10';
@@ -1395,11 +1503,14 @@ export class Renderer {
   drawWarehouse(ctx, w, h) {
     this.isoBox(ctx, 0, 0, w, h, 0, 2, { top: '#c69b5f', left: '#916735', right: '#d0a668' });
 
-    this.isoBox(ctx, 0.16, 0.28, w - 0.16, 1.88, 2, 26,
-      { top: '#dcb271', left: '#8d6331', right: '#c69a5a' });
+    this.isoMasonry(ctx, 0.16, 0.28, w - 0.16, 1.88, 2, 26,
+      { top: '#e5c898', left: '#9c7b52', right: '#d0b181' });
     // Plochá střecha s hranou.
     this.isoBox(ctx, 0.08, 0.2, w - 0.08, 1.96, 26, 30,
       { top: '#b78b4e', left: '#7d5729', right: '#a97f45' });
+    for (let v = 0.3; v < 1.9; v += 0.3) {
+      this.isoGround(ctx, 0.16, v, w - 0.16, v + 0.035, 30, '#907449');
+    }
     // Otevřená vrata.
     const gate0 = this.isoPoint(1.05, 1.88, 2);
     const gate1 = this.isoPoint(1.95, 1.88, 2);
@@ -1432,8 +1543,22 @@ export class Renderer {
   drawIronMine(ctx, w, h) {
     this.isoGround(ctx, 0, 0, w, h, 0, '#7b6a52', 'rgba(40,30,20,0.4)');
     // Skalní stěna.
-    this.isoBox(ctx, 0.1, 0.1, w - 0.1, 1.7, 0, 32,
-      { top: '#8f7350', left: '#5f4a30', right: '#7d6542' });
+    const rock0 = this.isoPoint(0.15, 0.25, 18), rock1 = this.isoPoint(w - 0.25, 0.25, 23);
+    const rock2 = this.isoPoint(w - 0.05, 1.65, 0), rock3 = this.isoPoint(0.05, 1.7, 0);
+    const peak = this.isoPoint(0.95, 0.65, 37);
+    const ridge = this.isoPoint(1.95, 0.65, 32);
+    const edge = this.isoPoint(w - 0.4, 1.5, 19);
+    const shoulder = this.isoPoint(0.5, 1.5, 22);
+    this.isoPoly(ctx, [rock0, peak, ridge, rock1], '#b3a18a', '#766b59');
+    this.isoPoly(ctx, [rock0, peak, shoulder, rock3], '#887a66', '#665b4d');
+    this.isoPoly(ctx, [peak, ridge, edge, shoulder], '#a39379', '#766b59');
+    this.isoPoly(ctx, [ridge, rock1, rock2, edge], '#8b7f6d', '#766b59');
+    this.isoPoly(ctx, [rock3, shoulder, edge, rock2], '#786b59', '#665b4d');
+    for (let i = 0; i < 5; i++) {
+      const p = this.isoPoint(0.35 + i * 0.5, 1.45, 11 + (i % 3) * 4);
+      ctx.strokeStyle = i % 2 ? '#b7b2a2' : '#534f47'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(p.x - 3, p.y); ctx.lineTo(p.x + 1, p.y - 4); ctx.lineTo(p.x + 5, p.y - 3); ctx.stroke();
+    }
     // Vstup do šachty.
     const e0 = this.isoPoint(1.05, 1.7, 0);
     const e1 = this.isoPoint(1.95, 1.7, 0);
@@ -1498,7 +1623,7 @@ export class Renderer {
   drawScaffolding(ctx, b) {
     const w = b.width;
     const h = b.height;
-    const z = 26;
+    const z = Math.max(12, b.progress * (BUILDING_TOP[b.type] || 34) + 10);
     ctx.strokeStyle = 'rgba(120, 84, 40, 0.85)';
     ctx.lineWidth = 1.8;
     const corners = [[0.05, 0.05], [w - 0.05, 0.05], [w - 0.05, h - 0.05], [0.05, h - 0.05]];
@@ -1508,17 +1633,27 @@ export class Renderer {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(c.x, c.y); ctx.stroke();
     }
     for (let level = 0; level < 3; level++) {
-      const zz = 6 + level * 9;
+      const zz = 3 + level * (z - 3) / 3;
       for (let i = 0; i < corners.length; i++) {
         const a = this.isoPoint(corners[i][0], corners[i][1], zz);
         const b2 = this.isoPoint(corners[(i + 1) % corners.length][0], corners[(i + 1) % corners.length][1], zz);
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
+        if (i === 1 || i === 2) {
+          const brace = this.isoPoint(corners[i][0], corners[i][1], Math.min(z, zz + 10));
+          ctx.beginPath(); ctx.moveTo(brace.x, brace.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
+        }
       }
     }
     // Žebřík.
     const l0 = this.isoPoint(w - 0.2, h - 0.1, 0);
     const l1 = this.isoPoint(w - 0.2, h - 0.1, z - 4);
-    ctx.beginPath(); ctx.moveTo(l0.x, l0.y); ctx.lineTo(l1.x, l1.y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(l0.x - 3, l0.y); ctx.lineTo(l1.x - 3, l1.y);
+    ctx.moveTo(l0.x + 3, l0.y); ctx.lineTo(l1.x + 3, l1.y);
+    for (let y = l0.y - 3; y > l1.y; y -= 4) {
+      ctx.moveTo(l0.x - 3, y); ctx.lineTo(l0.x + 3, y);
+    }
+    ctx.stroke();
   }
 
   drawConstructionBar(ctx, b, def) {
@@ -1546,12 +1681,13 @@ export class Renderer {
     ctx.moveTo(p.x, p.y);
     ctx.lineTo(p.x, p.y - 17);
     ctx.stroke();
-    const wave = Math.sin(this.time * 3 + b.id) * 2.5;
+    const wave = Math.sin(this.time * 3 + b.id) * 1.8;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(p.x + 1, p.y - 17);
-    ctx.lineTo(p.x + 15 + wave, p.y - 13);
-    ctx.lineTo(p.x + 1, p.y - 8);
+    ctx.bezierCurveTo(p.x + 6, p.y - 19 + wave, p.x + 9, p.y - 14 - wave, p.x + 15, p.y - 16 + wave);
+    ctx.lineTo(p.x + 14, p.y - 8 + wave);
+    ctx.bezierCurveTo(p.x + 8, p.y - 6 - wave, p.x + 6, p.y - 12 + wave, p.x + 1, p.y - 9);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.55)';
@@ -1620,14 +1756,20 @@ export class Renderer {
   // ------------------------------------------------------------------
 
   drawUnit(ctx, u, ui, camera) {
-    const def = u.config || {};
     const pos = tileToScreen(u.x, u.y);
     const selected = ui.selectedIds && ui.selectedIds.has(u.id);
     const hovered = ui.hoverEntity && ui.hoverEntity.entity && ui.hoverEntity.entity.id === u.id;
     const color = this.ownerColor(u.ownerId);
-    const moving = u.path ? u.path.length > 0 : !!u.moving;
-    const bob = moving ? Math.sin(this.time * 11 + u.id * 1.7) * 1.6 : Math.sin(this.time * 2 + u.id) * 0.5;
-    const facing = Math.cos(u.angle || 0) < -0.1 ? -1 : 1;
+    const pose = unitAnimation(u, this.time, this.unitAnimations.get(u));
+    this.unitAnimations.set(u, pose);
+    const carry = u.work && typeof u.work === 'object' ? u.work.carry : (u.carry || 0);
+    const resource = u.work && typeof u.work === 'object' ? u.work.produce : u.carryResource;
+    const soldier = u.type === 'swordsman';
+    const archer = u.type === 'archer';
+    const skin = ['#e0b58a', '#c99368', '#b47e56'][u.id % 3];
+    const cloth = soldier ? '#b7bdba' : archer ? '#66765a' : ['#c3aa7e', '#a99570', '#c6b494'][u.id % 3];
+    const working = ['work', 'build', 'harvest'].includes(pose.activity);
+    const swing = pose.stride * 2.8;
 
     ctx.save();
     ctx.translate(pos.x, pos.y);
@@ -1635,7 +1777,7 @@ export class Renderer {
     // Stín.
     ctx.fillStyle = 'rgba(35, 22, 8, 0.35)';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 6.2, 2.9, 0, 0, Math.PI * 2);
+    ctx.ellipse(0.7, 0.5, 6.5, 2.7, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Výběrový kroužek.
@@ -1656,136 +1798,141 @@ export class Renderer {
     }
 
     ctx.save();
-    ctx.translate(0, bob);
-    ctx.scale(facing, 1);
+    ctx.scale(pose.facing, 1);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const limb = (points, fill, width) => {
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (const p of points.slice(1)) ctx.lineTo(p[0], p[1]);
+      ctx.strokeStyle = '#47392b';
+      ctx.lineWidth = width + 1.2;
+      ctx.stroke();
+      ctx.strokeStyle = fill;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    };
+    limb([[-1.8, -7], [-2.2 - swing * 0.4, -3.5], [-2 + swing, -0.5 - Math.max(0, pose.stride) * 1.4]], '#655441', 2);
+    limb([[1.6, -7], [2.2 + swing * 0.4, -3.5], [2 - swing, -0.5 - Math.max(0, -pose.stride) * 1.4]], '#8a7458', 2);
+    ctx.translate(0, -pose.lift + pose.breathe);
+    limb([[-2.6, -14], [-4.7, -11], [-4.5 - swing * 0.55, -8.5]], skin, 1.8);
 
-    if (u.type === 'villager') {
-      // Poddaný.
+    ctx.fillStyle = cloth;
+    ctx.strokeStyle = '#53432e';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-3.2, -15.6);
+    ctx.quadraticCurveTo(0, -17, 3.1, -15);
+    ctx.lineTo(3.9, -6);
+    ctx.quadraticCurveTo(0, -4.7, -3.8, -6);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,244,215,0.22)';
+    ctx.beginPath(); ctx.moveTo(0, -15.4); ctx.lineTo(2.3, -14); ctx.lineTo(2.9, -7); ctx.lineTo(0, -7); ctx.fill();
+    ctx.fillStyle = color;
+    if (soldier) ctx.fillRect(-1.3, -15, 2.6, 8);
+    else ctx.fillRect(-3.3, -10, 6.6, 1.6);
+    ctx.fillStyle = '#55402c';
+    ctx.fillRect(-3.5, -7.5, 7, 1.3);
+    ctx.fillStyle = '#d4b375';
+    ctx.fillRect(0.3, -7.7, 1.5, 1.6);
+
+    if (archer) {
+      limb([[-3.2, -8], [-4.5, -18]], '#725335', 2.6);
+      limb([[-4.5, -18], [-5.7, -21]], '#d0c1a0', 0.8);
+    }
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.ellipse(0.4, -19, 2.9, 3.5, -0.12, 0, Math.PI * 2); ctx.fill();
+    if (!pose.back) {
+      ctx.fillRect(2.6, -19.5, 1.5, 1.5);
+      ctx.fillStyle = '#3b3025';
+      ctx.fillRect(1.7, -20, 0.8, 0.8);
+    }
+    ctx.fillStyle = soldier ? '#8e9fa5' : archer ? '#52644a' : '#e1cfa7';
+    ctx.strokeStyle = soldier ? '#495a60' : '#8b7858';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(-3.3, -18.8);
+    ctx.quadraticCurveTo(-4, -24.5, 0.2, -24);
+    ctx.quadraticCurveTo(4.2, -23.5, 3.5, -19.5);
+    ctx.lineTo(pose.back ? 3 : -0.8, -18);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (soldier) {
+      limb([[0.2, -23], [0.8, -19]], '#d5dfe0', 1);
+      ctx.fillStyle = color; ctx.fillRect(-0.6, -25, 1.7, 3);
+    } else if (!archer) {
+      limb([[-3.1, -21], [3.2, -21]], '#f2e1b9', 1.3);
+      limb([[-2.6, -18.5], [-3.2, -15.5]], '#c9b38c', 1.5);
+    }
+
+    const handX = carry > 0 ? 5 : working ? 5 + pose.effort * 1.6 : soldier ? 4 + pose.attack * 3 : 4.5 - swing * 0.5;
+    const handY = carry > 0 ? -10 : working ? -13 + pose.effort * 3 : soldier ? -10 - pose.attack * 3 : -9;
+    limb([[2.7, -14], [4.2, -11.5], [handX, handY]], soldier ? '#9babad' : skin, 2);
+    if (soldier) {
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(-0.3 + pose.attack * 1.7);
+      limb([[0, 1], [0, -11]], '#ccd9dc', 1.7);
+      limb([[-2, -1], [2, -1]], '#d8b571', 1.2);
+      ctx.restore();
       ctx.fillStyle = color;
-      ctx.globalAlpha = 0.9;
-      ctx.fillRect(-2.6, -11, 5.2, 8);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#5b3a18';
-      ctx.fillRect(-3, -4, 2.2, 4);
-      ctx.fillRect(0.8, -4, 2.2, 4);
-      ctx.fillStyle = '#e6c39a';
-      ctx.beginPath(); ctx.arc(0, -13.5, 3.1, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#8b6a3e';
+      ctx.strokeStyle = '#cfbe93';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.ellipse(0, -15.4, 3.6, 1.7, 0, Math.PI, 0);
-      ctx.fill();
-      if (u.work || u.repairBuildingId) {
-        ctx.strokeStyle = '#8a5a2a';
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        ctx.moveTo(1.5, -8);
-        ctx.lineTo(5.5, -13 - Math.abs(Math.sin(this.time * 5 + u.id)) * 3);
-        ctx.stroke();
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.beginPath();
-        ctx.moveTo(5.5, -13);
-        ctx.lineTo(8, -12);
-        ctx.stroke();
+      ctx.moveTo(-7, -15); ctx.lineTo(-2.5, -14);
+      ctx.lineTo(-2, -8); ctx.quadraticCurveTo(-3, -5, -4.5, -4.5);
+      ctx.quadraticCurveTo(-7.5, -7, -7, -15);
+      ctx.fill(); ctx.stroke();
+      limb([[-4.5, -13], [-4.5, -7]], '#e4d4b3', 0.8);
+    } else if (archer) {
+      const pull = pose.activity === 'attack' ? 2.5 * (1 - pose.attack) : 0;
+      ctx.strokeStyle = '#c59c60'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(5, -20); ctx.quadraticCurveTo(12, -13, 5, -5); ctx.stroke();
+      ctx.strokeStyle = '#e5d8b6'; ctx.lineWidth = 0.65;
+      ctx.beginPath(); ctx.moveTo(5, -20); ctx.lineTo(5 - pull, -12); ctx.lineTo(5, -5); ctx.stroke();
+      if (pose.activity === 'attack') limb([[5 - pull, -12], [11, -12]], '#d4c1a0', 0.8);
+    } else if (working && carry <= 0 && pose.activity !== 'harvest') {
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(-0.6 + pose.effort * 0.75);
+      limb([[0, 2], [0, -8]], '#946b3d', 1.2);
+      if (pose.activity === 'work' && resource === 'wood') {
+        ctx.fillStyle = '#b3bdbb'; ctx.strokeStyle = '#65716c'; ctx.lineWidth = 0.7;
+        ctx.beginPath(); ctx.moveTo(-0.5, -9); ctx.lineTo(4, -10);
+        ctx.quadraticCurveTo(6, -7, 3.5, -4.5); ctx.lineTo(-0.5, -6); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else {
+        limb([[-3, -7.5], [3.5, -7.5]], '#b3bdbb', pose.activity === 'build' ? 2.5 : 1.7);
       }
-    } else if (u.type === 'archer') {
-      // Lučištník.
-      ctx.fillStyle = '#5f7a34';
-      ctx.fillRect(-2.8, -11, 5.6, 8.5);
-      ctx.fillStyle = color;
-      ctx.fillRect(-2.8, -8, 5.6, 2.1);
-      ctx.fillStyle = '#4b2e14';
-      ctx.fillRect(-3, -4, 2.2, 4);
-      ctx.fillRect(0.8, -4, 2.2, 4);
-      ctx.fillStyle = '#e6c39a';
-      ctx.beginPath(); ctx.arc(0, -13.6, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#3f5c26';
-      ctx.beginPath(); ctx.arc(0, -14.2, 3.5, Math.PI * 0.9, Math.PI * 2.1); ctx.fill();
-      // Luk.
-      ctx.strokeStyle = '#a16207';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(-3.5, -10, 6.5, Math.PI * 0.55, Math.PI * 1.45); ctx.stroke();
-      ctx.strokeStyle = 'rgba(240, 230, 200, 0.9)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.moveTo(-3.5, -16.5); ctx.lineTo(-3.5, -3.5); ctx.stroke();
-      // Toulec.
-      ctx.strokeStyle = '#8a5a2a';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.moveTo(2.6, -9); ctx.lineTo(5, -14); ctx.stroke();
-    } else if (u.type === 'swordsman') {
-      // Těžký pěšák.
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(-3, -10, 6, 7);
-      ctx.fillStyle = color;
-      ctx.fillRect(-3, -8.5, 6, 2.2);
-      ctx.fillStyle = '#4a5568';
-      ctx.fillRect(-3, -4, 2.2, 4);
-      ctx.fillRect(0.8, -4, 2.2, 4);
-      ctx.fillStyle = '#e2e8f0';
-      ctx.beginPath(); ctx.arc(0, -13, 3.3, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#64748b';
-      ctx.beginPath(); ctx.arc(0, -13.5, 3.6, Math.PI * 0.85, Math.PI * 2.15); ctx.fill();
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(-0.5, -16.5, 1, 3);
-      // Štít.
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(-6.5, -13);
-      ctx.lineTo(-2.5, -13);
-      ctx.lineTo(-2.5, -5);
-      ctx.lineTo(-4.5, -3);
-      ctx.lineTo(-6.5, -5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#f8fafc';
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      // Meč.
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(3, -7);
-      ctx.lineTo(7.5, -15);
-      ctx.stroke();
-      ctx.strokeStyle = '#92400e';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(2, -6);
-      ctx.lineTo(4, -8);
-      ctx.stroke();
+      ctx.restore();
+    } else if (pose.activity === 'harvest') {
+      limb([[2.7, -14], [4, -18 - pose.effort * 2]], skin, 1.8);
+    }
+    if (carry > 0) {
+      ctx.fillStyle = '#967044'; ctx.strokeStyle = '#59412b'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(2.5, -12); ctx.lineTo(10, -12); ctx.lineTo(9, -7); ctx.lineTo(3, -7); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = { wood: '#bb9365', stone: '#c4b8a0', food: '#b94f3b', iron: '#8a9394' }[resource] || '#cfb88b';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath(); ctx.ellipse(4 + i * 2, -12.5 - (i % 2), 1.8, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      limb([[3, -9], [9, -9]], '#c6a26b', 0.6);
     }
     ctx.restore();
-
-    // Náklad v košíku.
-    const carry = u.work ? u.work.carry : (u.carry || 0);
-    if (carry > 0) {
-      const building = u.work && this.session && this.session.sim
-        ? this.session.sim.buildings.find(x => x.id === u.work.buildingId)
-        : null;
-      const res = building ? building.config.produce : 'wood';
-      const icon = RESOURCE_ICONS[res] || '📦';
-      ctx.font = '9px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(20,12,6,0.75)';
-      ctx.beginPath();
-      ctx.arc(8, -19, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillText(icon, 8, -16);
-    }
 
     if (u.fleeing) {
       ctx.font = 'bold 12px Outfit, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#fca5a5';
-      ctx.fillText('!', 0, -24);
+      ctx.fillText('!', 0, -32);
     }
 
     // Zdravotní pruh.
     if (u.hp < u.maxHp - 0.5 || selected) {
       const ratio = clamp(u.hp / u.maxHp, 0, 1);
       ctx.fillStyle = 'rgba(15, 10, 5, 0.8)';
-      ctx.fillRect(-9, -24, 18, 4);
+      ctx.fillRect(-9, -31, 18, 4);
       ctx.fillStyle = ratio > 0.5 ? '#4ade80' : ratio > 0.25 ? '#fbbf24' : '#ef4444';
-      ctx.fillRect(-9, -23.5, 18 * ratio, 3);
+      ctx.fillRect(-9, -30.5, 18 * ratio, 3);
     }
 
     ctx.restore();
