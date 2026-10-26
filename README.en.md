@@ -76,7 +76,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Select unit / building | Left button |
 | Select multiple units | Left button and drag a rectangle |
 | Movement and orders | Right button |
-| Order subjects to build | Select subjects, then click the site's button in the Construction section of their panel |
+| Order subjects to build | Select subjects, then right-click your construction site or click its button in the Construction section of their panel |
 | Place a building | Left button |
 | Cancel building / selection | Right button or `ESC` |
 
@@ -103,7 +103,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 - **Construction** is allowed anywhere on the map, at least **20 tiles** away from enemy units and buildings. Buildings snap to the grid and may not overlap; a free strip of 1 tile must remain between them (exception: warehouses next to each other).
 - **Construction time** depends on size: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. The time applies to one subject. Each additional subject adds half of the base speed, with no upper limit (a 2×2 site takes 40 s with two subjects, 24 s with four).
-- **Construction site** – buying a building creates a construction site. The player selects subjects and clicks the site's button in their panel's Construction section. It progresses only while they work on it. When it is finished, they return to the campfire.
+- **Construction site** – buying a building creates a construction site. The player selects subjects and right-clicks their own site, or clicks the site's button in their panel's Construction section. In a mixed selection, only subjects are assigned; soldiers keep their existing orders. It progresses only while they work on it. When it is finished, they return to the campfire.
 - **Woodcutter** must stand on a tree, **Quarry** on a stone deposit and **Iron Mine** on an iron deposit.
 - **Subjects** gather resources in batches of 10 and carry them to the nearest completed warehouse or the castle; food goes to the nearest granary (castle if there is none). A stone deposit holds 2000 units and an iron deposit 1000; once depleted, a new deposit appears after 3 minutes.
 - **Insufficient resources** mean the order is not carried out and the scribe reports it. The full cost is paid when the order is given.

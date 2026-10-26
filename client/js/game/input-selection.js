@@ -45,7 +45,13 @@ export function onRightClick(e) {
   }
 
   const dest = { x: t.x + 0.5, y: t.y + 0.5 };
-  const result = this.session.command({ op: 'move', unitIds, x: dest.x, y: dest.y });
+  const villagers = units.filter(u => u.isVillager);
+  const site = target && target.type === 'building' &&
+    target.entity.ownerId === this.session.selfId && !target.entity.complete;
+  const command = site && villagers.length
+    ? { op: 'construct', buildingId: target.entity.id, unitIds: villagers.map(u => u.id) }
+    : { op: 'move', unitIds, x: dest.x, y: dest.y };
+  const result = this.session.command(command);
   if (result && result.ok === false) {
     this.ui.toast(result.reason, 'error');
     audio.play('error');

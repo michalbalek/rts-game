@@ -10,7 +10,7 @@
 - **Stavební okruh**: Stavba je neomezená, jen ji nelze položit v okruhu **20 bloků** od nepřátelské jednotky nebo budovy. Poddaní na rozestavěné stavbě nepřestanou stavět jen kvůli nepříteli v okolí; napadený poddaný uteče a práci přeruší.
 - **Materiál na stavbu**: stavba se hradí ze zásob panství v okamžiku položení základů. Náklady jsou u každé budovy v jejím popisu.
 - **Staveniště**: po zakoupení vznikne na místě budovy staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Bez nich stavba stojí.
-- **Zadání stavby poddaným**: hráč vybere libovolný počet poddaných a v jejich panelu v sekci **Stavět** klikne na tlačítko stavby. Vybraní poddaní pak jdou na staveniště a začnou stavět. Pravé tlačítko stavbu nezadává.
+- **Zadání stavby poddaným**: hráč vybere libovolný počet poddaných a klikne pravým tlačítkem na vlastní staveniště, nebo v jejich panelu v sekci **Stavět** klikne na tlačítko stavby. Vybraní poddaní pak jdou na staveniště a začnou stavět. Ve smíšeném výběru se přiřadí pouze poddaní; vojákům se rozkazy nezmění.
 - **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný na staveništi přidá jen polovinu rychlosti jednoho poddaného, takže celková rychlost je 1 + 0,5 × (počet poddaných − 1) násobek rychlosti jednoho. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
 - **Dokončení stavby**: po dokončení se poddaní vrátí k ohništi a čekají na další příkaz. Hotovou budovu lze používat a přiřazovat do ní dělníky (viz [ekonomika.md](ekonomika.md)).
 - **Kolize a terén**: 

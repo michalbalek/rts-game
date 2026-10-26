@@ -40,7 +40,7 @@ export function siteInfoHtml(b) {
       <div class="sel-row"><span>Rychlost stavby</span><b data-site-speed>${stats.speed}</b></div>
       <div class="sel-row"><span>Zbývá</span><b data-site-left>${stats.left}</b></div>
     </div>
-    <p class="sel-desc">Vyberte poddané a v jejich panelu klikněte na tuto stavbu (sekce Stavět). Každý další stavitel přidá ${Math.round(BUILD.extraBuilderSpeed * 100)} % základní rychlosti.</p>`;
+    <p class="sel-desc">Vyberte poddané a klikněte pravým tlačítkem na toto staveniště, nebo v jejich panelu zvolte stavbu v sekci Stavět. Každý další stavitel přidá ${Math.round(BUILD.extraBuilderSpeed * 100)} % základní rychlosti.</p>`;
 }
 
 export function constructSectionHtml(units) {
@@ -60,6 +60,6 @@ export function constructSectionHtml(units) {
         </span>
       </button>`;
   }
-  html += '</div><p class="sel-desc">Vybraní poddaní půjdou na zvolenou stavbu a začnou stavět.</p></div>';
+  html += '</div><p class="sel-desc">Vybraní poddaní půjdou na zvolenou stavbu a začnou stavět. Můžete také kliknout pravým tlačítkem přímo na vlastní staveniště.</p></div>';
   return html;
 }
