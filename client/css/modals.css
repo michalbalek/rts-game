@@ -1,0 +1,200 @@
+/* =========================================================
+   MODÁLNÍ OKNA
+   ========================================================= */
+
+#modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+#modal-root:empty {
+  display: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(8, 5, 2, 0.68);
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.16s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-box {
+  width: min(620px, 96vw);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--sandstone-border-strong);
+  background:
+    linear-gradient(180deg, rgba(62, 43, 25, 0.99), rgba(28, 18, 10, 0.99));
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 232, 190, 0.14);
+  animation: modalIn 0.18s ease;
+  overflow: hidden;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(222, 179, 112, 0.24);
+  background: linear-gradient(180deg, rgba(88, 61, 35, 0.75), rgba(48, 32, 18, 0.4));
+}
+
+.modal-header h2 {
+  font-family: var(--font-title);
+  font-size: 21px;
+  letter-spacing: 0.04em;
+  color: #fbe9c6;
+  flex: 1 1 auto;
+}
+
+.modal-icon {
+  margin-right: 3px;
+}
+
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(222, 179, 112, 0.28);
+  background: rgba(12, 8, 4, 0.42);
+  color: #e6cda3;
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.modal-close:hover {
+  background: rgba(140, 60, 40, 0.6);
+  color: #fff;
+}
+
+.modal-body {
+  padding: 18px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(222, 179, 112, 0.35) transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(222, 179, 112, 0.3);
+  border-radius: 999px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 13px 18px;
+  border-top: 1px solid rgba(222, 179, 112, 0.2);
+  background: rgba(12, 8, 4, 0.26);
+}
+
+.modal-paragraph {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.modal-paragraph strong {
+  color: #f0d8ae;
+}
+
+/* Nastavení */
+
+.modal-settings {
+  width: min(660px, 96vw);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-section {
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.2);
+  background: rgba(10, 6, 3, 0.28);
+}
+
+.form-section h4 {
+  font-family: var(--font-title);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: #e9c98f;
+  margin-bottom: 11px;
+}
+
+.form-section .form-row + .form-row {
+  margin-top: 10px;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.range-row input {
+  flex: 1 1 auto;
+}
+
+.range-value {
+  flex: 0 0 52px;
+  text-align: right;
+  font-size: 12.5px;
+  color: #f0d8ae;
+  font-variant-numeric: tabular-nums;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.static-value {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(222, 179, 112, 0.3);
+  color: #f0d8ae;
+  font-size: 13px;
+}
+

@@ -1,0 +1,85 @@
+import { BUILDING_DEFS, BUILD_MENU, MARKET_PRICES } from '../sim/constants.js';
+import { escapeHtml } from './modals.js';
+import { audio } from '../engine/audio.js';
+
+export function buildDock() {
+  if (!this.el.buildDock) return;
+  const cards = BUILD_MENU.map(type => {
+    const def = BUILDING_DEFS[type];
+    const cost = Object.entries(def.cost)
+      .filter(([, value]) => value > 0)
+      .map(([key, value]) => `${MARKET_PRICES[key]?.icon || '🪙'} ${value}`)
+      .join(' · ');
+    return `
+      <button class="build-card" data-type="${type}" title="${escapeHtml(def.name)}">
+        <span class="build-icon">${def.icon}</span>
+        <span class="build-name">${escapeHtml(def.name)}</span>
+        <span class="build-cost">${cost}</span>
+        <span class="build-size">${def.w}×${def.h}</span>
+        <span class="build-tip">
+          <strong>${escapeHtml(def.name)}</strong>
+          <span>${escapeHtml(def.desc)}</span>
+          <span class="tip-line">⏱ ${def.buildTime} s · ${def.w}×${def.h} · ❤️ ${def.hp}</span>
+          <span class="tip-line">${cost}</span>
+        </span>
+      </button>`;
+  }).join('');
+  this.el.buildDock.innerHTML = `
+    <div class="dock-heading">Stavby <span>odstup 20 bloků od nepřítele</span></div>
+    <div class="dock-cards">${cards}</div>`;
+
+  this.el.buildDock.querySelectorAll('.build-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const type = card.dataset.type;
+      this.setBuildMode(this.buildMode === type ? null : type);
+      audio.play('click', { volume: 0.6 });
+    });
+  });
+}
+
+export function refreshBuildDock() {
+  if (!this.session) return;
+  this.el.buildDock.querySelectorAll('.build-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.type === this.buildMode);
+    card.classList.toggle('unaffordable', !this.canAfford(BUILDING_DEFS[card.dataset.type].cost));
+  });
+}
+
+export function updateDockAffordability() {
+  this.refreshBuildDock();
+}
+
+export function canAfford(cost) {
+  const player = this.session && this.session.player;
+  if (!player || !player.resources || !cost) return false;
+  return Object.keys(cost).every(key => (player.resources[key] || 0) >= (cost[key] || 0));
+}
+
+export function setBuildMode(type) {
+  this.buildMode = type || null;
+  this.refreshBuildDock();
+  if (!this.el.buildBanner) return;
+  if (!this.buildMode) {
+    this.hideBanner();
+    return;
+  }
+  const def = BUILDING_DEFS[this.buildMode];
+  if (!def) { this.hideBanner(); return; }
+  this.el.buildBanner.classList.remove('hidden');
+  this.el.buildBanner.innerHTML = `
+    <span class="banner-icon">${def.icon}</span>
+    <span class="banner-text">
+      <strong>Stavím: ${escapeHtml(def.name)}</strong>
+      <span>Levé tlačítko umístí budovu · pravé tlačítko nebo ESC zruší</span>
+    </span>
+    <button class="btn btn-secondary btn-small" id="cancel-build">Zrušit</button>`;
+  const cancel = this.el.buildBanner.querySelector('#cancel-build');
+  if (cancel) cancel.addEventListener('click', () => this.setBuildMode(null));
+}
+
+export function hideBanner() {
+  if (this.el.buildBanner) {
+    this.el.buildBanner.classList.add('hidden');
+    this.el.buildBanner.innerHTML = '';
+  }
+}

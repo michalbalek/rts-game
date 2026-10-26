@@ -128,13 +128,15 @@ The server determines the map, starting capital and fog of war. Multiplayer has 
 
 ## 🧪 Tests
 
-The tests cover the simulation and client logic:
+The tests cover simulation, client logic, server rooms and repository rules:
 
 ```bash
-npm test              # simulation, client and commit message format
+npm test              # all tests including source file size checks
 npm run test:sim      # map generation, economy, market, training, repairs, demolition, fog, warehouses, combat, pathfinding
 npm run test:client   # zoom limits, click and rectangle selection, hitboxes
 npm run test:commit   # commit message validator (Conventional Commits)
+npm run test:rooms    # connections, lobby, reconnection and match lifecycle
+npm run test:structure # maximum of 500 lines per source file
 ```
 
 The tests require neither a running server nor a browser.
@@ -148,7 +150,7 @@ rts-game/
 ├─ .githooks/               # Git hook checking commit messages
 ├─ client/                  # Client application
 │  ├─ index.html            # DOM skeleton of the HUD, menus and modals
-│  ├─ css/style.css         # Desert sandstone visual style
+│  ├─ css/                  # Styles by UI area; style.css entry point
 │  └─ js/
 │     ├─ sim/               # Shared simulation without DOM (client and server)
 │     │  ├─ constants.js    # Stats, prices, maps, bots
@@ -164,11 +166,16 @@ rts-game/
 ├─ server/
 │  └─ src/
 │     ├─ index.js           # Static server, API and WebSocket upgrade
-│     ├─ rooms.js           # Rooms, lobby, authoritative loop
+│     ├─ rooms.js           # Room management and player login
+│     ├─ room.js            # Connections and lobby
+│     ├─ room-match.js      # Authoritative loop and match lifecycle
+│     ├─ room-config.js     # Shared limits and timing
 │     └─ websocket.js       # Minimal RFC 6455 WebSocket server
 ├─ tools/
 │  ├─ test-sim.js           # Simulation tests
 │  ├─ test-client.js        # Camera, zoom and selection tests
+│  ├─ test-rooms.js         # Room and match lifecycle tests
+│  ├─ test-structure.js     # Source file size checks
 │  ├─ check-commit-msg.js   # Commit message validator
 │  └─ test-commit-msg.js    # Validator tests
 ├─ dokumentace/             # Game specification (in Czech)
@@ -197,6 +204,8 @@ The complete specification is in the [`dokumentace/`](dokumentace/) folder (in C
 ## 🤝 Contributing
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The rules and steps to enable the commit message check are in [CONTRIBUTING.md](CONTRIBUTING.md) (in Czech).
+
+Source files should target at most 300 lines, with a maximum of 500 lines. See the [code maintainability guidelines](CONTRIBUTING.md#velikost-souborů-a-členění-kódu) (in Czech) for splitting code into modules and logical sections and gradually updating existing oversized files.
 
 ---
 

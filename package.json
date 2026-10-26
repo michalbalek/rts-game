@@ -6,10 +6,12 @@
   "scripts": {
     "start": "node server/src/index.js",
     "dev": "node --watch server/src/index.js",
-    "test": "node tools/test-sim.js && node tools/test-client.js && node tools/test-commit-msg.js",
+    "test": "node tools/test-sim.js && node tools/test-client.js && node tools/test-rooms.js && node tools/test-commit-msg.js && node tools/test-structure.js",
     "test:sim": "node tools/test-sim.js",
     "test:client": "node tools/test-client.js",
-    "test:commit": "node tools/test-commit-msg.js"
+    "test:commit": "node tools/test-commit-msg.js",
+    "test:rooms": "node tools/test-rooms.js",
+    "test:structure": "node tools/test-structure.js"
   },
   "keywords": ["rts", "game", "isometric", "strategy"],
   "author": "",

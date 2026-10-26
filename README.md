@@ -128,13 +128,15 @@ Mapu, startovní kapitál a mlhu války určuje server. Multiplayer neobsahuje b
 
 ## 🧪 Testy
 
-Testy pokrývají simulaci i klientskou logiku:
+Testy pokrývají simulaci, klientskou logiku, serverové místnosti a pravidla repozitáře:
 
 ```bash
-npm test              # simulace, klient a formát zpráv commitů
+npm test              # všechny testy včetně kontroly velikosti souborů
 npm run test:sim      # generování map, ekonomika, obchod, výcvik, opravy, bourání, mlha, sklady, boj, pathfinding
 npm run test:client   # meze zoomu, výběr kliknutím i obdélníkem, hitboxy
 npm run test:commit   # validátor zpráv commitů (Conventional Commits)
+npm run test:rooms    # připojení, lobby, obnovení spojení a životní cyklus hry
+npm run test:structure # maximum 500 řádků ve zdrojových souborech
 ```
 
 Testy nevyžadují běžící server ani prohlížeč.
@@ -148,7 +150,7 @@ rts-game/
 ├─ .githooks/               # Git hook kontrolující zprávy commitů
 ├─ client/                  # Klientská aplikace
 │  ├─ index.html            # DOM kostra HUD, menu a modálů
-│  ├─ css/style.css         # Pouštní pískovcový vizuální styl
+│  ├─ css/                  # Styly podle oblastí rozhraní; vstup style.css
 │  └─ js/
 │     ├─ sim/               # Sdílená simulace bez DOM (klient i server)
 │     │  ├─ constants.js    # Statistiky, ceny, mapy, boti
@@ -164,11 +166,16 @@ rts-game/
 ├─ server/
 │  └─ src/
 │     ├─ index.js           # Statický server, API a WebSocket upgrade
-│     ├─ rooms.js           # Místnosti, lobby, autoritativní smyčka
+│     ├─ rooms.js           # Správce místností a přihlášení hráčů
+│     ├─ room.js            # Připojení a lobby
+│     ├─ room-match.js      # Autoritativní smyčka a životní cyklus hry
+│     ├─ room-config.js     # Sdílené limity a časování
 │     └─ websocket.js       # Minimální RFC 6455 WebSocket server
 ├─ tools/
 │  ├─ test-sim.js           # Simulační testy
 │  ├─ test-client.js        # Testy kamery, zoomu a výběru
+│  ├─ test-rooms.js         # Testy místností a životního cyklu hry
+│  ├─ test-structure.js     # Kontrola velikosti zdrojových souborů
 │  ├─ check-commit-msg.js   # Validátor zpráv commitů
 │  └─ test-commit-msg.js    # Testy validátoru zpráv
 ├─ dokumentace/             # Herní specifikace
@@ -197,6 +204,8 @@ Kompletní specifikace je ve složce [`dokumentace/`](dokumentace/):
 ## 🤝 Přispívání
 
 Commity se řídí [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). Pravidla a aktivaci kontroly zpráv najdeš v [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Pro zdrojové soubory platí cíl do 300 řádků a maximum 500 řádků. Postup rozdělování do modulů a logických sekcí i postupné úpravy starších souborů popisují [pravidla udržitelnosti kódu](CONTRIBUTING.md#velikost-souborů-a-členění-kódu).
 
 ---
 

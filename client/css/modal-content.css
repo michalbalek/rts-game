@@ -1,0 +1,304 @@
+/* Nápověda a kredity */
+
+.modal-help {
+  width: min(880px, 96vw);
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.help-section {
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.2);
+  background: rgba(10, 6, 3, 0.26);
+}
+
+.help-section:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.help-section h4 {
+  font-family: var(--font-title);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: #e9c98f;
+  margin-bottom: 8px;
+}
+
+.help-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.help-section li {
+  position: relative;
+  padding-left: 13px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.help-section li::before {
+  content: '◆';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 7px;
+  color: #b98b4c;
+  line-height: 2.2;
+}
+
+.help-section strong {
+  color: #f0d8ae;
+}
+
+.credits-content {
+  text-align: center;
+}
+
+.credits-logo {
+  width: 62px;
+  height: 70px;
+  margin: 0 auto 10px;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  color: #42240e;
+  background: linear-gradient(160deg, #f8e5bc, #c3914d);
+  clip-path: polygon(50% 0%, 100% 12%, 100% 66%, 50% 100%, 0% 66%, 0% 12%);
+}
+
+.credits-content h3 {
+  font-family: var(--font-title);
+  font-size: 26px;
+  letter-spacing: 0.1em;
+  color: #fbe9c6;
+}
+
+.credits-subtitle {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  margin: 4px 0 18px;
+}
+
+.credits-block {
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.18);
+  background: rgba(10, 6, 3, 0.24);
+  text-align: left;
+}
+
+.credits-block h4 {
+  font-family: var(--font-title);
+  font-size: 13.5px;
+  letter-spacing: 0.06em;
+  color: #e9c98f;
+  margin-bottom: 5px;
+}
+
+.credits-block p,
+.credits-block li {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.credits-block ul {
+  list-style: none;
+}
+
+.credits-block li::before {
+  content: '· ';
+  color: #b98b4c;
+}
+
+/* Obchod */
+
+.modal-market {
+  width: min(720px, 96vw);
+}
+
+.market-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 13px;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+.market-top b {
+  color: #f8e5bc;
+  font-size: 17px;
+}
+
+.market-amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.market-amount .text-input {
+  width: 90px;
+  padding: 7px 9px;
+}
+
+.market-head {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 0.8fr 0.8fr 1.5fr;
+  gap: 8px;
+  padding: 0 8px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.market-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.market-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 0.8fr 0.8fr 1.5fr;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.2);
+  background: rgba(10, 6, 3, 0.3);
+}
+
+.market-name {
+  font-weight: 600;
+  color: #f0d8ae;
+  font-size: 13px;
+}
+
+.market-stock {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.market-price {
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.market-price.buy {
+  color: #fca5a5;
+}
+
+.market-price.sell {
+  color: #86efac;
+}
+
+.market-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.modal-market .form-hint {
+  margin-top: 12px;
+}
+
+/* Výsledky */
+
+.modal-results {
+  width: min(760px, 96vw);
+}
+
+.results-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.3);
+  background: rgba(10, 6, 3, 0.3);
+  margin-bottom: 14px;
+}
+
+.results-banner > span {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.results-banner strong {
+  display: block;
+  font-family: var(--font-title);
+  font-size: 20px;
+  letter-spacing: 0.03em;
+}
+
+.results-banner span {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.results-banner.victory {
+  border-color: rgba(250, 211, 143, 0.6);
+  background: linear-gradient(90deg, rgba(120, 80, 24, 0.55), rgba(10, 6, 3, 0.24));
+}
+
+.results-banner.defeat {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: linear-gradient(90deg, rgba(88, 24, 18, 0.5), rgba(10, 6, 3, 0.24));
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.results-table th {
+  text-align: left;
+  padding: 7px 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(222, 179, 112, 0.28);
+}
+
+.results-table td {
+  padding: 8px;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(222, 179, 112, 0.12);
+  font-variant-numeric: tabular-nums;
+}
+
+.results-table tr.winner td {
+  color: #f8e5bc;
+  background: rgba(240, 180, 90, 0.1);
+}
+
+.results-table tr.dead td {
+  opacity: 0.6;
+}
+
+.results-table td:first-child {
+  font-weight: 600;
+  color: #f0d8ae;
+}
+

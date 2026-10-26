@@ -1,0 +1,118 @@
+/* =========================================================
+   RESPONSIVITA
+   ========================================================= */
+
+/* Devět karet v jedné řadě ořezává ceny staveb, proto dok do 1600 px má dvě řady. */
+@media (max-width: 1600px) {
+  .dock-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .build-size { display: none; }
+}
+
+@media (max-width: 1240px) {
+  .hud-brand-text { display: none; }
+  .hud-bottom { grid-template-columns: 300px minmax(0, 1fr) 232px; }
+  .minimap-panel { --minimap-size: 140px; }
+  .build-card { flex-direction: row; justify-content: flex-start; gap: 6px; padding: 5px 7px; }
+  .build-name { font-size: 9px; }
+  .build-cost { font-size: 8px; }
+}
+
+@media (max-width: 1080px) {
+  .menu-shell { grid-template-columns: 1fr; gap: 26px; max-width: 760px; }
+  .menu-brand { text-align: center; }
+  .brand-crest { display: flex; justify-content: center; }
+  .brand-flavor { margin-left: auto; margin-right: auto; }
+  .brand-badges, .brand-footer { justify-content: center; }
+  .setup-grid { grid-template-columns: 1fr; }
+  .map-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lobby-grid { grid-template-columns: 1fr; }
+  .help-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1120px) {
+  #hud { --hud-top-height: 96px; }
+  .hud-top {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 30px 38px;
+    gap: 8px 12px;
+    padding: 9px 12px;
+  }
+  .hud-resources { grid-row: 2; grid-column: 1 / -1; height: 38px; }
+  .hud-status { justify-content: flex-end; padding-right: 0; border-right: 0; }
+  .hud-controls { justify-content: flex-end; }
+  .hud-menu-btn { height: 30px; }
+}
+
+@media (max-width: 860px) {
+  .menu-screen { padding: 20px 18px; }
+  .mode-grid { grid-template-columns: 1fr; }
+  .mode-card { min-height: 0; }
+  .multi-card { grid-template-columns: 1fr; }
+  .multi-card-art { min-height: 100px; }
+  .map-grid { grid-template-columns: 1fr; }
+  .map-preview { height: 96px; }
+  .hud-bottom {
+    grid-template-columns: minmax(0, 1fr) 232px;
+    grid-template-rows: auto auto;
+    gap: 7px;
+  }
+  .selection-panel { grid-column: 1 / -1; max-height: 168px; min-height: 0; }
+  .build-dock { min-height: 0; }
+  .dock-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .minimap-panel { grid-row: 2; }
+}
+
+@media (max-width: 620px) {
+  .menubar-actions .btn { width: 100%; }
+  .menu-secondary-row { grid-template-columns: 1fr; }
+  .choice-row { grid-template-columns: 1fr; }
+  .multi-rules { grid-template-columns: 1fr; }
+  .lobby-footer { flex-direction: column; gap: 6px; }
+  .modal-body { padding: 14px; }
+  .modal-actions { padding: 11px 14px; }
+  .market-head { display: none; }
+  .market-row { grid-template-columns: 1fr 1fr; }
+  .market-actions { justify-content: flex-start; }
+  .results-table { font-size: 11px; }
+  .results-table th:nth-child(n+4),
+  .results-table td:nth-child(n+4) { display: none; }
+  .hud-brand { display: none; }
+  .hud-top { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 9px 8px; }
+  .hud-status { justify-content: flex-start; gap: 10px; }
+  .storage-chips { gap: 10px; }
+  .res-card {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    grid-template-rows: 12px 16px;
+    gap: 0 3px;
+    padding: 3px 6px;
+  }
+  .res-card .res-info { display: contents; }
+  .res-icon { font-size: 12px; }
+  .res-card .res-label { grid-column: 2; }
+  .res-value { grid-column: 1 / -1; }
+  .storage-chip > span, .population-badge > span { display: none; }
+  .res-value { font-size: 13px; }
+  .res-label { font-size: 8px; letter-spacing: 0.02em; }
+  .hud-menu-btn kbd { display: none; }
+  .fps-counter { font-size: 9px; padding: 2px 4px; }
+  .hud-controls { gap: 4px; }
+  .hud-bottom { grid-template-columns: 1fr; }
+  .minimap-panel { display: none; }
+  .selection-panel { max-height: 150px; min-height: 0; }
+}
+
+@media (max-width: 380px) {
+  .hud-status, .storage-chips { gap: 6px; }
+  .storage-chip, .population-badge { gap: 3px; }
+  .storage-chip b, .population-badge b { font-size: 10px; }
+  .res-card { padding: 3px 4px; }
+  .hud-menu-btn { gap: 4px; padding: 0 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,131 @@
+/* =========================================================
+   SPOLEČNÉ PRVKY
+   ========================================================= */
+
+.crusader-crest {
+  width: 52px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(160deg, #f8e5bc 0%, #d5a961 48%, #9a6b32 100%);
+  clip-path: polygon(50% 0%, 100% 12%, 100% 66%, 50% 100%, 0% 66%, 0% 12%);
+  box-shadow: 0 0 22px rgba(240, 180, 90, 0.35);
+  color: #4a2610;
+  flex: 0 0 auto;
+}
+
+.crest-cross {
+  font-size: 26px;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--sandstone-border);
+  background: linear-gradient(180deg, rgba(88, 61, 36, 0.95), rgba(52, 35, 20, 0.95));
+  color: var(--parchment);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--sandstone-border-strong);
+  background: linear-gradient(180deg, rgba(108, 76, 44, 0.98), rgba(64, 44, 25, 0.98));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--crusader-gold);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #d99a45, #a86421);
+  border-color: rgba(255, 222, 160, 0.55);
+  color: #2b1507;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #eab05a, #b87328);
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #a83226, #6e1c16);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #ffe9e3;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(180deg, #c03a2d, #7f241c);
+}
+
+.btn-small {
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.btn.wide {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.text-input,
+.select-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 179, 112, 0.4);
+  background: rgba(18, 12, 7, 0.75);
+  color: var(--parchment);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.text-input:focus,
+.select-input:focus {
+  border-color: var(--crusader-gold);
+  box-shadow: 0 0 0 3px rgba(240, 180, 90, 0.16);
+}
+
+.text-input.large {
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+}
+
+.select-input option {
+  background: #24170d;
+  color: var(--parchment);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--crusader-gold);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--crusader-gold);
+  width: 17px;
+  height: 17px;
+}
+
