@@ -24,7 +24,7 @@
 - **Kapacita**: 20 obyvatel z hradu a 8 dalších za každé obydlí.
 - **Přiřazení**: volné obyvatele lze přiřadit jako dělníky do Dřevorubce, Kamenolomu, Jabloňového sadu a Železného dolu, nebo rekrutovat jako vojáky (pěšáci v Královském hradu, lučištníci v Kasárnách).
 - **Stavění**: po zakoupení budovy vznikne staveniště. Vybrané volné obyvatele přidělíte tlačítkem stavby v sekci Stavět v jejich panelu. Pracují na něm, dokud není budova hotová. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi (viz [budovy.md](budovy.md)).
-- **Práce dělníka**: dělník přiřazený k budově nejdřív přijde k této budově. Pak jde ke zdroji, chodí kolem něj (zhruba do 3 dlaždic) a sbírá suroviny. U dřevorubce je zdrojem nejbližší dosažitelný strom od budovy, bez pevného limitu vzdálenosti. V místní hře je na mapě vidět čára od dělníka k jeho cíli, například k sadu.
+- **Práce dělníka**: dělník přiřazený k budově nejdřív přijde k této budově. U uzavřených budov zůstává venku u vstupu/obvodu budovy a chodí ke zdroji (např. stromy, ložisko). U otevřených budov (Jabloňový sad) dělník vstupuje přímo do sadu, chodí po trávě mezi stromy (kde je plně viditelný a neskrývá se pod texturou) a sbírá jablka. V místní hře je na mapě vidět čára od dělníka k jeho cíli.
 - **Nosnost**: dělník nese 10 jednotek najednou. U botů se nosnost řídí obtížností.
 - **Doba sběru**: 10 kusů trvá 20 s.
 - **Produkce**: jeden dělník dá nejvýše 30 jednotek za minutu (10 za 20 s). Skutečně dá méně, protože cesta k cíli a zpět trvá. Čím je cíl dál, tím je produkce nižší.
@@ -48,5 +48,5 @@
 - **Náboženství a zábava**: zatím neovlivňují spokojenost, je to plánované rozšíření.
 
 ## Hospodářské řetězce
-- Jabloňový sad zajišťuje jídlo. Dělníci ho odnášejí do nejbližší sýpky, bez sýpky do hradu. Každá sýpka zvyšuje kapacitu jídla o 300 jednotek.
+- Jabloňový sad zajišťuje jídlo. Sad je otevřená plocha, kde dělníci viditelně sbírají jablka mezi stromy a odnášejí je do nejbližší sýpky, bez sýpky do hradu. Každá sýpka zvyšuje kapacitu jídla o 300 jednotek.
 - Železný důl těží železnou rudu z ložiska. Dělníci ji odnášejí do nejbližšího dosažitelného hotového skladu nebo hradu, kde se eviduje jako železo.

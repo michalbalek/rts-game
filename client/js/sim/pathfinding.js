@@ -5,6 +5,8 @@ import { TILE_TYPES, RESOURCE_TYPES } from './constants.js';
  * Hluboká voda, stromy a budovy jsou neprůchodné. Mělká voda (brody) průchodná.
  */
 export function isTileWalkable(map, x, y) {
+  x = Math.floor(x);
+  y = Math.floor(y);
   if (x < 0 || y < 0 || x >= map.size || y >= map.size) return false;
   const tile = map.tiles[y * map.size + x];
   if (tile === TILE_TYPES.WATER_DEEP) return false;
@@ -108,6 +110,8 @@ function reconstruct(cameFrom, idx, size) {
 }
 
 export function findNearestWalkable(map, blockGrid, x, y, maxRadius = 6) {
+  x = Math.floor(x);
+  y = Math.floor(y);
   if (isTileWalkable(map, x, y) && !blockGrid[y * map.size + x]) return { x, y };
   for (let r = 1; r <= maxRadius; r++) {
     for (let dy = -r; dy <= r; dy++) {

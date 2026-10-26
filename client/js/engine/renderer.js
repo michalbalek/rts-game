@@ -204,12 +204,49 @@ export class Renderer {
     const rows = this.getVisibleRows(camera);
     this.drawTerrain(ctx, rows);
     this.drawResources(ctx, rows);
+    this.drawBuildingsGround(ctx, bounds, ui);
 
     const renderList = [];
     for (const b of this.session.state.buildings) {
       if (!this.entityVisible(b)) continue;
       if (!this.inBounds(b.centerX, b.centerY, bounds, 8)) continue;
-      renderList.push({ kind: b.type === 'castle' ? 'castle' : 'building', entity: b, depth: b.tileX + b.tileY + b.width + b.height });
+
+      if (b.type === 'orchard') {
+        // Otevřená budova: jabloně a košík se řadí samostatně podle izometrické hloubky.
+        // Travnatý podklad se kreslí na úrovni terénu (drawBuildingsGround), takže dělníci
+        // chodí po trávě a nikdy pod texturou sadu.
+        for (let gy = 0; gy < 3; gy++) {
+          for (let gx = 0; gx < 3; gx++) {
+            const u = 0.62 + gx * 1.16;
+            const v = 0.62 + gy * 1.16;
+            renderList.push({
+              kind: 'orchard_tree',
+              entity: b,
+              gx, gy, u, v,
+              depth: b.tileX + b.tileY + u + v
+            });
+          }
+        }
+        renderList.push({
+          kind: 'orchard_basket',
+          entity: b,
+          depth: b.tileX + b.tileY + 0.4 + b.height - 0.55
+        });
+        renderList.push({
+          kind: 'building_overlay',
+          entity: b,
+          depth: b.tileX + b.tileY + b.width + b.height + 0.5
+        });
+      } else {
+        // Uzavřená budova: hloubka přední stěny. Postavy procházející před budovou (jižně/východně)
+        // se kreslí před budovou, postavy za budovou jsou přirozeně cloněny jejími stěnami.
+        renderList.push({
+          kind: b.type === 'castle' ? 'castle' : 'building',
+          entity: b,
+          depth: b.tileX + b.tileY + Math.max(b.width, b.height)
+        });
+      }
+
       if (b.type === 'castle') {
         const fire = this.campfirePos(b);
         renderList.push({ kind: 'campfire', x: fire.x, y: fire.y, depth: fire.x + fire.y - 0.2 });
@@ -229,6 +266,12 @@ export class Renderer {
         this.drawUnit(ctx, item.entity, ui, camera);
       } else if (item.kind === 'campfire') {
         this.drawCampfire(ctx, item.x, item.y);
+      } else if (item.kind === 'orchard_tree') {
+        this.drawOrchardTree(ctx, item.entity, item.gx, item.gy, item.u, item.v);
+      } else if (item.kind === 'orchard_basket') {
+        this.drawOrchardBasket(ctx, item.entity);
+      } else if (item.kind === 'building_overlay') {
+        this.drawBuildingOverlay(ctx, item.entity, ui);
       }
     }
 
@@ -725,7 +768,136 @@ export class Renderer {
     }
   }
 
-  drawBuilding(ctx, b, ui, camera) {
+  drawBuildingsGround(ctx, bounds, ui) {
+    if (!this.session || !this.session.state || !this.session.state.buildings) return;
+    for (const b of this.session.state.buildings) {
+      if (!this.entityVisible(b)) continue;
+      if (!this.inBounds(b.centerX, b.centerY, bounds, 8)) continue;
+
+      const pos = tileToScreen(b.tileX, b.tileY);
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+
+      // Kontaktní stín pod budovou – sedí přímo na terénu pod jednotkami.
+      const shadow = buildingShadow(b.width, b.height);
+      ctx.save();
+      ctx.translate(shadow.cx, shadow.cy);
+      ctx.scale(shadow.rx, shadow.ry);
+      const shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      shadowGrad.addColorStop(0, 'rgba(44, 28, 11, 0.24)');
+      shadowGrad.addColorStop(0.68, 'rgba(44, 28, 11, 0.2)');
+      shadowGrad.addColorStop(0.9, 'rgba(44, 28, 11, 0.07)');
+      shadowGrad.addColorStop(1, 'rgba(44, 28, 11, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      const selected = ui.selectedBuilding && ui.selectedBuilding.id === b.id;
+      const hovered = ui.hoverEntity && ui.hoverEntity.entity && ui.hoverEntity.entity.id === b.id;
+      if (selected) {
+        this.drawFootprint(ctx, b.width, b.height, 'rgba(240, 192, 90, 0.2)', '#f0c05a', 2.4);
+      } else if (hovered) {
+        this.drawFootprint(ctx, b.width, b.height, 'rgba(255, 235, 180, 0.07)', 'rgba(255, 235, 180, 0.5)', 1.4);
+      }
+      ctx.restore();
+
+      // Pokud je to otevřená plocha (jablečný sad), vykreslí se travnatý podklad na úrovni terénu.
+      if (b.type === 'orchard') {
+        this.drawOrchardGround(ctx, b);
+      }
+    }
+  }
+
+  drawOrchardGround(ctx, b) {
+    const w = b.width;
+    const h = b.height;
+    const pos = tileToScreen(b.tileX, b.tileY);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    if (!b.complete) {
+      ctx.globalAlpha = clamp(0.28 + b.progress * 0.6, 0.28, 0.9);
+    }
+    this.isoGround(ctx, 0, 0, w, h, 0, '#355f25');
+    this.isoGround(ctx, 0.15, 0.15, w - 0.15, h - 0.15, 0, '#3f7330');
+
+    // Nízká zídka (obrubník sadu).
+    const wall = { top: '#d8b071', left: '#966e3a', right: '#bd9154' };
+    this.isoBox(ctx, 0, 0, 0.1, h, 0, 4, wall, null);
+    this.isoBox(ctx, 0, 0, w, 0.1, 0, 4, wall, null);
+    this.isoBox(ctx, w - 0.1, 0, w, h, 0, 4, wall, null);
+    this.isoBox(ctx, 0, h - 0.1, w, h, 0, 4, wall, null);
+
+    // Zavlažovací strouha.
+    this.isoGround(ctx, w / 2 - 0.06, 0.15, w / 2 + 0.06, h - 0.15, 0, '#2a7d8c');
+    ctx.restore();
+  }
+
+  drawOrchardTree(ctx, b, gx, gy, u, v) {
+    const pos = tileToScreen(b.tileX, b.tileY);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    if (!b.complete) {
+      ctx.globalAlpha = clamp(0.28 + b.progress * 0.6, 0.28, 0.9);
+    }
+    const base = this.isoPoint(u, v, 0);
+    const top = this.isoPoint(u, v, 13);
+    ctx.fillStyle = 'rgba(16, 36, 10, 0.3)';
+    ctx.beginPath(); ctx.ellipse(base.x + 2, base.y + 1, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#6b4423';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y); ctx.stroke();
+    const sway = Math.sin(this.time * 1.5 + gx + gy) * 1.2;
+    ctx.fillStyle = '#2d7a26';
+    ctx.beginPath(); ctx.arc(top.x + sway, top.y - 4, 7.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3d8f31';
+    ctx.beginPath(); ctx.arc(top.x + sway - 3, top.y - 7, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(top.x + sway + 3, top.y - 3, 1.7, 0, Math.PI * 2);
+    ctx.arc(top.x + sway - 2, top.y - 8, 1.7, 0, Math.PI * 2);
+    ctx.arc(top.x + sway + 1, top.y - 9, 1.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawOrchardBasket(ctx, b) {
+    const pos = tileToScreen(b.tileX, b.tileY);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    if (!b.complete) {
+      ctx.globalAlpha = clamp(0.28 + b.progress * 0.6, 0.28, 0.9);
+    }
+    const basket = this.isoPoint(0.4, b.height - 0.55, 0);
+    ctx.fillStyle = '#9a6b2f';
+    ctx.beginPath(); ctx.ellipse(basket.x, basket.y, 4.5, 2.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(basket.x - 1.6, basket.y - 1.5, 1.5, 0, Math.PI * 2);
+    ctx.arc(basket.x + 1.6, basket.y - 1.8, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawBuildingOverlay(ctx, b, ui) {
+    const def = b.config || BUILDING_DEFS[b.type];
+    if (!def) return;
+    const selected = ui.selectedBuilding && ui.selectedBuilding.id === b.id;
+    const pos = tileToScreen(b.tileX, b.tileY);
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    if (!b.complete) {
+      this.drawScaffolding(ctx, b);
+      this.drawConstructionBar(ctx, b, def);
+    } else {
+      this.drawOwnerFlag(ctx, b, def);
+      this.drawBuildingStatus(ctx, b, def, selected);
+    }
+    ctx.restore();
+  }
+
+  drawBuilding(ctx, b, ui, camera, includeGround = false) {
     const def = b.config || BUILDING_DEFS[b.type];
     if (!def) return;
     const selected = ui.selectedBuilding && ui.selectedBuilding.id === b.id;
@@ -735,27 +907,27 @@ export class Renderer {
     ctx.save();
     ctx.translate(pos.x, pos.y);
 
-    // Kontaktní stín pod budovou. Musí být ve stopě, aby budova seděla na zemi.
-    // Měkký přechod zabrání tomu, aby kolem budovy vznikl tvrdý tmavý kruh.
-    const shadow = buildingShadow(b.width, b.height);
-    ctx.save();
-    ctx.translate(shadow.cx, shadow.cy);
-    ctx.scale(shadow.rx, shadow.ry);
-    const shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-    shadowGrad.addColorStop(0, 'rgba(44, 28, 11, 0.24)');
-    shadowGrad.addColorStop(0.68, 'rgba(44, 28, 11, 0.2)');
-    shadowGrad.addColorStop(0.9, 'rgba(44, 28, 11, 0.07)');
-    shadowGrad.addColorStop(1, 'rgba(44, 28, 11, 0)');
-    ctx.fillStyle = shadowGrad;
-    ctx.beginPath();
-    ctx.arc(0, 0, 1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    if (includeGround) {
+      const shadow = buildingShadow(b.width, b.height);
+      ctx.save();
+      ctx.translate(shadow.cx, shadow.cy);
+      ctx.scale(shadow.rx, shadow.ry);
+      const shadowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      shadowGrad.addColorStop(0, 'rgba(44, 28, 11, 0.24)');
+      shadowGrad.addColorStop(0.68, 'rgba(44, 28, 11, 0.2)');
+      shadowGrad.addColorStop(0.9, 'rgba(44, 28, 11, 0.07)');
+      shadowGrad.addColorStop(1, 'rgba(44, 28, 11, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-    if (selected) {
-      this.drawFootprint(ctx, b.width, b.height, 'rgba(240, 192, 90, 0.2)', '#f0c05a', 2.4);
-    } else if (hovered) {
-      this.drawFootprint(ctx, b.width, b.height, 'rgba(255, 235, 180, 0.07)', 'rgba(255, 235, 180, 0.5)', 1.4);
+      if (selected) {
+        this.drawFootprint(ctx, b.width, b.height, 'rgba(240, 192, 90, 0.2)', '#f0c05a', 2.4);
+      } else if (hovered) {
+        this.drawFootprint(ctx, b.width, b.height, 'rgba(255, 235, 180, 0.07)', 'rgba(255, 235, 180, 0.5)', 1.4);
+      }
     }
 
     if (!b.complete) {

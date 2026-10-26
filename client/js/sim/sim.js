@@ -419,6 +419,21 @@ export class GameSim {
     }
     this.buildings.push(building);
     this.rebuildBlockGrid();
+
+    // Žádná jednotka nesmí uvíznout pod staveništěm ani uvnitř uzavřené budovy.
+    for (const u of this.units) {
+      if (building.containsTile(Math.floor(u.x), Math.floor(u.y)) ||
+          (u.x >= x - 0.2 && u.x <= x + def.w + 0.2 && u.y >= y - 0.2 && u.y <= y + def.h + 0.2)) {
+        const safe = findNearestWalkable(this.map, this.blockGrid, u.x, u.y, 10);
+        if (safe) {
+          u.x = safe.x + 0.5;
+          u.y = safe.y + 0.5;
+          u.setPath([]);
+          u.moveTarget = null;
+        }
+      }
+    }
+
     this.emit('toast', {
       playerId,
       text: `Stavba zahájena: ${def.name}`,
@@ -452,7 +467,8 @@ export class GameSim {
     b.repair = { workerId: worker.id };
     worker.work = null;
     worker.repairBuildingId = b.id;
-    this.navigateTo(worker, b.centerX, b.centerY);
+    const approach = this.findBuildingApproach(worker, b);
+    if (approach) this.navigateTo(worker, approach.x, approach.y);
     this.emit('toast', { playerId, text: `Oprava zahájena: ${b.config.name}`, kind: 'info' });
     return { ok: true };
   }
@@ -533,7 +549,8 @@ export class GameSim {
       }
     }
     if (!candidates.length) {
-      return { x: building.centerX, y: building.centerY };
+      const safe = findNearestWalkable(this.map, this.blockGrid, building.centerX, building.centerY, 15);
+      return safe ? { x: safe.x + 0.5, y: safe.y + 0.5 } : { x: building.centerX, y: building.centerY };
     }
     return candidates[Math.floor(this.rng() * candidates.length)];
   }
@@ -1246,9 +1263,13 @@ export class GameSim {
       this.emit('toast', { playerId: b.ownerId, text: `Oprava dokončena: ${b.config.name}`, kind: 'success' });
       return;
     }
-    if (!this.unitAt(unit, b.centerX, b.centerY, Math.max(b.width, b.height) / 2 + 1.6)) {
-      if (unit.path.length === 0) {
-        this.navigateTo(unit, b.centerX, b.centerY);
+    const approach = this.findBuildingApproach(unit, b);
+    const inReach = approach
+      ? this.unitAt(unit, approach.x, approach.y, 1.2)
+      : this.unitAt(unit, b.centerX, b.centerY, Math.max(b.width, b.height) / 2 + 1.6);
+    if (!inReach) {
+      if (unit.path.length === 0 && approach) {
+        this.navigateTo(unit, approach.x, approach.y);
       }
       return;
     }
@@ -1629,6 +1650,21 @@ export class GameSim {
             b.hp = b.maxHp;
             this.rebuildBlockGrid();
             this.releaseBuildersOf(b.id, true);
+
+            // Po dokončení uzavřené budovy ověříme, že uvnitř nezůstala žádná jednotka.
+            if (!def.passable) {
+              for (const u of this.units) {
+                if (b.containsTile(Math.floor(u.x), Math.floor(u.y))) {
+                  const safe = findNearestWalkable(this.map, this.blockGrid, u.x, u.y, 10);
+                  if (safe) {
+                    u.x = safe.x + 0.5;
+                    u.y = safe.y + 0.5;
+                    u.setPath([]);
+                    u.moveTarget = null;
+                  }
+                }
+              }
+            }
             this.emit('buildingComplete', {
               playerId: b.ownerId,
               x: b.centerX,

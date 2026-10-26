@@ -36,7 +36,7 @@ Projekt se skládá z:
 4. **Kamenolom (Quarry)**:
    - Pískovcový a vápencový lom s těžebním jeřábem na skalních nalezištích.
 5. **Jabloňový sad (Apple Orchard)**:
-   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Zajišťuje stálý přísun jídla do nejbližší sýpky (bez sýpky do hradu) a udržuje vysokou spokojenost lidu.
+   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Na rozdíl od uzavřených staveb jde o otevřenou plochu, kde dělníci chodí přímo v sadu po trávě mezi stromy a jsou plně viditelní (nejsou vykresleni pod texturou). Zajišťuje stálý přísun jídla do nejbližší sýpky (bez sýpky do hradu) a udržuje vysokou spokojenost lidu.
 6. **Obchod (Market)**:
    - Tržnice, kde hráč nakupuje a prodává suroviny za pevné ceny.
 7. **Obydlí (Dwelling)**:

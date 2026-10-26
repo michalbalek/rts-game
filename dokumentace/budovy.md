@@ -19,6 +19,14 @@
   - Výjimka: sklady lze stavět přímo vedle sebe bez pruhu.
   - Dlaždice pod budovou musí být volné (přírodní zdroje jako stromy či kameny se při stavbě vyčistí, nebo je stavba přímo vyžaduje jako kamenolom).
 
+### Uzavřené a otevřené budovy, kolize a vykreslování postav
+- **Uzavřené budovy**: Všechny stavby s pevnými stěnami (Královský hrad, Kasárna, Dřevorubec, Kamenolom, Obchod, Obydlí, Sýpka, Sklad, Železný důl) jsou uzavřené. Žádná postava (NPC, dělník ani voják) na ně nemůže vstoupit ani skrz ně procházet. Při zahájení stavby i při jejím dokončení jsou případné jednotky nacházející se pod půdorysem stavby automaticky bezpečně odsunuty na nejbližší volnou dlaždici.
+- **Otevřené budovy (Jabloňový sad)**: Jabloňový sad je otevřenou zemědělskou plochou v oáze. Po dokončení stavby neblokuje chůzi (`passable: true`), dělníci vstupují přímo do sadu a chodí mezi stromy, kde sbírají jablka.
+- **Pravidlo viditelnosti postav (vykreslování a z-ordering)**: Žádná postava ve hře nesmí být vykreslována tak, že by chodila „pod texturou“ budovy.
+  - Kontaktní stíny budov a travnatý půdorys jabloňového sadu se vykreslují na úrovni terénu ještě před vykreslením postav. Dělníci tak vždy chodí **na** trávě a na zemi, nikdy pod texturou.
+  - V otevřeném jabloňovém sadu jsou jednotlivé stromy a košík izometricky řazeny podle své hloubky společně s dělníky. Dělník procházející sadem je plně viditelný: stromy za ním jsou vykresleny za ním a stromy před ním před ním.
+  - U uzavřených budov jsou postavy procházející kolem budovy zepředu (jižní a východní stěna) vykresleny před budovou, zatímco postavy za budovou jsou přirozeně zakryty 3D stěnami budovy.
+
 ### Zdraví, poškození a zánik
 - **Zdraví budov**: 1×1 500, 2×2 800, 3×3 1200, 4×4 1500, Královský hrad 2000.
 - **Poškození**: nepřátelské jednotky ubírají budově zdraví. Hradby a věže chrání budovy za nimi.
@@ -67,8 +75,9 @@
 ### 5. Jabloňový sad
 - **Velikost na mřížce**: 4×4 bloky
 - **Náklady**: 120 peněz, 60 dřeva.
-- **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě.
-- **Funkce**: stálý přísun jídla (dělníci chodí mezi stromy a nosí jablka do nejbližší sýpky, bez sýpky do hradu) a udržování vysoké spokojenosti lidu. Do budovy lze přiřadit dělníky z hradu. Při nedostatku jídla dělníci sadu pracují dál, takže se zásoba obnoví.
+- **Typ**: otevřená budova / zemědělská plocha (průchozí po dokončení).
+- **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě, zavlažovací stružkou a nízkou zídkou.
+- **Funkce**: stálý přísun jídla a udržování vysoké spokojenosti lidu. Dělníci chodí přímo v sadu po trávě mezi jabloněmi, kde jsou plně viditelní (nejsou vykresleni pod texturou). Sbírají jablka a nosí je do nejbližší sýpky (bez sýpky do hradu). Do budovy lze přiřadit až 4 dělníky z hradu. Při nedostatku jídla dělníci sadu pracují dál, takže se zásoba spolehlivě obnoví. Jablka v sadu jsou nevyčerpatelná.
 
 ### 6. Obchod
 - **Velikost na mřížce**: 2×2 bloky

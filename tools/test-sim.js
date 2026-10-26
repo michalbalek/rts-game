@@ -874,5 +874,56 @@ console.log('\n--- Dřevorubec: nejbližší strom, doprava do hradu a celé ná
   }
 }
 
+console.log('\n--- Uzavřené vs. otevřené budovy a kolize ---');
+{
+  const simB = new GameSim({
+    mapSeed: 10,
+    capital: 'rich',
+    players: [{ name: 'Lord', isBot: false }]
+  });
+  const spot = findSpot(simB, 1, 'dwelling');
+  assert(!!spot, 'nalezeno místo pro obydlí');
+  // Přesuneme poddaného přímo na místo budoucího obydlí
+  const testVillager = simB.units.find(u => u.ownerId === 1 && u.isVillager);
+  testVillager.x = spot.x + 0.5;
+  testVillager.y = spot.y + 0.5;
+  testVillager.setPath([]);
+
+  // Postavíme uzavřené obydlí na tomto místě
+  const buildRes = simB.command(1, { op: 'build', buildingType: 'dwelling', x: spot.x, y: spot.y });
+  assert(buildRes.ok, 'obydlí zadáno ke stavbě');
+  const dwelling = simB.buildings.find(b => b.id === buildRes.buildingId);
+
+  // Poddaný musel být okamžitě vysunut mimo půdorys budovy
+  assert(!dwelling.containsTile(Math.floor(testVillager.x), Math.floor(testVillager.y)),
+    'poddaný byl při zahájení stavby uzavřené budovy odsunut mimo její půdorys');
+  assert(simB.isWalkableTile(Math.floor(testVillager.x), Math.floor(testVillager.y)),
+    'poddaný stojí na průchozí dlaždici');
+
+  // Dlaždice uzavřené budovy jsou neprůchozí
+  for (let dy = 0; dy < dwelling.height; dy++) {
+    for (let dx = 0; dx < dwelling.width; dx++) {
+      assert(!simB.isWalkableTile(dwelling.tileX + dx, dwelling.tileY + dy),
+        `dlaždice uzavřené budovy [${dwelling.tileX + dx}, ${dwelling.tileY + dy}] je neprůchodná`);
+    }
+  }
+
+  // Otevřená budova: jabloňový sad po dokončení je průchozí
+  const orchardSpot = findSpot(simB, 1, 'orchard');
+  const orchardRes = simB.command(1, { op: 'build', buildingType: 'orchard', x: orchardSpot.x, y: orchardSpot.y });
+  assert(orchardRes.ok, 'sad zadán ke stavbě');
+  const orchard = simB.buildings.find(b => b.id === orchardRes.buildingId);
+  orchard.complete = true;
+  orchard.progress = 1;
+  simB.rebuildBlockGrid();
+  assert(orchard.config.passable === true, 'jabloňový sad je definován jako passable');
+  for (let dy = 0; dy < orchard.height; dy++) {
+    for (let dx = 0; dx < orchard.width; dx++) {
+      assert(simB.isWalkableTile(orchard.tileX + dx, orchard.tileY + dy),
+        `dlaždice dokončeného sadu [${orchard.tileX + dx}, ${orchard.tileY + dy}] je plně průchozí`);
+    }
+  }
+}
+
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');
 process.exit(failures ? 1 : 0);

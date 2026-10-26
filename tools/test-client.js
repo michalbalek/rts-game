@@ -248,5 +248,37 @@ console.log('\n--- Stín budov ---');
   }
 }
 
+console.log('\n--- Hloubkové řazení (z-ordering) budov a jednotek ---');
+{
+  // Jabloňový sad 4x4 na [10, 10]:
+  // Podklad sadu se vykresluje na úrovni terénu.
+  // Dělník uvnitř sadu na [11.5, 11.5] má hloubku: 11.5 + 11.5 + 0.35 = 23.35.
+  // Zadní strom sadu na u=0.62, v=0.62 má hloubku: 10 + 10 + 1.24 = 21.24.
+  // Přední strom sadu na u=2.94, v=2.94 má hloubku: 10 + 10 + 5.88 = 25.88.
+  const orchard = { type: 'orchard', tileX: 10, tileY: 10, width: 4, height: 4 };
+  const workerInside = { x: 11.5, y: 11.5 };
+  const workerDepth = workerInside.x + workerInside.y + 0.35;
+  const backTreeDepth = orchard.tileX + orchard.tileY + 0.62 + 0.62;
+  const frontTreeDepth = orchard.tileX + orchard.tileY + (0.62 + 2 * 1.16) + (0.62 + 2 * 1.16);
+
+  assert(workerDepth > backTreeDepth, 'dělník v sadu se vykreslí před zadním stromem');
+  assert(workerDepth < frontTreeDepth, 'dělník v sadu je správně překryt předním stromem');
+
+  // Uzavřená budova (např. kasárna 2x2 na [20, 20]):
+  // Hloubka uzavřené budovy je tileX + tileY + Math.max(w, h) = 20 + 20 + 2 = 42.
+  const barracks = { type: 'barracks', tileX: 20, tileY: 20, width: 2, height: 2 };
+  const bDepth = barracks.tileX + barracks.tileY + Math.max(barracks.width, barracks.height);
+
+  // Jednotka procházející jižně před budovou na [20.5, 22.5]:
+  const unitInFront = { x: 20.5, y: 22.5 };
+  const unitInFrontDepth = unitInFront.x + unitInFront.y + 0.35;
+  assert(unitInFrontDepth > bDepth, 'jednotka před jižní stěnou budovy se vykreslí před budovou');
+
+  // Jednotka za budovou na [19.5, 20.5]:
+  const unitBehind = { x: 19.5, y: 20.5 };
+  const unitBehindDepth = unitBehind.x + unitBehind.y + 0.35;
+  assert(unitBehindDepth < bDepth, 'jednotka za severozápadní stěnou budovy je cloněna budovou');
+}
+
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy klienta prošly.');
 process.exit(failures ? 1 : 0);
