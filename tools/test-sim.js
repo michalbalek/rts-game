@@ -64,6 +64,23 @@ assert(sim.buildings.length === 2, 'dva hrady');
 assert(sim.units.length === 40, 'dvě sídla po 20 poddaných');
 assert(sim.players[0].resources.wood === 200, 'startovní kapitál dřeva');
 
+console.log('\n--- Ekonomika bez daní a spokojenosti ---');
+const startingMoney = sim.players.map(p => p.resources.money);
+for (const dt of [1 / 20, 1, 60]) sim.updateEconomy(dt);
+assert(sim.players.every((p, i) => p.resources.money === startingMoney[i]),
+  'hráči ani botovi nepřibývají peníze automaticky');
+assert(sim.players.every(p => !('tax' in p) && !('popularity' in p)),
+  'stav hráčů neobsahuje daně ani spokojenost');
+for (const player of sim.players) {
+  const taxCommand = sim.command(player.id, { op: 'tax', level: 'high' });
+  assert(!taxCommand.ok && taxCommand.reason === 'Neznámý příkaz.',
+    `hráč ${player.id}: zrušený příkaz pro změnu daně se odmítne`);
+  const snapshot = sim.serialize(player.id);
+  assert(!('tax' in snapshot.self) && !('popularity' in snapshot.self) &&
+    snapshot.players.every(p => !('tax' in p) && !('popularity' in p)),
+  `hráč ${player.id}: síťový snímek neobsahuje daně ani spokojenost`);
+}
+
 // Lidský hráč zadá dřevorubce na stromě, čtyři poddaní ho postaví a přiřadí se dělníci.
 const humanCastle = sim.getCastle(1);
 let lumberSpot = null;
@@ -121,7 +138,7 @@ for (let tick = 0; tick < 20 * 150; tick++) sim.tick(1 / 20);
 console.log(`  simulace 160 s: ${Date.now() - t0} ms, tick ${sim.tickCount}`);
 console.log('  budovy:', sim.buildings.map(b => `${b.type}(${b.ownerId})${b.complete ? '' : '*'}`).join(', '));
 for (const p of sim.players) {
-  console.log(`  hráč ${p.name}: peníze ${Math.floor(p.resources.money)}, dřevo ${Math.floor(p.resources.wood)}, kámen ${Math.floor(p.resources.stone)}, jídlo ${Math.floor(p.resources.food)}, železo ${Math.floor(p.resources.iron)}; lid ${p.population}/${p.capacity}; spokojenost ${Math.round(p.popularity)}; zabito ${p.stats.lost}, zničeno ${p.stats.destroyed}, sehráno ${p.stats.gathered}`);
+  console.log(`  hráč ${p.name}: peníze ${Math.floor(p.resources.money)}, dřevo ${Math.floor(p.resources.wood)}, kámen ${Math.floor(p.resources.stone)}, jídlo ${Math.floor(p.resources.food)}, železo ${Math.floor(p.resources.iron)}; lid ${p.population}/${p.capacity}; zabito ${p.stats.lost}, zničeno ${p.stats.destroyed}, sehráno ${p.stats.gathered}`);
 }
 assert(sim.buildings.some(b => b.ownerId === 2 && b.complete), 'bot postavil alespoň jednu budovu');
 assert(sim.players[0].resources.wood > humanWoodBefore, 'lidský dělník přinesl dřevo');
@@ -317,8 +334,23 @@ const serialized = JSON.stringify(saved);
 console.log(`  velikost uložení: ${(serialized.length / 1024).toFixed(1)} kB`);
 assert(saved.meta.startedAt === startedAt, 'uložení nese čas zahájení hry');
 assert(formatSaveLabel(saved.meta).includes('25. 10. 2026 14:32'), 'popisek uložení obsahuje datum a čas zahájení');
+assert(saved.sim.players.every(p => !('tax' in p) && !('popularity' in p)),
+  'nové uložení neobsahuje daně ani spokojenost');
 
-const restored = GameSim.fromSaveState(JSON.parse(serialized));
+const legacySaved = JSON.parse(serialized);
+for (const p of legacySaved.sim.players) {
+  p.tax = 'high';
+  p.popularity = 35;
+}
+const restored = GameSim.fromSaveState(legacySaved);
+assert(restored.players.every(p => !('tax' in p) && !('popularity' in p)),
+  'starší uložení se načte bez zrušených polí daní a spokojenosti');
+const restoredMoney = restored.players.map(p => p.resources.money);
+restored.updateEconomy(60);
+assert(restored.players.every((p, i) => p.resources.money === restoredMoney[i]),
+  'ani po načtení starší hry se neobnoví daňový příjem');
+assert(restored.toSaveState().sim.players.every(p => !('tax' in p) && !('popularity' in p)),
+  'opětovné uložení starší hry nevrací zrušená pole');
 assert(restored.time === sim.time && restored.tickCount === sim.tickCount, 'načtený čas simulace odpovídá uložení');
 assert(restored.buildings.length === sim.buildings.length, 'načtený počet budov odpovídá uložení');
 assert(restored.units.length === sim.units.length, 'načtený počet jednotek odpovídá uložení');

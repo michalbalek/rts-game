@@ -1,5 +1,5 @@
 import {
-  BUILDING_DEFS, UNIT_DEFS, BUILD_MENU, TAX_LEVELS, MARKET_PRICES,
+  BUILDING_DEFS, UNIT_DEFS, BUILD_MENU, MARKET_PRICES,
   RESOURCE_TYPES, PLAYER_COLORS, BUILD, buildSpeedFactor
 } from '../sim/constants.js';
 import {
@@ -14,8 +14,6 @@ const RESOURCE_ITEMS = [
   { key: 'food', icon: '🍎', name: 'Jídlo' },
   { key: 'iron', icon: '⛓️', name: 'Železo' }
 ];
-
-const TAX_ORDER = ['low', 'medium', 'high'];
 
 function fmt(n) {
   return String(Math.floor(Number(n) || 0));
@@ -41,14 +39,6 @@ function timeLabel(seconds) {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
-function popularityFace(value) {
-  if (value >= 80) return '😄';
-  if (value >= 65) return '🙂';
-  if (value >= 45) return '😐';
-  if (value >= 25) return '🙁';
-  return '😠';
-}
-
 /**
  * Herní HUD: horní lišta, dok staveb, výběrový panel, minimapa,
  * hlášení písaře a všechna herní dialogová okna.
@@ -61,7 +51,6 @@ export class GameUI {
     this.session = null;
     this.buildMode = null;
     this.timer = 0;
-    this.taxButtons = [];
     this.lastSelectionSignature = '';
     this.lastLegendSignature = '';
     this.resultsOpen = false;
@@ -87,15 +76,10 @@ export class GameUI {
       storeValue: document.getElementById('store-value'),
       foodStoreValue: document.getElementById('food-store-value'),
       popValue: document.getElementById('pop-value'),
-      popularityValue: document.getElementById('popularity-value'),
-      popularityFace: document.getElementById('popularity-face'),
-      popularityNote: document.getElementById('popularity-note'),
-      taxGroup: document.getElementById('tax-group'),
       menuButton: document.getElementById('menu-button')
     };
 
     this.buildDock();
-    this.bindTaxButtons();
     this.bindSelectionPanel();
     if (this.el.menuButton) {
       this.el.menuButton.addEventListener('click', () => {
@@ -214,24 +198,6 @@ export class GameUI {
     const capacity = player.capacity ?? 20;
     if (this.el.popValue) this.el.popValue.textContent = `${pop}/${capacity}`;
 
-    const popularity = Math.round(player.popularity ?? 100);
-    if (this.el.popularityValue) this.el.popularityValue.textContent = String(popularity);
-    if (this.el.popularityFace) this.el.popularityFace.textContent = popularityFace(popularity);
-    if (this.el.popularityNote) {
-      this.el.popularityNote.textContent = this.scribeLine(popularity, player);
-      this.el.popularityNote.classList.toggle('bad', popularity < 40 || player.foodShortage);
-    }
-
-    for (const btn of this.taxButtons) {
-      btn.classList.toggle('active', btn.dataset.tax === player.tax);
-    }
-  }
-
-  scribeLine(popularity, player) {
-    if (player.foodShortage) return 'Sýpka je prázdná, lidé mají hlad!';
-    if (popularity >= 55) return 'Panství vzkvétá, sire.';
-    if (popularity >= 35) return 'Lid si stěžuje na daň, můj pane.';
-    return 'Lidé jsou nespokojeni a hrozí vzpoura!';
   }
 
   getStorageCaps() {
@@ -245,28 +211,6 @@ export class GameUI {
       if (b.type === 'granary') food += 300;
     }
     return { resources: resources || 500, food: food || 300 };
-  }
-
-  bindTaxButtons() {
-    if (!this.el.taxGroup) return;
-    this.el.taxGroup.innerHTML = '';
-    this.taxButtons = [];
-    for (const key of TAX_ORDER) {
-      const def = TAX_LEVELS[key];
-      if (!def) continue;
-      const btn = document.createElement('button');
-      btn.className = 'tax-btn';
-      btn.dataset.tax = key;
-      btn.type = 'button';
-      btn.title = def.desc;
-      btn.innerHTML = `<strong>${escapeHtml(def.name)}</strong><small>${def.desc}</small>`;
-      btn.addEventListener('click', () => {
-        this.issue({ op: 'tax', level: key });
-        audio.play('click');
-      });
-      this.el.taxGroup.appendChild(btn);
-      this.taxButtons.push(btn);
-    }
   }
 
   // ------------------------------------------------------------------
@@ -1055,4 +999,4 @@ function resourceName(key) {
   }
 }
 
-export { popularityFace, timeLabel };
+export { timeLabel };

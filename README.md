@@ -13,7 +13,7 @@ Ujměte se vlády nad pouštním panstvím. Povolejte poddané k ohništi před 
 ### Hlavní prvky
 
 - **3 náhodně generované mapy** – Poušť s řekou, Oáza u jezera a Skalní rokle. Každá má 4 symetrické startovní pozice.
-- **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky, daně, spokojenost lidu a obchod s pevnými cenami.
+- **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky a obchod s pevnými cenami. Daně a ukazatel spokojenosti jsou zatím odstraněné; peníze pocházejí ze startovního kapitálu a prodeje surovin.
 - **10 budov** – Královský hrad, Kasárna, Dřevorubec, Kamenolom, Jabloňový sad, Obchod, Obydlí, Sýpka, Sklad a Železný důl.
 - **3 typy jednotek** – Pěšák, Lučištník a Poddaný. Pěšáci a lučištníci bojují, poddaní pracují a staví.
 - **Boti** – 1–3 protivníci ve třech obtížnostech. Staví podle dokumentovaného pořadí, drží část vojska u hradu a útočí.
@@ -92,7 +92,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 ### HUD
 
-- **Horní lišta** – peníze, dřevo, kámen, jídlo, železo, obyvatelstvo a spokojenost, přepínač daní.
+- **Horní lišta** – peníze, dřevo, kámen, jídlo, železo a obyvatelstvo.
 - **Spodní dok** – nabídka staveb s cenou a dobou výstavby.
 - **Výběrový panel** – informace o budově, staveništi nebo jednotkách, přiřazení dělníků, výcvik, oprava a bourání.
 - **Minimapa** – přehled mapy včetně mlhy války; kliknutím nebo tažením se kamera přesune.
@@ -151,7 +151,7 @@ rts-game/
 │  ├─ css/style.css         # Pouštní pískovcový vizuální styl
 │  └─ js/
 │     ├─ sim/               # Sdílená simulace bez DOM (klient i server)
-│     │  ├─ constants.js    # Statistiky, ceny, mapy, boti, daně
+│     │  ├─ constants.js    # Statistiky, ceny, mapy, boti
 │     │  ├─ mapgen.js       # Procedurální generování map
 │     │  ├─ sim.js          # Autoritativní herní smyčka a příkazy
 │     │  ├─ bot.js          # Chování botů
@@ -186,7 +186,7 @@ Kompletní specifikace je ve složce [`dokumentace/`](dokumentace/):
 - [intro.md](dokumentace/intro.md) – menu, nastavení a multiplayer
 - [budovy.md](dokumentace/budovy.md) – budovy a pravidla výstavby
 - [vojaci.md](dokumentace/vojaci.md) – jednotky a boj
-- [ekonomika.md](dokumentace/ekonomika.md) – suroviny, daně a obchod
+- [ekonomika.md](dokumentace/ekonomika.md) – suroviny, obyvatelstvo a obchod
 - [mapa.md](dokumentace/mapa.md) – biomy, zdroje a mlha války
 - [multiplayer.md](dokumentace/multiplayer.md) – síťový model a párování
 - [ovladani.md](dokumentace/ovladani.md) – ovládání a HUD

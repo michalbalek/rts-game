@@ -85,12 +85,6 @@ export const CAPITALS = {
   }
 };
 
-export const TAX_LEVELS = {
-  low: { key: 'low', name: 'Nízká', rate: 1, popularity: 5, desc: '1 peníz za obyvatele za minutu' },
-  medium: { key: 'medium', name: 'Střední', rate: 2, popularity: 0, desc: '2 peníze za obyvatele za minutu' },
-  high: { key: 'high', name: 'Vysoká', rate: 3, popularity: -10, desc: '3 peníze za obyvatele za minutu' }
-};
-
 export const MARKET_PRICES = {
   wood: { buy: 10, sell: 6, name: 'Dřevo', icon: '🪵' },
   stone: { buy: 12, sell: 8, name: 'Kámen', icon: '🪨' },

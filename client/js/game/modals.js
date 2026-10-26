@@ -233,7 +233,7 @@ export function helpContent() {
           <li>Kasárna vyrábějí lučištníky, Královský hrad těžké pěšáky.</li>
           <li>Lučištníci útočí z dálky a jejich šípy mohou minout pohybující se cíl.</li>
           <li>Plná kapacita zastaví dělníky. Postavte včas další Sklad (suroviny) nebo Sýpku (jídlo).</li>
-          <li>Vysoká daň vynáší více peněz, ale snižuje spokojenost lidu.</li>
+          <li>Další peníze získáte prodejem přebytečných surovin v Obchodu.</li>
           <li>Vyčerpané ložisko se po 3 minutách objeví jinde na mapě.</li>
         </ul>
       </section>

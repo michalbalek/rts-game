@@ -17,10 +17,6 @@ export function updateBot(sim, player, dt) {
   const castle = sim.getCastle(player.id);
   if (!castle) return;
 
-  // Daň: při nespokojenosti bot uleví lidu.
-  if (player.popularity < 45 && player.tax !== 'low') player.tax = 'low';
-  else if (player.popularity > 72 && player.tax !== 'medium') player.tax = 'medium';
-
   assignBuilders(sim, player);
   assignWorkers(sim, player, castle);
   tryBuild(sim, player, castle);

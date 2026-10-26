@@ -237,8 +237,6 @@ export class RemoteSession extends BaseSession {
     const self = this.state.players.find(p => p.id === this.selfId);
     if (self && snap.self) {
       self.resources = snap.self.resources;
-      self.tax = snap.self.tax;
-      self.popularity = snap.self.popularity;
       self.population = snap.self.population;
       self.capacity = snap.self.capacity;
       self.foodShortage = snap.self.foodShortage;

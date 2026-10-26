@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { GameUI } from '../client/js/game/ui.js';
 import { Camera, MIN_ZOOM, MAX_ZOOM } from '../client/js/engine/camera.js';
 import { tileToScreen, worldToTile, buildingShadow, HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from '../client/js/engine/isometric.js';
 import { visibleTileRows } from '../client/js/engine/viewport.js';
@@ -43,6 +45,32 @@ function makeSession() {
     state: { units, buildings },
     isEntityVisible(entity) { return !entity.hidden; }
   };
+}
+
+console.log('--- Horní lišta bez daní a spokojenosti ---');
+{
+  const html = readFileSync(new URL('../client/index.html', import.meta.url), 'utf8');
+  assert(!/popularity|tax-group|tax-btn/.test(html),
+    'HUD neobsahuje ukazatel spokojenosti ani nastavení daní');
+  const ui = Object.create(GameUI.prototype);
+  ui.el = Object.fromEntries([
+    'resMoney', 'resWood', 'resStone', 'resFood', 'resIron',
+    'storeValue', 'foodStoreValue', 'popValue'
+  ].map(key => [key, { textContent: '' }]));
+  ui.session = {
+    player: {
+      resources: { money: 600, wood: 200, stone: 100, food: 200, iron: 0 },
+      population: 20, capacity: 28
+    },
+    sim: { getStorageCaps: () => ({ resources: 500, food: 300 }) }
+  };
+  ui.updateTopBar();
+  assert(ui.el.resMoney.textContent === '600' && ui.el.resFood.textContent === '200',
+    'horní lišta dál zobrazuje peníze a jídlo bez zrušených polí');
+  assert(ui.el.popValue.textContent === '20/28' &&
+    ui.el.storeValue.textContent === '300/500' &&
+    ui.el.foodStoreValue.textContent === '200/300',
+  'horní lišta dál zobrazuje obyvatelstvo a kapacity skladů');
 }
 
 console.log('--- Kamera a zoom ---');

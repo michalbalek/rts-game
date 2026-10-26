@@ -36,7 +36,7 @@ Projekt se skládá z:
 4. **Kamenolom (Quarry)**:
    - Pískovcový a vápencový lom s těžebním jeřábem na skalních nalezištích.
 5. **Jabloňový sad (Apple Orchard)**:
-   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Na rozdíl od uzavřených staveb jde o otevřenou plochu, kde dělníci chodí přímo v sadu po trávě mezi stromy a jsou plně viditelní (nejsou vykresleni pod texturou). Zajišťuje stálý přísun jídla do nejbližší sýpky (bez sýpky do hradu) a udržuje vysokou spokojenost lidu.
+   - Zavlažovaný sad v úrodné oázové půdě s jabloňovými stromy. Na rozdíl od uzavřených staveb jde o otevřenou plochu, kde dělníci chodí přímo v sadu po trávě mezi stromy a jsou plně viditelní (nejsou vykresleni pod texturou). Zajišťuje stálý přísun jídla do nejbližší sýpky (bez sýpky do hradu).
 6. **Obchod (Market)**:
    - Tržnice, kde hráč nakupuje a prodává suroviny za pevné ceny.
 7. **Obydlí (Dwelling)**:
@@ -58,7 +58,7 @@ Projekt se skládá z:
   - **Poslat na staveniště**: vyberte poddané a v jejich panelu klikněte na stavbu v sekci Stavět. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi.
   - **Rekrutovat jako vojáky** (Pěšáci v Hradu, Lučištníci v Kasárnách).
 - **Chování dělníků**: každý dělník, ať pracuje v kterékoli hospodářské budově, odejde do přiřazené budovy a tam pracuje. Chodí po okolí zdroje, sbírá suroviny a nosí je do cíle odnosu: dřevo, kámen a železo do nejbližšího dosažitelného hotového skladu nebo hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Dřevorubec nejdřív přijde k budově, najde nejbližší dosažitelný strom, pokácí ho a rozřeže. Náklady jsou vždy celé jednotky. Pokud se náklad nevejde do zásob, dělník čeká, až se uvolní místo, a odevzdá ho celý najednou. Dělník, který nese náklad, ho nejdřív odevzdá. Přiřazení není pasivní přičtení k budově.
-- Spokojenost lidu (Popularita) závisí na dostupnosti jídla a zásobách. Když jsou lidé šťastní, hrad vzkvétá!
+- Výběr a nastavení daní i ukazatel spokojenosti jsou zatím odstraněné. Peníze hráči i boti získávají ze startovního kapitálu a prodejem surovin v Obchodu, nikoli automatickým příjmem.
 
 ---
 

@@ -1,6 +1,6 @@
 import {
   MAP_SIZE, TILE_TYPES, RESOURCE_TYPES, START_POSITIONS,
-  PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, TAX_LEVELS, MARKET_PRICES,
+  PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, MARKET_PRICES,
   BOT_DIFFICULTIES, BUILDING_DEFS, UNIT_DEFS, WORK, STORAGE, DEPOSITS,
   FOG_RANGES, GAME_MODES, MILITARY_TYPES, BUILD, buildSpeedFactor, DELIVERY
 } from './constants.js';
@@ -98,8 +98,6 @@ export class GameSim {
         difficulty: p.difficulty || 'medium',
         alive: true,
         resources: { ...capital.resources },
-        tax: 'medium',
-        popularity: 100,
         population: 0,
         capacity: 20,
         spawnTimer: 5,
@@ -1735,10 +1733,6 @@ export class GameSim {
       if (!player.alive) continue;
       const p = player.resources;
 
-      // Daně
-      const tax = TAX_LEVELS[player.tax] || TAX_LEVELS.medium;
-      p.money += (tax.rate * player.population / 60) * dt;
-
       // Spotřeba jídla
       let workers = 0;
       let soldiers = 0;
@@ -1768,15 +1762,6 @@ export class GameSim {
       } else {
         player.foodShortage = false;
       }
-
-      // Spokojenost
-      let target = 100 + tax.popularity;
-      if (p.food <= 0.01) target -= 40;
-      else if (p.food < player.population * 0.4) target -= 15;
-      target = clamp(target, 0, 100);
-      const diff = target - player.popularity;
-      const step = Math.sign(diff) * Math.min(Math.abs(diff), 2 * dt);
-      player.popularity = clamp(player.popularity + step, 0, 100);
 
       // Přírůstek poddaných
       if (player.population < player.capacity && this.getCastle(player.id)) {
@@ -2071,11 +2056,6 @@ export class GameSim {
       case 'buy':
       case 'sell':
         return this.marketTrade(playerId, cmd.resource, Number(cmd.amount) || 0, cmd.op);
-      case 'tax': {
-        if (!TAX_LEVELS[cmd.level]) return { ok: false, reason: 'Neplatná daň.' };
-        player.tax = cmd.level;
-        return { ok: true };
-      }
       case 'ping':
         return { ok: true };
       default:
@@ -2260,8 +2240,6 @@ export class GameSim {
           food: Math.floor(viewer.resources.food),
           iron: Math.floor(viewer.resources.iron)
         },
-        tax: viewer.tax,
-        popularity: Math.round(viewer.popularity),
         population: viewer.population,
         capacity: viewer.capacity,
         foodShortage: viewer.foodShortage,
@@ -2274,7 +2252,6 @@ export class GameSim {
         colorName: p.colorName,
         isBot: p.isBot,
         alive: p.alive,
-        popularity: Math.round(p.popularity),
         population: p.population,
         capacity: p.capacity,
         stats: { ...p.stats }
@@ -2414,14 +2391,19 @@ export class GameSim {
       if (this.mapChanges.length > 6000) this.mapChanges.splice(0, 1000);
     };
 
-    this.players = (state.players || []).map(p => ({
-      ...p,
-      resources: { ...(p.resources || {}) },
-      stats: { ...(p.stats || {}) },
-      bot: { ...(p.bot || {}) },
-      alive: p.alive !== false,
-      foodDebt: Number(p.foodDebt) || 0
-    }));
+    this.players = (state.players || []).map(p => {
+      const player = {
+        ...p,
+        resources: { ...(p.resources || {}) },
+        stats: { ...(p.stats || {}) },
+        bot: { ...(p.bot || {}) },
+        alive: p.alive !== false,
+        foodDebt: Number(p.foodDebt) || 0
+      };
+      delete player.tax;
+      delete player.popularity;
+      return player;
+    });
     this.playerById = new Map(this.players.map(p => [p.id, p]));
 
     // Jednotky obnovíme první – podle jejich práce se dopočítají dělníci budov.

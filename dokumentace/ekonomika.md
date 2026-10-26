@@ -2,7 +2,7 @@
 
 ## Suroviny a zásoby
 - **Suroviny**: dřevo, kámen, jídlo, železo. Železo se těží z ložisek železné rudy v Železném dole.
-- **Celé jednotky**: dřevo, kámen, železo a jídlo se nosí, skladují i odečítají jen v celých kusech. Peníze jsou výjimka, počítají se průběžně.
+- **Celé jednotky**: dřevo, kámen, železo a jídlo se nosí, skladují i odečítají jen v celých kusech.
 - **Hrad**: místo, kam dělníci odevzdávají dřevo, kámen a železo, pokud je z jejich místa nejblíž mezi hradem a sklady. Jídlo odnášejí do nejbližší sýpky, bez sýpky do hradu. Má základní kapacitu 500 jednotek dřeva, kamene a železa dohromady a 300 jídla.
 - **Sklad**: zvyšuje kapacitu pro dřevo, kámen a železo dohromady o 500 jednotek. Dělníci sem odevzdávají suroviny, pokud je z jejich místa nejblíž mezi hradem a sklady.
 - **Sýpka**: zvyšuje kapacitu jen pro jídlo, o 300 jednotek. Je cílem odnosu jídla z jabloňového sadu.
@@ -14,10 +14,7 @@
   - Bohatý: 1000 peněz, 300 dřeva, 200 kamene, 300 jídla.
   - Střední: 600 peněz, 200 dřeva, 100 kamene, 200 jídla.
   - Skromný: 300 peněz, 150 dřeva, 80 kamene, 100 jídla.
-- **Daně**: výše daně určuje příjem peněz. Vyšší daň přináší více peněz, nižší daň méně.
-  - Nízká: 1 peněz za obyvatele za minutu.
-  - Střední (výchozí): 2 peněze za obyvatele za minutu.
-  - Vysoká: 3 peněze za obyvatele za minutu.
+- **Příjem peněz**: po vyčerpání startovního kapitálu lze peníze získávat prodejem surovin v Obchodu. Výběr a nastavení daní jsou zatím odstraněné; peníze automaticky nepřibývají hráčům ani botům.
 
 ## Obyvatelstvo a pracovní síla
 - **Počáteční obyvatelé**: hrad má na začátku 20 volných obyvatel.
@@ -39,13 +36,7 @@
 - **Voják**: spotřebuje 1 jídlo za minutu.
 - **Nepracující obyvatelé**: jídlo nespotřebovávají.
 - **Zdroj**: jídlo se odebírá z celkových zásob panství. Spotřeba se počítá průběžně, ze zásob se odečítají celé jednotky.
-- **Nedostatek**: když v zásobách není dost jídla, spokojenost klesá a dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní. Výjimkou jsou dělníci v jabloňovém sadu: ti dál sbírají jablka a odnášejí je do nejbližší sýpky (bez sýpky do hradu), takže se zásoba jídla obnoví i z nuly.
-
-## Spokojenost lidu a popularita
-- Spokojenost závisí na dostupnosti jídla a zásobách.
-- Při vysoké spokojenosti hrad vzkvétá.
-- **Vliv daní**: nízká daň zvyšuje spokojenost o 5 bodů, vysoká ji snižuje o 10 bodů. Střední daň je neutrální.
-- **Náboženství a zábava**: zatím neovlivňují spokojenost, je to plánované rozšíření.
+- **Nedostatek**: když v zásobách není dost jídla, dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní. Výjimkou jsou dělníci v jabloňovém sadu: ti dál sbírají jablka a odnášejí je do nejbližší sýpky (bez sýpky do hradu), takže se zásoba jídla obnoví i z nuly.
 
 ## Hospodářské řetězce
 - Jabloňový sad zajišťuje jídlo. Sad je otevřená plocha, kde dělníci viditelně sbírají jablka mezi stromy a odnášejí je do nejbližší sýpky, bez sýpky do hradu. Každá sýpka zvyšuje kapacitu jídla o 300 jednotek.

@@ -77,7 +77,7 @@
 - **Náklady**: 120 peněz, 60 dřeva.
 - **Typ**: otevřená budova / zemědělská plocha (průchozí po dokončení).
 - **Vzhled**: zavlažovaný sad s jabloňovými stromy v úrodné oázové půdě, zavlažovací stružkou a nízkou zídkou.
-- **Funkce**: stálý přísun jídla a udržování vysoké spokojenosti lidu. Dělníci chodí přímo v sadu po trávě mezi jabloněmi, kde jsou plně viditelní (nejsou vykresleni pod texturou). Sbírají jablka a nosí je do nejbližší sýpky (bez sýpky do hradu). Do budovy lze přiřadit až 4 dělníky z hradu. Při nedostatku jídla dělníci sadu pracují dál, takže se zásoba spolehlivě obnoví. Jablka v sadu jsou nevyčerpatelná.
+- **Funkce**: stálý přísun jídla. Dělníci chodí přímo v sadu po trávě mezi jabloněmi, kde jsou plně viditelní (nejsou vykresleni pod texturou). Sbírají jablka a nosí je do nejbližší sýpky (bez sýpky do hradu). Do budovy lze přiřadit až 4 dělníky z hradu. Při nedostatku jídla dělníci sadu pracují dál, takže se zásoba spolehlivě obnoví. Jablka v sadu jsou nevyčerpatelná.
 
 ### 6. Obchod
 - **Velikost na mřížce**: 2×2 bloky

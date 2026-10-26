@@ -346,7 +346,6 @@ export class Room {
         colorName: p.colorName,
         isBot: false,
         alive: p.alive,
-        popularity: p.popularity,
         population: p.population,
         capacity: p.capacity,
         stats: { ...p.stats }

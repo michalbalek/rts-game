@@ -13,7 +13,7 @@ Take charge of a desert domain. Summon your subjects to the campfire in front of
 ### Key Features
 
 - **3 randomly generated maps** – Desert with a River (Poušť s řekou), Oasis by the Lake (Oáza u jezera) and Rocky Gorge (Skalní rokle). Each has 4 symmetrical starting positions.
-- **Full economy** – wood, stone, food, iron and money. Warehouses, granaries, taxes, public happiness and a market with fixed prices.
+- **Full economy** – wood, stone, food, iron and money. Warehouses, granaries and a market with fixed prices. Taxes and the happiness indicator are removed for now; money comes from starting capital and resource sales.
 - **10 buildings** – Royal Castle (Královský hrad), Barracks (Kasárna), Woodcutter (Dřevorubec), Quarry (Kamenolom), Apple Orchard (Jabloňový sad), Market (Obchod), Housing (Obydlí), Granary (Sýpka), Warehouse (Sklad) and Iron Mine (Železný důl).
 - **3 unit types** – Footman (Pěšák), Archer (Lučištník) and Subject (Poddaný). Footmen and archers fight; subjects work and build.
 - **Bots** – 1–3 opponents across three difficulty levels. They build in a documented order, keep part of their army near the castle and attack.
@@ -92,7 +92,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 ### HUD
 
-- **Top bar** – money, wood, stone, food, iron, population and happiness, tax switch.
+- **Top bar** – money, wood, stone, food, iron and population.
 - **Bottom dock** – building menu with cost and construction time.
 - **Selection panel** – information about the selected building, construction site or units, worker assignment, training, repair and demolition.
 - **Minimap** – map overview including fog of war; clicking or dragging moves the camera.
@@ -151,7 +151,7 @@ rts-game/
 │  ├─ css/style.css         # Desert sandstone visual style
 │  └─ js/
 │     ├─ sim/               # Shared simulation without DOM (client and server)
-│     │  ├─ constants.js    # Stats, prices, maps, bots, taxes
+│     │  ├─ constants.js    # Stats, prices, maps, bots
 │     │  ├─ mapgen.js       # Procedural map generation
 │     │  ├─ sim.js          # Authoritative game loop and commands
 │     │  ├─ bot.js          # Bot behaviour
@@ -186,7 +186,7 @@ The complete specification is in the [`dokumentace/`](dokumentace/) folder (in C
 - [intro.md](dokumentace/intro.md) – menu, settings and multiplayer
 - [budovy.md](dokumentace/budovy.md) – buildings and construction rules
 - [vojaci.md](dokumentace/vojaci.md) – units and combat
-- [ekonomika.md](dokumentace/ekonomika.md) – resources, taxes and trade
+- [ekonomika.md](dokumentace/ekonomika.md) – resources, population and trade
 - [mapa.md](dokumentace/mapa.md) – biomes, resources and fog of war
 - [multiplayer.md](dokumentace/multiplayer.md) – network model and matchmaking
 - [ovladani.md](dokumentace/ovladani.md) – controls and HUD

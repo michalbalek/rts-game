@@ -15,7 +15,7 @@ const TIPS = [
   'Poddaní čekají u ohniště před hradem. Přiřaďte je do hospodářství nebo je povolejte jako vojáky.',
   'Lučištníkova střela letí obloukem a může minout pohybující se cíl. Pěšák je spolehlivější v tlačenici.',
   'Sýpka pojme 300 jídla, hrad slouží jako první sýpka i sklad.',
-  'Vyšší daň vynese více peněz, ale sníží spokojenost lidu. Nízká daň spokojenost zvyšuje.',
+  'Další peníze získáte prodejem přebytečných surovin v Obchodu.',
   'Vyčerpané ložisko zmizí. Po třech minutách se objeví nové ložisko jinde na mapě.',
   'Stromy se po pokácení obnovují za 30 až 90 sekund. Jablka v sadu jsou nevyčerpatelná.',
   'Zničená budova vrátí 50 % surovin. Při bourání vlastní budovy se vrací také 50 %.',
