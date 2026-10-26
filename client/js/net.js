@@ -1,3 +1,4 @@
+import { t } from './i18n/index.js';
 /**
  * WebSocket klient pro multiplayer. Servery se hledají na stejné adrese,
  * na které běží klient (Node server zároveň servíruje hru i websockety).
@@ -15,9 +16,9 @@ export class NetClient {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await fetch('/api/status', { signal: controller.signal, cache: 'no-store' });
-      if (!res.ok) throw new Error('Server neodpovídá.');
+      if (!res.ok) throw new Error(t("Server neodpovídá."));
       const data = await res.json();
-      if (data.status !== 'online') throw new Error('Server není dostupný.');
+      if (data.status !== 'online') throw new Error(t("Server není dostupný."));
       return data;
     } finally {
       clearTimeout(timer);
@@ -36,7 +37,7 @@ export class NetClient {
         if (settled) return;
         settled = true;
         try { this.ws && this.ws.close(); } catch (e) { /* ignore */ }
-        reject(new Error('Server není dostupný.'));
+        reject(new Error(t("Server není dostupný.")));
       }, timeoutMs);
 
       try {
@@ -65,7 +66,7 @@ export class NetClient {
         } else if (msg.type === 'error' && !settled) {
           settled = true;
           clearTimeout(timer);
-          const error = new Error(msg.message || 'Server odmítl připojení.');
+          const error = new Error(msg.message || t("Server odmítl připojení."));
           error.code = msg.code || 'ERROR';
           try { this.ws.close(); } catch (e) { /* ignore */ }
           reject(error);
@@ -77,14 +78,14 @@ export class NetClient {
         if (!settled) {
           settled = true;
           clearTimeout(timer);
-          reject(new Error('Server není dostupný.'));
+          reject(new Error(t("Server není dostupný.")));
         }
       };
       this.ws.onclose = () => {
         if (!settled) {
           settled = true;
           clearTimeout(timer);
-          reject(new Error('Spojení se serverem bylo uzavřeno.'));
+          reject(new Error(t("Spojení se serverem bylo uzavřeno.")));
         }
         if (!this.closedByUser && this.handlers.onClose) this.handlers.onClose();
       };

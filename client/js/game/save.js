@@ -1,3 +1,4 @@
+import { t, getLanguage, getLocale } from '../i18n/index.js';
 /**
  * Ukládání rozehrané singleplayer hry do localStorage prohlížeče.
  * Ukládá se vždy jeden slot; každé uložení nese čas zahájení hry.
@@ -44,10 +45,10 @@ export function hasSave() {
 /** Uloží běžící lokální hru. Vrací metadata uložení. */
 export function saveLocalSession(session) {
   if (!session || !session.local || !session.sim) {
-    throw new Error('Uložit lze pouze rozehranou hru v singleplayeru.');
+    throw new Error(t("Uložit lze pouze rozehranou hru v singleplayeru."));
   }
   const storage = safeStorage();
-  if (!storage) throw new Error('Prohlížeč neumožňuje ukládat data.');
+  if (!storage) throw new Error(t("Prohlížeč neumožňuje ukládat data."));
 
   const data = session.sim.toSaveState({
     startedAt: session.startedAt,
@@ -72,17 +73,22 @@ function pad2(value) {
   return String(value).padStart(2, '0');
 }
 
-/** České datum a čas bez závislosti na locale prohlížeče. */
+/** Datum a čas podle zvoleného jazyka, ne nastavení prohlížeče. */
 export function formatDateTime(iso) {
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return 'neznámý čas';
+  if (Number.isNaN(date.getTime())) return t("neznámý čas");
+  if (getLanguage() === 'en') {
+    return new Intl.DateTimeFormat(getLocale(), {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(date);
+  }
   return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()} ` +
     `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
 }
 
 export function formatSaveLabel(meta) {
-  if (!meta) return 'Bez uložené hry';
+  if (!meta) return t("Bez uložené hry");
   const started = formatDateTime(meta.startedAt);
   const saved = formatDateTime(meta.savedAt);
-  return `Zahájeno ${started} · uloženo ${saved}`;
+  return t("Zahájeno {0} · uloženo {1}", { 0: started, 1: saved });
 }

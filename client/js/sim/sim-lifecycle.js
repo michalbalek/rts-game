@@ -50,7 +50,7 @@ export class SimulationLifecycle {
         byPlayerId: opts.byPlayerId || null
       });
       if (ownerId === this.humanId) {
-        this.emit('toast', { playerId: ownerId, text: `Budova zničena: ${def.name}`, kind: 'error' });
+        this.emit('toast', { playerId: ownerId, ...notice('Budova zničena: {0}', { 0: { key: def.name } }), kind: 'error' });
       }
     }
 
@@ -107,9 +107,9 @@ export class SimulationLifecycle {
     this.emit('defeat', { playerId });
     this.emit('toast', {
       playerId: this.humanId,
-      text: playerId === this.humanId
-        ? 'Váš Královský hrad padl! Panství je ztraceno.'
-        : `Panství hráče ${player.name} padlo.`,
+      ...(playerId === this.humanId
+        ? notice('Váš Královský hrad padl! Panství je ztraceno.')
+        : notice('Panství hráče {0} padlo.', { 0: player.name })),
       kind: playerId === this.humanId ? 'error' : 'info'
     });
     this.checkVictory();
@@ -155,3 +155,4 @@ export class SimulationLifecycle {
     });
   }
 }
+import { notice } from './messages.js';

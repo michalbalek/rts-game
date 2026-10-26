@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { CAMERA_SPEEDS } from './settings.js';
 import { audio } from '../engine/audio.js';
 
@@ -82,11 +83,11 @@ export function saveGroup(index) {
     .filter(u => u.ownerId === this.session.selfId)
     .map(u => u.id);
   if (!ids.length) {
-    this.ui.toast('Nemáte vybrané jednotky pro uložení skupiny.', 'info');
+    this.ui.toast(t("Nemáte vybrané jednotky pro uložení skupiny."), 'info');
     return;
   }
   this.groups.set(index, ids);
-  this.ui.toast(`Skupina ${index} uložena (${ids.length} jednotek).`, 'success');
+  this.ui.toast(t("Skupina {0} uložena ({1} jednotek).", { 0: index, 1: ids.length }), 'success');
   audio.play('click');
 }
 
@@ -95,7 +96,7 @@ export function selectGroup(index) {
   if (!ids || !ids.length) return;
   const units = this.session.state.units.filter(u => ids.includes(u.id) && u.ownerId === this.session.selfId);
   if (!units.length) {
-    this.ui.toast(`Skupina ${index} už neexistuje.`, 'info');
+    this.ui.toast(t("Skupina {0} už neexistuje.", { 0: index }), 'info');
     this.groups.delete(index);
     return;
   }

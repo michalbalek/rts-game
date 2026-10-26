@@ -99,6 +99,7 @@ export class GameUI {
   }
 
   setConnection(text, kind = 'warning') {
+    this.connectionText = text;
     if (!this.el.connectionBanner) return;
     if (!text) {
       this.el.connectionBanner.classList.add('hidden');
@@ -107,7 +108,7 @@ export class GameUI {
     }
     this.el.connectionBanner.classList.remove('hidden');
     this.el.connectionBanner.className = `connection-banner ${kind}`;
-    this.el.connectionBanner.innerHTML = `<span class="spinner"></span><span>${escapeHtml(text)}</span>`;
+    this.el.connectionBanner.innerHTML = `<span class="spinner"></span><span>${escapeHtml(t(text))}</span>`;
   }
 
   setGameCountdown(...args) {
@@ -233,7 +234,7 @@ export class GameUI {
     if (!this.session) return null;
     const result = this.hooks.command ? this.hooks.command(cmd) : this.session.command(cmd);
     if (result && result.ok === false && result.reason) {
-      this.toast(result.reason, 'error');
+      this.toast(result.message || result.reason, 'error');
       audio.play('error');
     }
     return result;
@@ -243,7 +244,7 @@ export class GameUI {
     if (!this.el.toastRoot) return;
     const node = document.createElement('div');
     node.className = `toast ${kind}`;
-    node.innerHTML = `<span class="toast-icon">${kind === 'error' ? '⚠️' : kind === 'success' ? '✅' : '📜'}</span><span>${escapeHtml(text)}</span>`;
+    node.innerHTML = `<span class="toast-icon">${kind === 'error' ? '⚠️' : kind === 'success' ? '✅' : '📜'}</span><span>${escapeHtml(t(text))}</span>`;
     this.el.toastRoot.appendChild(node);
     while (this.el.toastRoot.children.length > 5) {
       this.el.toastRoot.firstElementChild.remove();

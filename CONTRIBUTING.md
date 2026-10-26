@@ -34,6 +34,14 @@ Automatická kontrola [tools/test-structure.js](tools/test-structure.js) je sou�
 - Serverový [správce místností](server/src/rooms.js) zajišťuje přiřazování a přihlášení hráčů a zachovává exporty `Room` a `RoomManager`. [Room](server/src/room.js) řeší připojení a lobby, navazující [RoomMatch](server/src/room-match.js) životní cyklus rozehrané hry a [konfigurace](server/src/room-config.js) společné limity a časování.
 - Vstupní testovací příkazy zůstávají v [package.json](package.json). Nové testy přidávejte k odpovídající oblasti; nerozšiřujte jeden soubor nad limit.
 
+## Překlady rozhraní
+
+- [Lokalizace](client/js/i18n/index.js) nabízí `t(českýText, parametry)`. Český zdrojový text je klíč a výchozí překlad. Anglické překlady patří podle oblasti do [rozhraní](client/js/i18n/en-ui.js) nebo [herního katalogu](client/js/i18n/en-game.js).
+- Překládejte až při vykreslování, ne při importu modulu. Herní definice, identifikátory příkazů, uložené hry a jména hráčů se kvůli jazyku nemění. Dynamické údaje předávejte přes parametry `{0}`, `{1}`; nepřekládejte uživatelská jména.
+- Statické popisky stránky označujte `data-i18n`, atributy například `data-i18n-title` nebo `data-i18n-aria-label`. Jejich hodnotou je český klíč.
+- Dynamické hlášky simulace a serveru vytvářejte pomocí `notice` / `failure` v [messages.js](client/js/sim/messages.js). Zachovávají původní český text a přidají serializovatelný klíč s parametry pro překlad u příjemce. Překládaný parametr, například název budovy, předávejte jako `{ key: def.name }`; nick jako prostý řetězec.
+- Při přidávání jazyka zaregistrujte jeho katalog a locale v lokalizačním modulu. Rozšiřte [testy lokalizace](tools/client-tests/localization.js), které spouští `npm run test:client`, a ověřte přepnutí i obnovení stránky v prohlížeči.
+
 ## Commity
 
 Zprávy commitů se řídí [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/). Nové commity musí tomuto formátu odpovídat. Existující historii nepřepisujeme.

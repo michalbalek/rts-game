@@ -152,7 +152,7 @@ export class Room extends RoomMatch {
     }
 
     if (this.state === 'playing') {
-      this.broadcastInfo(`${participant.nick} se odpojil. Má ${RECONNECT_SECONDS} s na návrat.`);
+      this.broadcastInfo(notice('{0} se odpojil. Má {1} s na návrat.', { 0: participant.nick, 1: RECONNECT_SECONDS }));
     }
   }
 
@@ -164,7 +164,7 @@ export class Room extends RoomMatch {
 
     if (this.state === 'playing' && this.sim) {
       this.sim.eliminatePlayer(participant.playerId);
-      this.broadcastInfo(`${participant.nick} opustil hru a prohrává.`);
+      this.broadcastInfo(notice('{0} opustil hru a prohrává.', { 0: participant.nick }));
       if (this.sim.ended) this.finishGame(now);
     } else if (this.state === 'lobby' || this.state === 'countdown') {
       this.participants = this.participants.filter(p => p !== participant);
@@ -204,6 +204,7 @@ export class Room extends RoomMatch {
     return {
       type: 'lobby',
       serverName: this.name,
+      serverNameMessage: { key: 'Království #{0}', params: { 0: this.id } },
       maxPlayers: MAX_PLAYERS,
       players: this.connected().map(publicPlayer),
       countdown,
@@ -314,3 +315,4 @@ export class Room extends RoomMatch {
   }
 }
 
+import { notice } from '../../client/js/sim/messages.js';

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { BUILDING_DEFS, BUILD, buildSpeedFactor } from '../sim/constants.js';
 import { escapeHtml } from './modals.js';
 
@@ -21,26 +22,26 @@ export function siteStats(b) {
     progress: Math.round(b.progress * 100),
     active,
     total,
-    builders: `${active} na místě · ${total} přiřazeno`,
+    builders: t("{0} na místě · {1} přiřazeno", { 0: active, 1: total }),
     speed: `${Math.round(factor * 100)} %`,
-    left: factor > 0 ? `~${Math.ceil((1 - b.progress) * def.buildTime / factor)} s` : 'čeká na stavitele'
+    left: factor > 0 ? `~${Math.ceil((1 - b.progress) * def.buildTime / factor)} s` : t("čeká na stavitele")
   };
 }
 
 export function siteLabel(b) {
   const { progress, active, total } = this.siteStats(b);
-  return total ? `${progress} % · stavitelů ${active}/${total}` : `${progress} % · nikdo nestaví`;
+  return total ? t("{0} % · stavitelů {1}/{2}", { 0: progress, 1: active, 2: total }) : t("{0} % · nikdo nestaví", { 0: progress });
 }
 
 export function siteInfoHtml(b) {
   const stats = this.siteStats(b);
   return `
     <div class="sel-rows" data-site-info>
-      <div class="sel-row"><span>👷 Stavitelé</span><b data-site-builders>${stats.builders}</b></div>
-      <div class="sel-row"><span>Rychlost stavby</span><b data-site-speed>${stats.speed}</b></div>
-      <div class="sel-row"><span>Zbývá</span><b data-site-left>${stats.left}</b></div>
+      <div class="sel-row"><span>${t("👷 Stavitelé")}</span><b data-site-builders>${stats.builders}</b></div>
+      <div class="sel-row"><span>${t("Rychlost stavby")}</span><b data-site-speed>${stats.speed}</b></div>
+      <div class="sel-row"><span>${t("Zbývá")}</span><b data-site-left>${stats.left}</b></div>
     </div>
-    <p class="sel-desc">Vyberte poddané a klikněte pravým tlačítkem na toto staveniště, nebo v jejich panelu zvolte stavbu v sekci Stavět. Každý další stavitel přidá ${Math.round(BUILD.extraBuilderSpeed * 100)} % základní rychlosti.</p>`;
+    <p class="sel-desc">${t("Vyberte poddané a klikněte pravým tlačítkem na toto staveniště, nebo v jejich panelu zvolte stavbu v sekci Stavět. Každý další stavitel přidá")} ${Math.round(BUILD.extraBuilderSpeed * 100)} ${t("% základní rychlosti.")}</p>`;
 }
 
 export function constructSectionHtml(units) {
@@ -48,18 +49,18 @@ export function constructSectionHtml(units) {
   if (!units.some(u => u.isVillager && u.ownerId === s.selfId)) return '';
   const sites = this.constructionSites();
   if (!sites.length) return '';
-  let html = '<div class="train-section"><div class="sub-heading">Stavět</div><div class="train-buttons">';
+  let html = `<div class="train-section"><div class="sub-heading">${t("Stavět")}</div><div class="train-buttons">`;
   for (const site of sites) {
     const def = site.config || BUILDING_DEFS[site.type];
     html += `
       <button class="train-button" data-action="construct" data-building-id="${site.id}">
         <span class="train-icon">${def.icon}</span>
         <span class="train-info">
-          <strong>${escapeHtml(def.name)}</strong>
+          <strong>${escapeHtml(t(def.name))}</strong>
           <span data-site-label>${escapeHtml(this.siteLabel(site))}</span>
         </span>
       </button>`;
   }
-  html += '</div><p class="sel-desc">Vybraní poddaní půjdou na zvolenou stavbu a začnou stavět. Můžete také kliknout pravým tlačítkem přímo na vlastní staveniště.</p></div>';
+  html += `</div><p class="sel-desc">${t("Vybraní poddaní půjdou na zvolenou stavbu a začnou stavět. Můžete také kliknout pravým tlačítkem přímo na vlastní staveniště.")}</p></div>`;
   return html;
 }

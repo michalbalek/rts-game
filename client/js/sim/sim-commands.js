@@ -49,7 +49,7 @@ export class SimulationCommands {
       }
       case 'build': {
         const result = this.placeBuilding(playerId, cmd.buildingType, cmd.x, cmd.y);
-        return { ok: result.valid, reason: result.reason, buildingId: result.building ? result.building.id : null };
+        return { ok: result.valid, reason: result.reason, message: result.message, buildingId: result.building ? result.building.id : null };
       }
       case 'train':
         return this.trainUnit(playerId, cmd.buildingId, cmd.unitType);

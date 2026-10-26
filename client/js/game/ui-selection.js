@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { BUILDING_DEFS } from '../sim/constants.js';
 import { audio } from '../engine/audio.js';
 import { pct, assignedWorkers, workerLabel } from './ui-format.js';
@@ -140,7 +141,7 @@ export function refreshDynamic() {
       const def = b.config || BUILDING_DEFS[b.type];
       const enRoute = Math.max(0, assignedWorkers(b) - b.workers);
       workers.textContent = workerLabel(b, def);
-      workers.title = enRoute ? `${enRoute} na cestě do budovy` : '';
+      workers.title = enRoute ? t("{0} na cestě do budovy", { 0: enRoute }) : '';
     }
     const siteInfo = panel.querySelector('[data-site-info]');
     if (siteInfo) {

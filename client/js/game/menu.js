@@ -1,3 +1,4 @@
+import { t, getLanguage, languageOptions } from '../i18n/index.js';
 import { readSaveInfo, formatSaveLabel } from './save.js';
 import { settingsForm, bindSettingsForm, helpContent, creditsContent, escapeHtml } from './modals.js';
 import { audio } from '../engine/audio.js';
@@ -89,12 +90,12 @@ export class Menu {
 
   showMain() {
     const settings = this.getSettings();
-    const nick = settings.nick ? `<span class="menu-note">Nick: ${escapeHtml(settings.nick)}</span>` : '';
+    const nick = settings.nick ? `<span class="menu-note">${t("Nick:")} ${escapeHtml(settings.nick)}</span>` : '';
     const saveInfo = readSaveInfo();
     const loadEntry = saveInfo ? `
             <button class="menu-entry load" data-action="load">
               <span class="entry-icon">📜</span>
-              <span class="entry-text"><strong>Načíst hru</strong><small>${escapeHtml(formatSaveLabel(saveInfo))}</small></span>
+              <span class="entry-text"><strong>${t("Načíst hru")}</strong><small>${escapeHtml(formatSaveLabel(saveInfo))}</small></span>
               <span class="entry-arrow">›</span>
             </button>` : '';
     this.show(`
@@ -103,43 +104,52 @@ export class Menu {
         <div class="menu-shell">
           <div class="menu-brand">
             <div class="brand-crest">${this.crest()}</div>
-            <div class="brand-kicker">Izometrická real-time strategie</div>
-            <h1>KRÁLOVSTVÍ</h1>
-            <p class="brand-subtitle">Poušť, oázy a pískovcové hrady</p>
-            <p class="brand-flavor">Ujměte se vlády, řiďte poddané, stavte hradby a veďte své vojsko k jedinému královskému trůnu.</p>
+            <div class="brand-kicker">${t("Izometrická real-time strategie")}</div>
+            <h1>${t("KRÁLOVSTVÍ")}</h1>
+            <p class="brand-subtitle">${t("Poušť, oázy a pískovcové hrady")}</p>
+            <p class="brand-flavor">${t("Ujměte se vlády, řiďte poddané, stavte hradby a veďte své vojsko k jedinému královskému trůnu.")}</p>
             <div class="brand-badges">
-              <span>🏰 3 mapy</span><span>⚔️ 4 hráči</span><span>👑 10 budov</span>
+              <span>${t("🏰 3 mapy")}</span><span>${t("⚔️ 4 hráči")}</span><span>${t("👑 10 budov")}</span>
             </div>
             <div class="brand-footer">
-              <span>Verze 2.0.0</span>
+              <span>${t("Verze 2.0.0")}</span>
               ${nick}
             </div>
           </div>
           <div class="menu-panel main-links">
+            <div class="menu-language">
+              <label for="menu-language">${t('Jazyk')}</label>
+              <select id="menu-language" class="select-input">${languageOptions()}</select>
+            </div>
             <button class="menu-entry primary" data-action="single">
               <span class="entry-icon">🛡️</span>
-              <span class="entry-text"><strong>Single player</strong><small>Hra s boty nebo vlastní stavba</small></span>
+              <span class="entry-text"><strong>${t("Single player")}</strong><small>${t("Hra s boty nebo vlastní stavba")}</small></span>
               <span class="entry-arrow">›</span>
             </button>
             ${loadEntry}
             <button class="menu-entry multiplayer" data-action="multiplayer">
               <span class="entry-icon">🌐</span>
-              <span class="entry-text"><strong>Multiplayer</strong><small>Až 4 hráči na jednom serveru</small></span>
+              <span class="entry-text"><strong>${t("Multiplayer")}</strong><small>${t("Až 4 hráči na jednom serveru")}</small></span>
               <span class="entry-arrow">›</span>
             </button>
             <div class="menu-secondary-row">
-              <button class="menu-entry small" data-action="settings"><span>⚙️</span><strong>Nastavení</strong></button>
-              <button class="menu-entry small" data-action="help"><span>📖</span><strong>Nápověda</strong></button>
+              <button class="menu-entry small" data-action="settings"><span>⚙️</span><strong>${t("Nastavení")}</strong></button>
+              <button class="menu-entry small" data-action="help"><span>📖</span><strong>${t("Nápověda")}</strong></button>
             </div>
             <div class="menu-secondary-row">
-              <button class="menu-entry small" data-action="credits"><span>👑</span><strong>Kredity</strong></button>
-              <button class="menu-entry small danger" data-action="quit"><span>🚪</span><strong>Konec</strong></button>
+              <button class="menu-entry small" data-action="credits"><span>👑</span><strong>${t("Kredity")}</strong></button>
+              <button class="menu-entry small danger" data-action="quit"><span>🚪</span><strong>${t("Konec")}</strong></button>
             </div>
           </div>
         </div>
-        <footer class="menu-footer">Vyberte režim a vstupte do pouštního království.</footer>
+        <footer class="menu-footer">${t("Vyberte režim a vstupte do pouštního království.")}</footer>
       </div>`);
 
+    this.bind('#menu-language', 'change', e => {
+      this.applySettings({ ...this.getSettings(), language: e.target.value });
+      this.showMain();
+      this.root.querySelector('#menu-language').focus();
+    });
     this.bind('[data-action="single"]', 'click', () => { audio.play('click'); this.showSingle(); });
     this.bind('[data-action="load"]', 'click', () => { audio.play('click'); this.onLoadGame(); });
     this.bind('[data-action="multiplayer"]', 'click', () => { audio.play('click'); this.showMultiplayer(); });
@@ -199,32 +209,39 @@ export class Menu {
 
   openSettings() {
     this.modals.open({
-      title: 'Nastavení',
+      title: t("Nastavení"),
       icon: '⚙️',
       body: settingsForm(this.getSettings()),
       className: 'modal-settings',
-      actions: [{ label: 'Zavřít', kind: 'btn-primary', onClick: (m) => m.close() }]
+      actions: [{ label: t("Zavřít"), kind: 'btn-primary', onClick: (m) => m.close() }]
     });
-    bindSettingsForm(this.modals.root, this.getSettings(), (settings) => this.applySettings(settings));
+    bindSettingsForm(this.modals.root, this.getSettings(), (settings) => {
+      const language = getLanguage();
+      this.applySettings(settings);
+      if (language !== getLanguage()) {
+        this.showMain();
+        this.openSettings();
+      }
+    });
   }
 
   openHelp() {
     this.modals.open({
-      title: 'Nápověda',
+      title: t("Nápověda"),
       icon: '📖',
       body: helpContent(),
       className: 'modal-help',
-      actions: [{ label: 'Rozumím', kind: 'btn-primary', onClick: (m) => m.close() }]
+      actions: [{ label: t("Rozumím"), kind: 'btn-primary', onClick: (m) => m.close() }]
     });
   }
 
   openCredits() {
     this.modals.open({
-      title: 'Kredity',
+      title: t('Kredity'),
       icon: '👑',
       body: creditsContent(),
       className: 'modal-credits',
-      actions: [{ label: 'Zavřít', kind: 'btn-primary', onClick: (m) => m.close() }]
+      actions: [{ label: t("Zavřít"), kind: 'btn-primary', onClick: (m) => m.close() }]
     });
   }
 }

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 export function fmt(n) {
   return String(Math.floor(Number(n) || 0));
 }
@@ -24,10 +25,10 @@ export function timeLabel(seconds) {
 
 export function resourceName(key) {
   switch (key) {
-    case 'wood': return '🪵 Dřevo';
-    case 'stone': return '🪨 Kámen';
-    case 'food': return '🍎 Jídlo';
-    case 'iron': return '⛓️ Železo';
+    case 'wood': return t("🪵 Dřevo");
+    case 'stone': return t("🪨 Kámen");
+    case 'food': return t("🍎 Jídlo");
+    case 'iron': return t("⛓️ Železo");
     default: return key || '—';
   }
 }

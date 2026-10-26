@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml } from './modals.js';
 import { timeLabel } from './ui-format.js';
 
@@ -10,7 +11,7 @@ export function showResults({ victory, time, players, winnerId, returnIn, onRest
     return `
       <tr class="${isWinner ? 'winner' : ''} ${p.alive ? '' : 'dead'}">
         <td><span class="legend-dot" style="background:${p.color || '#999'}"></span> ${escapeHtml(p.name)}${isWinner ? ' 👑' : ''}</td>
-        <td>${p.alive ? 'Naživu' : 'Vyřazen'}</td>
+        <td>${p.alive ? t("Naživu") : t("Vyřazen")}</td>
         <td>${stats.destroyed || 0}</td>
         <td>${stats.trained || 0}</td>
         <td>${stats.gathered || 0}</td>
@@ -18,25 +19,25 @@ export function showResults({ victory, time, players, winnerId, returnIn, onRest
       </tr>`;
   }).join('');
 
-  const title = victory ? 'Vítězství!' : 'Prohra';
+  const title = victory ? t("Vítězství!") : t("Prohra");
   const icon = victory ? '👑' : '💀';
   const body = `
     <div class="results-banner ${victory ? 'victory' : 'defeat'}">
       <span>${icon}</span>
       <div>
-        <strong>${victory ? 'Království je vaše!' : 'Vaše panství padlo.'}</strong>
-        <span>Délka hry ${timeLabel(time || 0)}${returnIn ? ` · návrat do lobby za <b id="results-countdown">${returnIn}</b> s` : ''}</span>
+        <strong>${victory ? t("Království je vaše!") : t("Vaše panství padlo.")}</strong>
+        <span>${t("Délka hry")} ${timeLabel(time || 0)}${returnIn ? ` ${t("· návrat do lobby za")} <b id="results-countdown">${returnIn}</b> s` : ''}</span>
       </div>
     </div>
     <table class="results-table">
-      <thead><tr><th>Panství</th><th>Stav</th><th>Zničeno</th><th>Vycvičeno</th><th>Sebráno</th><th>Ztraceno</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="6">Bez záznamů</td></tr>'}</tbody>
+      <thead><tr><th>${t("Panství")}</th><th>${t("Stav")}</th><th>${t("Zničeno")}</th><th>${t("Vycvičeno")}</th><th>${t("Sebráno")}</th><th>${t("Ztraceno")}</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="6">${t("Bez záznamů")}</td></tr>`}</tbody>
     </table>`;
 
   const actions = [];
-  if (onRestart) actions.push({ label: 'Hrát znovu', kind: 'btn-primary', onClick: (m) => { m.close(); this.resultsOpen = false; onRestart(); } });
+  if (onRestart) actions.push({ label: t("Hrát znovu"), kind: 'btn-primary', onClick: (m) => { m.close(); this.resultsOpen = false; onRestart(); } });
   actions.push({
-    label: 'Hlavní menu', kind: onRestart ? 'btn-secondary' : 'btn-primary',
+    label: t("Hlavní menu"), kind: onRestart ? 'btn-secondary' : 'btn-primary',
     onClick: (m) => { m.close(); this.resultsOpen = false; if (onMenu) onMenu(); }
   });
 

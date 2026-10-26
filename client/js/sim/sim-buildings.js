@@ -2,6 +2,7 @@ import { RESOURCE_TYPES, BUILDING_DEFS, buildSpeedFactor } from './constants.js'
 import { Building } from './entities.js';
 import { findNearestWalkable } from './pathfinding.js';
 import { validatePlacement } from './placement.js';
+import { notice } from './messages.js';
 
 export class SimulationBuildings {
   canPlaceBuilding(playerId, type, x, y) {
@@ -59,7 +60,7 @@ export class SimulationBuildings {
 
     this.emit('toast', {
       playerId,
-      text: `Stavba zahájena: ${def.name}`,
+      ...notice('Stavba zahájena: {0}', { 0: { key: def.name } }),
       kind: 'info'
     });
     return { valid: true, building };
@@ -92,7 +93,7 @@ export class SimulationBuildings {
     worker.repairBuildingId = b.id;
     const approach = this.findBuildingApproach(worker, b);
     if (approach) this.navigateTo(worker, approach.x, approach.y);
-    this.emit('toast', { playerId, text: `Oprava zahájena: ${b.config.name}`, kind: 'info' });
+    this.emit('toast', { playerId, ...notice('Oprava zahájena: {0}', { 0: { key: b.config.name } }), kind: 'info' });
     return { ok: true };
   }
 
@@ -107,7 +108,7 @@ export class SimulationBuildings {
     this.removeBuilding(b, { refund: false, destroyed: false });
     this.emit('toast', {
       playerId,
-      text: `Budova zbořena: ${b.config.name} (vráceno 50 % nákladů)`,
+      ...notice('Budova zbořena: {0} (vráceno 50 % nákladů)', { 0: { key: b.config.name } }),
       kind: 'info'
     });
     return { ok: true };
@@ -129,7 +130,7 @@ export class SimulationBuildings {
     if (b.hp >= b.maxHp) {
       b.repair = null;
       unit.repairBuildingId = null;
-      this.emit('toast', { playerId: b.ownerId, text: `Oprava dokončena: ${b.config.name}`, kind: 'success' });
+      this.emit('toast', { playerId: b.ownerId, ...notice('Oprava dokončena: {0}', { 0: { key: b.config.name } }), kind: 'success' });
       return;
     }
     const approach = this.findBuildingApproach(unit, b);
@@ -146,7 +147,7 @@ export class SimulationBuildings {
     if (b.hp >= b.maxHp) {
       b.repair = null;
       unit.repairBuildingId = null;
-      this.emit('toast', { playerId: b.ownerId, text: `Oprava dokončena: ${b.config.name}`, kind: 'success' });
+      this.emit('toast', { playerId: b.ownerId, ...notice('Oprava dokončena: {0}', { 0: { key: b.config.name } }), kind: 'success' });
     }
   }
 
@@ -191,7 +192,7 @@ export class SimulationBuildings {
             });
             this.emit('toast', {
               playerId: b.ownerId,
-              text: `Stavba dokončena: ${def.name}`,
+              ...notice('Stavba dokončena: {0}', { 0: { key: def.name } }),
               kind: 'success'
             });
             this.updateAllCapacities();

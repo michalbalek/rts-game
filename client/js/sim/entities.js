@@ -1,4 +1,5 @@
 import { BUILDING_DEFS, UNIT_DEFS } from './constants.js';
+import { localizedError } from './messages.js';
 
 export function unitActivity(unit) {
   if (unit.fleeing || unit.workPaused) return 'idle';
@@ -14,7 +15,7 @@ export function unitActivity(unit) {
 export class Building {
   constructor(id, type, ownerId, tileX, tileY, complete = true) {
     const def = BUILDING_DEFS[type];
-    if (!def) throw new Error(`Neznámá budova: ${type}`);
+    if (!def) throw localizedError('Neznámá budova: {0}', { 0: type });
     this.id = id;
     this.type = type;
     this.ownerId = ownerId;
@@ -55,7 +56,7 @@ export class Building {
 export class Unit {
   constructor(id, type, ownerId, x, y) {
     const def = UNIT_DEFS[type];
-    if (!def) throw new Error(`Neznámá jednotka: ${type}`);
+    if (!def) throw localizedError('Neznámá jednotka: {0}', { 0: type });
     this.id = id;
     this.type = type;
     this.ownerId = ownerId;

@@ -164,8 +164,7 @@ export class SimulationEconomy {
         ? caps.food - player.resources.food
         : caps.resources - this.getStoredResources(playerId);
       if (free < amount) {
-        const where = resource === 'food' ? 'V sýpkách' : 'Ve skladech';
-        return { ok: false, reason: `${where} není dost místa.` };
+        return { ok: false, reason: resource === 'food' ? 'V sýpkách není dost místa.' : 'Ve skladech není dost místa.' };
       }
       player.resources.money -= total;
       player.resources[resource] += amount;

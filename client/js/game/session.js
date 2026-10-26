@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { GameSim, distanceToBuilding } from '../sim/sim.js';
 import { GameMap } from '../sim/mapgen.js';
 import { validatePlacement } from '../sim/placement.js';
@@ -82,7 +83,7 @@ class BaseSession {
   }
 
   command(cmd) {
-    return { ok: false, reason: 'Příkazy nejsou dostupné.' };
+    return { ok: false, reason: t("Příkazy nejsou dostupné.") };
   }
 
   drainEvents() {

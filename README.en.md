@@ -20,7 +20,8 @@ Take charge of a desert domain. Summon your subjects to the campfire in front of
 - **Fog of war** – optional, with explored and unexplored areas.
 - **Multiplayer for up to 4 players** – authoritative server, automatic room assignment, start countdown, connection recovery and a results screen.
 - **Procedural audio** – music, ambient environment sounds, scribe announcements and fanfares generated via the Web Audio API.
-- **Saved settings** – volume, graphics quality, camera speed, FPS and nickname are stored in the browser.
+- **Czech and English** – switch languages above the game-mode choices in the main menu or in Settings. Menus, HUD, buildings, units, help, gameplay notices and multiplayer messages are translated.
+- **Saved settings** – language, volume, graphics quality, camera speed, FPS and nickname are stored in the browser. Czech is the default language.
 
 ---
 

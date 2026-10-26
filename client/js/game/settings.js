@@ -1,3 +1,5 @@
+import { isLanguage } from '../i18n/index.js';
+
 const KEY = 'kralovstvi_settings_v2';
 
 export const CAMERA_SPEEDS = {
@@ -7,6 +9,7 @@ export const CAMERA_SPEEDS = {
 };
 
 export const DEFAULT_SETTINGS = {
+  language: 'cs',
   musicVolume: 55,
   sfxVolume: 80,
   musicMuted: false,
@@ -22,7 +25,7 @@ export function loadSettings() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return { ...DEFAULT_SETTINGS, ...parsed, language: isLanguage(parsed.language) ? parsed.language : 'cs' };
   } catch (err) {
     return { ...DEFAULT_SETTINGS };
   }
@@ -31,8 +34,10 @@ export function loadSettings() {
 export function saveSettings(settings) {
   try {
     localStorage.setItem(KEY, JSON.stringify(settings));
+    return true;
   } catch (err) {
-    // Soukromý režim může zápis zakázat.
+    console.warn('Could not save settings:', err);
+    return false;
   }
 }
 

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { MARKET_PRICES } from '../sim/constants.js';
 import { audio } from '../engine/audio.js';
 import { fmt } from './ui-format.js';
@@ -6,33 +7,33 @@ export function showMarket() {
   if (!this.session) return;
   const rows = Object.entries(MARKET_PRICES).map(([key, price]) => `
     <div class="market-row">
-      <span class="market-name">${price.icon} ${price.name}</span>
+      <span class="market-name">${price.icon} ${t(price.name)}</span>
       <span class="market-stock" data-market-stock="${key}">0</span>
       <span class="market-price buy">${price.buy} 🪙</span>
       <span class="market-price sell">${price.sell} 🪙</span>
       <div class="market-actions">
-        <button class="btn btn-secondary btn-small" data-market-op="buy" data-resource="${key}">Koupit</button>
-        <button class="btn btn-secondary btn-small" data-market-op="sell" data-resource="${key}">Prodat</button>
+        <button class="btn btn-secondary btn-small" data-market-op="buy" data-resource="${key}">${t("Koupit")}</button>
+        <button class="btn btn-secondary btn-small" data-market-op="sell" data-resource="${key}">${t("Prodat")}</button>
       </div>
     </div>`).join('');
 
   this.modals.open({
-    title: 'Královský obchod',
+    title: t("Královský obchod"),
     icon: '🪙',
     className: 'modal-market',
     body: `
       <div class="market-top">
-        <span>Pokladna: <b data-market-money>0</b> 🪙</span>
-        <label class="market-amount">Množství
+        <span>${t("Pokladna:")} <b data-market-money>0</b> 🪙</span>
+        <label class="market-amount">${t("Množství")}
           <input id="market-amount" class="text-input" type="number" min="1" max="500" value="10">
         </label>
       </div>
       <div class="market-head">
-        <span>Surovina</span><span>Sklad</span><span>Nákup</span><span>Prodej</span><span></span>
+        <span>${t("Surovina")}</span><span>${t("Sklad")}</span><span>${t("Nákup")}</span><span>${t("Prodej")}</span><span></span>
       </div>
       <div class="market-list">${rows}</div>
-      <p class="form-hint">Nákup i prodej probíhá okamžitě. Nákup omezuje pokladna a volné místo (sklad pro suroviny, sýpka pro jídlo), prodej zásoba suroviny.</p>`,
-    actions: [{ label: 'Zavřít', kind: 'btn-primary', onClick: (m) => m.close() }],
+      <p class="form-hint">${t("Nákup i prodej probíhá okamžitě. Nákup omezuje pokladna a volné místo (sklad pro suroviny, sýpka pro jídlo), prodej zásoba suroviny.")}</p>`,
+    actions: [{ label: t("Zavřít"), kind: 'btn-primary', onClick: (m) => m.close() }],
     onClose: () => { this.marketOpen = false; }
   });
   this.marketOpen = true;

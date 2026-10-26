@@ -1,6 +1,7 @@
 import {
   BUILDING_DEFS, TILE_TYPES, RESOURCE_TYPES, ENEMY_BUILD_DISTANCE
 } from './constants.js';
+import { failure } from './messages.js';
 
 /** Nejkratší vzdálenost mezi dvěma obdélníky (bod má w = h = 0). */
 function rectGap(x, y, w, h, rx, ry, rw, rh) {
@@ -32,7 +33,7 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
   const enemyUnit = (opts.units || []).some(u => isEnemyOwner(u.ownerId) &&
     rectGap(x, y, def.w, def.h, u.x, u.y, 0, 0) < ENEMY_BUILD_DISTANCE);
   if (enemyBuilding || enemyUnit) {
-    return { valid: false, reason: `Stavět nelze do ${ENEMY_BUILD_DISTANCE} bloků od nepřátelské jednotky nebo budovy, sire!` };
+    return { valid: false, ...failure('Stavět nelze do {0} bloků od nepřátelské jednotky nebo budovy, sire!', { 0: ENEMY_BUILD_DISTANCE }) };
   }
 
   let treeTiles = 0;

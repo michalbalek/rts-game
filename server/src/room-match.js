@@ -1,4 +1,5 @@
 import { GameSim } from '../../client/js/sim/sim.js';
+import { notice } from '../../client/js/sim/messages.js';
 import { TICK_MS, SNAPSHOT_MS, RETURN_SECONDS, RECONNECT_SECONDS, randomSeed, randomMapKey } from './room-config.js';
 
 export class RoomMatch {
@@ -136,7 +137,7 @@ export class RoomMatch {
       if (now - p.disconnectedAt < RECONNECT_SECONDS * 1000) continue;
       p.left = true;
       this.sim.eliminatePlayer(p.playerId);
-      this.broadcastInfo(`Hráč ${p.nick} byl po ${RECONNECT_SECONDS} s vyřazen ze hry.`);
+      this.broadcastInfo(notice('Hráč {0} byl po {1} s vyřazen ze hry.', { 0: p.nick, 1: RECONNECT_SECONDS }));
       if (this.sim.ended) {
         this.finishGame(now);
         return;
@@ -177,7 +178,9 @@ export class RoomMatch {
   }
 
   broadcastInfo(text) {
-    const msg = { type: 'info', text, kind: 'info' };
+    const msg = typeof text === 'string'
+      ? { type: 'info', text, kind: 'info' }
+      : { type: 'info', text: text.text, localized: text.message, kind: 'info' };
     for (const p of this.connected()) {
       if (p.ws) p.ws.sendJson(msg);
     }

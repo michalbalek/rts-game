@@ -32,7 +32,7 @@ export function onRightClick(e) {
       targetId: target.entity.id
     });
     if (result && result.ok === false) {
-      this.ui.toast(result.reason, 'error');
+      this.ui.toast(result.message || result.reason, 'error');
       audio.play('error');
     } else {
       audio.play('ack');
@@ -53,7 +53,7 @@ export function onRightClick(e) {
     : { op: 'move', unitIds, x: dest.x, y: dest.y };
   const result = this.session.command(command);
   if (result && result.ok === false) {
-    this.ui.toast(result.reason, 'error');
+    this.ui.toast(result.message || result.reason, 'error');
     audio.play('error');
   } else {
     audio.play('ack');
@@ -129,13 +129,13 @@ export function tryPlaceBuilding() {
   const { x, y } = this.ui.hoverTile;
   const check = this.session.canPlace(type, x, y);
   if (!check.valid) {
-    this.ui.toast(check.reason, 'error');
+    this.ui.toast(check.message || check.reason, 'error');
     audio.play('error');
     return;
   }
   const result = this.session.command({ op: 'build', buildingType: type, x, y });
   if (result && result.ok === false) {
-    this.ui.toast(result.reason, 'error');
+    this.ui.toast(result.message || result.reason, 'error');
     audio.play('error');
     return;
   }

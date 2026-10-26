@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 import { NetClient } from '../net.js';
 
@@ -35,10 +36,10 @@ export function applicationReconnect(app) {
       audio.setMusicMode('menu');
       app.menu.showMain();
       app.modals.open({
-        title: 'Spojení ztraceno',
+        title: t("Spojení ztraceno"),
         icon: '📡',
-        body: '<p class="modal-paragraph">Nepodařilo se obnovit spojení se serverem do 120 sekund. Hra byla opuštěna.</p>',
-        actions: [{ label: 'Hlavní menu', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${t("Nepodařilo se obnovit spojení se serverem do 120 sekund. Hra byla opuštěna.")}</p>`,
+        actions: [{ label: t("Hlavní menu"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
     }
   }

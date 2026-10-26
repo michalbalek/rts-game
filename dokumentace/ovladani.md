@@ -16,6 +16,7 @@
 - **Delete**: býrání vybrané vlastní budovy (po potvrzení).
 
 ## Herní panely (HUD)
+- **Jazyk** – češtinu nebo angličtinu vyberete v hlavním menu nebo Nastavení. Volba se uloží a přeloží také popisky HUD, nápovědu a hlášky; zkratky a herní pravidla se nemění.
 - **Horní lišta**: kompaktní přehled peněz, dřeva, kamene, jídla a železa. Vedle zásob ukazuje obsazenost skladu a sýpky i počet obyvatel vůči kapacitě. Tlačítko Menu otevře herní menu. Na užších obrazovkách se zásoby přesunou do druhého řádku, kapacity zůstávají viditelné.
 - **Spodní dok**: nabídka staveb.
 - **Výběrový panel**: informace a příkazy pro vybranou budovu, staveniště nebo jednotky.

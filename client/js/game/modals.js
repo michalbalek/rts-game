@@ -1,3 +1,4 @@
+import { t, languageOptions } from '../i18n/index.js';
 import { CAMERA_SPEEDS, isValidNick } from './settings.js';
 
 /** Jednoduchý správce modálních oken sdílený menu i hrou. */
@@ -22,7 +23,7 @@ export class Modals {
         <div class="modal-box ${className}">
           <div class="modal-header">
             <h2>${icon ? `<span class="modal-icon">${icon}</span> ` : ''}${title}</h2>
-            ${dismissable ? '<button class="modal-close" aria-label="Zavřít">&times;</button>' : ''}
+            ${dismissable ? `<button class="modal-close" aria-label="${t("Zavřít")}">&times;</button>` : ''}
           </div>
           <div class="modal-body">${body}</div>
           ${buttons ? `<div class="modal-actions">${buttons}</div>` : ''}
@@ -63,58 +64,58 @@ export class Modals {
 export function settingsForm(settings, opts = {}) {
   const nickField = opts.showNick === false ? '' : `
     <div class="form-row">
-      <label for="opt-nick">Nick pro multiplayer</label>
+      <label for="opt-nick">${t("Nick pro multiplayer")}</label>
       <input id="opt-nick" class="text-input" maxlength="16" value="${escapeAttr(settings.nick || '')}"
-        placeholder="3–16 znaků (písmena, číslice, mezera, _)">
-      <div class="form-hint" id="nick-hint">Nick se ukládá v prohlížeči a musí být na serveru jedinečný.</div>
+        placeholder="${t("3–16 znaků (písmena, číslice, mezera, _)")}">
+      <div class="form-hint" id="nick-hint">${t("Nick se ukládá v prohlížeči a musí být na serveru jedinečný.")}</div>
     </div>`;
 
   return `
     <div class="settings-form">
       <div class="form-section">
-        <h4>Zvuk</h4>
+        <h4>${t("Zvuk")}</h4>
         <div class="form-row">
-          <label for="opt-music">Hudba</label>
+          <label for="opt-music">${t("Hudba")}</label>
           <div class="range-row">
             <input id="opt-music" type="range" min="0" max="100" step="1" value="${settings.musicVolume}">
             <span class="range-value" id="music-value">${settings.musicVolume} %</span>
           </div>
         </div>
         <div class="form-row">
-          <label for="opt-sfx">Zvukové efekty</label>
+          <label for="opt-sfx">${t("Zvukové efekty")}</label>
           <div class="range-row">
             <input id="opt-sfx" type="range" min="0" max="100" step="1" value="${settings.sfxVolume}">
             <span class="range-value" id="sfx-value">${settings.sfxVolume} %</span>
           </div>
         </div>
         <div class="form-row checkbox-row">
-          <label><input id="opt-mute-music" type="checkbox" ${settings.musicMuted ? 'checked' : ''}> Ztlumit hudbu</label>
-          <label><input id="opt-mute-sfx" type="checkbox" ${settings.sfxMuted ? 'checked' : ''}> Ztlumit efekty</label>
+          <label><input id="opt-mute-music" type="checkbox" ${settings.musicMuted ? 'checked' : ''}> ${t("Ztlumit hudbu")}</label>
+          <label><input id="opt-mute-sfx" type="checkbox" ${settings.sfxMuted ? 'checked' : ''}> ${t("Ztlumit efekty")}</label>
         </div>
       </div>
 
       <div class="form-section">
-        <h4>Obraz a ovládání</h4>
+        <h4>${t("Obraz a ovládání")}</h4>
         <div class="form-row">
-          <label for="opt-camera">Rychlost kamery</label>
+          <label for="opt-camera">${t("Rychlost kamery")}</label>
           <select id="opt-camera" class="select-input">
             ${Object.entries(CAMERA_SPEEDS).map(([key, speed]) =>
-              `<option value="${key}" ${settings.cameraSpeed === key ? 'selected' : ''}>${cameraLabel(key)} (${speed} px/s)</option>`
+              `<option value="${key}" ${settings.cameraSpeed === key ? 'selected' : ''}>${cameraLabel(key)} (${speed} ${t("px/s)")}</option>`
             ).join('')}
           </select>
         </div>
         <div class="form-row">
-          <label for="opt-quality">Kvalita grafiky</label>
+          <label for="opt-quality">${t("Kvalita grafiky")}</label>
           <select id="opt-quality" class="select-input">
             ${qualityOptions(settings.quality)}
           </select>
         </div>
         <div class="form-row checkbox-row">
-          <label><input id="opt-fps" type="checkbox" ${settings.showFps ? 'checked' : ''}> Zobrazovat FPS</label>
+          <label><input id="opt-fps" type="checkbox" ${settings.showFps ? 'checked' : ''}> ${t("Zobrazovat FPS")}</label>
         </div>
         <div class="form-row">
-          <label>Jazyk</label>
-          <div class="static-value">Čeština</div>
+          <label for="opt-language">${t("Jazyk")}</label>
+          <select id="opt-language" class="select-input">${languageOptions()}</select>
         </div>
       </div>
 
@@ -123,14 +124,14 @@ export function settingsForm(settings, opts = {}) {
 }
 
 function qualityOptions(current) {
-  const values = [['low', 'Nízká'], ['medium', 'Střední'], ['high', 'Vysoká']];
+  const values = [['low', t("Nízká")], ['medium', t("Střední")], ['high', t("Vysoká")]];
   return values.map(([key, label]) =>
     `<option value="${key}" ${current === key ? 'selected' : ''}>${label}</option>`
   ).join('');
 }
 
 function cameraLabel(key) {
-  return key === 'low' ? 'Nízká' : key === 'high' ? 'Vysoká' : 'Střední';
+  return key === 'low' ? t("Nízká") : key === 'high' ? t("Vysoká") : t("Střední");
 }
 
 /** Napojí formulář nastavení na objekt settings. */
@@ -177,19 +178,23 @@ export function bindSettingsForm(root, settings, onChange) {
   if (fps) fps.addEventListener('change', () => {
     settings.showFps = fps.checked; emit();
   });
+  const language = root.querySelector('#opt-language');
+  if (language) language.addEventListener('change', () => {
+    settings.language = language.value; emit();
+  });
   if (nick) {
     nick.addEventListener('input', () => {
       const value = nick.value.trim();
       settings.nick = value;
       if (nickHint) {
         if (!value) {
-          nickHint.textContent = 'Nick se ukládá v prohlížeči a musí být na serveru jedinečný.';
+          nickHint.textContent = t("Nick se ukládá v prohlížeči a musí být na serveru jedinečný.");
           nickHint.className = 'form-hint';
         } else if (!isValidNick(value)) {
-          nickHint.textContent = 'Nick musí mít 3–16 znaků: písmena, číslice, mezera nebo podtržítko.';
+          nickHint.textContent = t("Nick musí mít 3–16 znaků: písmena, číslice, mezera nebo podtržítko.");
           nickHint.className = 'form-hint error';
         } else {
-          nickHint.textContent = 'Nick je v pořádku.';
+          nickHint.textContent = t("Nick je v pořádku.");
           nickHint.className = 'form-hint success';
         }
       }
@@ -202,39 +207,39 @@ export function helpContent() {
   return `
     <div class="help-grid">
       <section class="help-section">
-        <h4>🎮 Ovládání</h4>
+        <h4>${t("🎮 Ovládání")}</h4>
         <ul>
-          <li><strong>WASD / šipky</strong> – posun kamery, najetí myší k okraji také posouvá.</li>
-          <li><strong>Kolečko myši</strong> – přiblížení a oddálení.</li>
-          <li><strong>Levé tlačítko</strong> – výběr jednotek a budov, potvrzení stavby.</li>
-          <li><strong>Tažení levým tlačítkem</strong> – výběr více jednotek obdélníkem.</li>
-          <li><strong>Pravé tlačítko</strong> – pohyb, útok, zrušení akce.</li>
-          <li><strong>Ctrl + 1–9</strong> – uložení skupiny, <strong>1–9</strong> – její výběr.</li>
-          <li><strong>Mezerník</strong> – vycentrování na Královský hrad.</li>
-          <li><strong>ESC</strong> – zruší stavbu/výběr, jinak otevře herní menu.</li>
-          <li><strong>Delete</strong> – zbourání vybrané vlastní budovy (po potvrzení).</li>
+          <li><strong>${t("WASD / šipky")}</strong> ${t("– posun kamery, najetí myší k okraji také posouvá.")}</li>
+          <li><strong>${t("Kolečko myši")}</strong> ${t("– přiblížení a oddálení.")}</li>
+          <li><strong>${t("Levé tlačítko")}</strong> ${t("– výběr jednotek a budov, potvrzení stavby.")}</li>
+          <li><strong>${t("Tažení levým tlačítkem")}</strong> ${t("– výběr více jednotek obdélníkem.")}</li>
+          <li><strong>${t("Pravé tlačítko")}</strong> ${t("– pohyb, útok, stavba na vlastním staveništi, zrušení akce.")}</li>
+          <li><strong>${t("Ctrl + 1–9")}</strong> ${t("– uložení skupiny,")} <strong>1–9</strong> ${t("– její výběr.")}</li>
+          <li><strong>${t("Mezerník")}</strong> ${t("– vycentrování na Královský hrad.")}</li>
+          <li><strong>${t("ESC")}</strong> ${t("– zruší stavbu/výběr, jinak otevře herní menu.")}</li>
+          <li><strong>${t("Delete")}</strong> ${t("– zbourání vybrané vlastní budovy (po potvrzení).")}</li>
         </ul>
       </section>
       <section class="help-section">
-        <h4>🏰 Základní pravidla</h4>
+        <h4>${t("🏰 Základní pravidla")}</h4>
         <ul>
-          <li>Stavět lze kdekoli na mapě, nejméně <strong>20 bloků</strong> od nepřátelských jednotek a budov.</li>
-          <li>Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.</li>
-          <li>Dřevorubec musí stát na stromě, kamenolom a železný důl celé na ložisku.</li>
-          <li>Poddaní čekají u ohniště. Přiřaďte je do hospodářství, pošlete na stavbu, nebo je povolejte jako vojáky.</li>
-          <li>Dělníci nosí dřevo, kámen a železo po 10 kusech do nejbližšího hotového skladu nebo Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Sýpky a sklady zvyšují kapacitu.</li>
-          <li>Obydlí přidá 8 míst v kapacitě. Hrad sám pojme 20 obyvatel.</li>
+          <li>${t("Stavět lze kdekoli na mapě, nejméně")} <strong>${t("20 bloků")}</strong> ${t("od nepřátelských jednotek a budov.")}</li>
+          <li>${t("Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.")}</li>
+          <li>${t("Dřevorubec musí stát na stromě, kamenolom a železný důl celé na ložisku.")}</li>
+          <li>${t("Poddaní čekají u ohniště. Přiřaďte je do hospodářství, pošlete na stavbu, nebo je povolejte jako vojáky.")}</li>
+          <li>${t("Dělníci nosí dřevo, kámen a železo po 10 kusech do nejbližšího hotového skladu nebo Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Sýpky a sklady zvyšují kapacitu.")}</li>
+          <li>${t("Obydlí přidá 8 míst v kapacitě. Hrad sám pojme 20 obyvatel.")}</li>
         </ul>
       </section>
       <section class="help-section">
-        <h4>💡 Tipy písaře</h4>
+        <h4>${t("💡 Tipy písaře")}</h4>
         <ul>
-          <li>Nejprve postavte Dřevorubce a Kamenolom, poté Jabloňový sad a Kasárna.</li>
-          <li>Kasárna vyrábějí lučištníky, Královský hrad těžké pěšáky.</li>
-          <li>Lučištníci útočí z dálky a jejich šípy mohou minout pohybující se cíl.</li>
-          <li>Plná kapacita zastaví dělníky. Postavte včas další Sklad (suroviny) nebo Sýpku (jídlo).</li>
-          <li>Další peníze získáte prodejem přebytečných surovin v Obchodu.</li>
-          <li>Vyčerpané ložisko se po 3 minutách objeví jinde na mapě.</li>
+          <li>${t("Nejprve postavte Dřevorubce a Kamenolom, poté Jabloňový sad a Kasárna.")}</li>
+          <li>${t("Kasárna vyrábějí lučištníky, Královský hrad těžké pěšáky.")}</li>
+          <li>${t("Lučištníci útočí z dálky a jejich šípy mohou minout pohybující se cíl.")}</li>
+          <li>${t("Plná kapacita zastaví dělníky. Postavte včas další Sklad (suroviny) nebo Sýpku (jídlo).")}</li>
+          <li>${t("Další peníze získáte prodejem přebytečných surovin v Obchodu.")}</li>
+          <li>${t("Vyčerpané ložisko se po 3 minutách objeví jinde na mapě.")}</li>
         </ul>
       </section>
     </div>`;
@@ -244,26 +249,26 @@ export function creditsContent() {
   return `
     <div class="credits-content">
       <div class="credits-logo">✠</div>
-      <h3>KRÁLOVSTVÍ</h3>
-      <p class="credits-subtitle">Izometrická real-time strategie z pouštního království</p>
+      <h3>${t("KRÁLOVSTVÍ")}</h3>
+      <p class="credits-subtitle">${t("Izometrická real-time strategie z pouštního království")}</p>
       <div class="credits-block">
-        <h4>Autoři projektu</h4>
-        <p>Návrh a vývoj: tým Království</p>
-        <p>Herní design, simulace a síťová část: vlastní implementace</p>
+        <h4>${t("Autoři projektu")}</h4>
+        <p>${t("Návrh a vývoj: tým Království")}</p>
+        <p>${t("Herní design, simulace a síťová část: vlastní implementace")}</p>
       </div>
       <div class="credits-block">
-        <h4>Použité technologie</h4>
+        <h4>${t("Použité technologie")}</h4>
         <ul>
-          <li>HTML5 Canvas 2D – vykreslování hry</li>
-          <li>Web Audio API – procedurální hudba a zvuky</li>
-          <li>WebSockets – multiplayer</li>
-          <li>Node.js (bez externích herních knihoven) – server</li>
-          <li>Cinzel &amp; Outfit – písma z Google Fonts</li>
+          <li>${t("HTML5 Canvas 2D – vykreslování hry")}</li>
+          <li>${t("Web Audio API – procedurální hudba a zvuky")}</li>
+          <li>${t("WebSockets – multiplayer")}</li>
+          <li>${t("Node.js (bez externích herních knihoven) – server")}</li>
+          <li>${t("Cinzel &amp; Outfit – písma z Google Fonts")}</li>
         </ul>
       </div>
       <div class="credits-block">
-        <h4>Verze</h4>
-        <p>Verze 2.0.0 · © 2026</p>
+        <h4>${t("Verze")}</h4>
+        <p>${t("Verze 2.0.0 · © 2026")}</p>
       </div>
     </div>`;
 }

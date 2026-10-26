@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml } from './modals.js';
 import { audio } from '../engine/audio.js';
 
@@ -9,10 +10,10 @@ export function showLobby(lobby) {
       <div class="lobby-shell">
         <header class="lobby-header">
           <div>
-            <span class="kicker">${escapeHtml(lobby.serverName || 'Království server')}</span>
-            <h2>Lobby</h2>
+            <span class="kicker">${escapeHtml(t(lobby.serverNameMessage || lobby.serverName || 'Království server'))}</span>
+            <h2>${t("Lobby")}</h2>
           </div>
-          <button class="btn btn-secondary" data-action="leave">Opustit lobby</button>
+          <button class="btn btn-secondary" data-action="leave">${t("Opustit lobby")}</button>
         </header>
         <div class="lobby-grid">
           <section class="lobby-map panel">
@@ -26,9 +27,9 @@ export function showLobby(lobby) {
           </section>
         </div>
         <footer class="lobby-footer">
-          <span>🌫️ Mlha války: <b>${lobby.fog ? 'zapnuta' : 'vypnuta'}</b></span>
-          <span>🪙 Kapitál: <b>Střední</b></span>
-          <span>🎲 Mapa: <b id="lobby-map-name">${escapeHtml(lobby.map ? lobby.map.name : 'náhodná')}</b></span>
+          <span>${t("🌫️ Mlha války:")} <b>${lobby.fog ? t("zapnuta") : t("vypnuta")}</b></span>
+          <span>${t("🪙 Kapitál:")} <b>${t("Střední")}</b></span>
+          <span>${t("🎲 Mapa:")} <b id="lobby-map-name">${escapeHtml(lobby.map ? t(lobby.map.name) : t("náhodná"))}</b></span>
         </footer>
       </div>
     </div>`);
@@ -62,45 +63,45 @@ export function updateLobby(lobby) {
         <div class="lobby-slot filled" style="--player-color:${player.color}">
           <span class="slot-dot"></span>
           <span class="slot-name">${escapeHtml(player.name)}</span>
-          <span class="slot-tag">připraven</span>
+          <span class="slot-tag">${t("připraven")}</span>
         </div>`;
     } else {
       slots += `
         <div class="lobby-slot empty">
           <span class="slot-dot"></span>
-          <span class="slot-name">Volné místo</span>
-          <span class="slot-tag">čekáme</span>
+          <span class="slot-name">${t("Volné místo")}</span>
+          <span class="slot-tag">${t("čekáme")}</span>
         </div>`;
     }
   }
   playersEl.innerHTML = `
-    <div class="lobby-players-head"><span>Hráči</span><span>${players.length}/${max}</span></div>
+    <div class="lobby-players-head"><span>${t("Hráči")}</span><span>${players.length}/${max}</span></div>
     <div class="lobby-slots">${slots}</div>`;
 
   if (countdownEl) {
     if (lobby.countdown && lobby.countdown > 0) {
-      countdownEl.innerHTML = `<span>Hra začíná za</span><b>${lobby.countdown}</b><span>s</span>`;
+      countdownEl.innerHTML = `<span>${t("Hra začíná za")}</span><b>${lobby.countdown}</b><span>s</span>`;
       countdownEl.classList.add('active');
     } else {
-      countdownEl.innerHTML = `<span>Čekáme na hráče</span><b>${players.length}/${max}</b><span>pro start</span>`;
+      countdownEl.innerHTML = `<span>${t("Čekáme na hráče")}</span><b>${players.length}/${max}</b><span>${t("pro start")}</span>`;
       countdownEl.classList.remove('active');
     }
   }
   if (statusEl) {
     statusEl.textContent = players.length >= 2
-      ? 'Hra se spustí automaticky. Hráči, kteří se připojí během odpočtu, se přidají.'
-      : 'Hra začne, jakmile budou v lobby alespoň dva hráči.';
+      ? t("Hra se spustí automaticky. Hráči, kteří se připojí během odpočtu, se přidají.")
+      : t("Hra začne, jakmile budou v lobby alespoň dva hráči.");
   }
   if (mapInfo && lobby.map) {
     mapInfo.innerHTML = `
-      <h3>${escapeHtml(lobby.map.name)}</h3>
-      <p>${escapeHtml(lobby.map.desc || '')}</p>
+      <h3>${escapeHtml(t(lobby.map.name))}</h3>
+      <p>${escapeHtml(t(lobby.map.desc || ''))}</p>
       <div class="map-meta">
-        <span>${lobby.map.size || 200}×${lobby.map.size || 200}</span>
-        <span>${lobby.map.positions || 4} pozice</span>
-        <span>${escapeHtml(lobby.map.biome || '')}</span>
+        <span>${lobby.map.size || 200}${t("×")}${lobby.map.size || 200}</span>
+        <span>${lobby.map.positions || 4} ${t("pozice")}</span>
+        <span>${escapeHtml(t(lobby.map.biome || ''))}</span>
       </div>`;
   }
   const mapName = this.root.querySelector('#lobby-map-name');
-  if (mapName && lobby.map) mapName.textContent = lobby.map.name;
+  if (mapName && lobby.map) mapName.textContent = t(lobby.map.name);
 }

@@ -19,72 +19,72 @@
 
   <!-- Herní HUD -->
   <div id="hud" class="hidden">
-    <header class="hud-top" aria-label="Přehled panství">
-      <div class="hud-brand" title="Království">
+    <header class="hud-top" aria-label="Přehled panství" data-i18n-aria-label="Přehled panství">
+      <div class="hud-brand" title="Království" data-i18n-title="Království">
         <div class="crusader-crest" aria-hidden="true"><span class="crest-cross">✠</span></div>
         <div class="hud-brand-text">
-          <h1>KRÁLOVSTVÍ</h1>
+          <h1 data-i18n="KRÁLOVSTVÍ">KRÁLOVSTVÍ</h1>
         </div>
       </div>
 
-      <div class="hud-resources" role="group" aria-label="Zásoby panství">
-        <div class="res-card" title="Peníze v královské pokladně">
+      <div class="hud-resources" role="group" aria-label="Zásoby panství" data-i18n-aria-label="Zásoby panství">
+        <div class="res-card" title="Peníze v královské pokladně" data-i18n-title="Peníze v královské pokladně">
           <span class="res-icon">🪙</span>
           <div class="res-info">
-            <span class="res-label">PENÍZE</span>
+            <span class="res-label" data-i18n="PENÍZE">PENÍZE</span>
             <span class="res-value" id="res-money">0</span>
           </div>
         </div>
-        <div class="res-card" title="Dřevo ve skladu">
+        <div class="res-card" title="Dřevo ve skladu" data-i18n-title="Dřevo ve skladu">
           <span class="res-icon">🪵</span>
           <div class="res-info">
-            <span class="res-label">DŘEVO</span>
+            <span class="res-label" data-i18n="DŘEVO">DŘEVO</span>
             <span class="res-value" id="res-wood">0</span>
           </div>
         </div>
-        <div class="res-card" title="Kámen ve skladu">
+        <div class="res-card" title="Kámen ve skladu" data-i18n-title="Kámen ve skladu">
           <span class="res-icon">🪨</span>
           <div class="res-info">
-            <span class="res-label">KÁMEN</span>
+            <span class="res-label" data-i18n="KÁMEN">KÁMEN</span>
             <span class="res-value" id="res-stone">0</span>
           </div>
         </div>
-        <div class="res-card" title="Jídlo v sýpce">
+        <div class="res-card" title="Jídlo v sýpce" data-i18n-title="Jídlo v sýpce">
           <span class="res-icon">🍎</span>
           <div class="res-info">
-            <span class="res-label">JÍDLO</span>
+            <span class="res-label" data-i18n="JÍDLO">JÍDLO</span>
             <span class="res-value" id="res-food">0</span>
           </div>
         </div>
-        <div class="res-card" title="Železná ruda ve skladu">
+        <div class="res-card" title="Železná ruda ve skladu" data-i18n-title="Železná ruda ve skladu">
           <span class="res-icon">⛓️</span>
           <div class="res-info">
-            <span class="res-label">ŽELEZO</span>
+            <span class="res-label" data-i18n="ŽELEZO">ŽELEZO</span>
             <span class="res-value" id="res-iron">0</span>
           </div>
         </div>
       </div>
 
-      <div class="hud-status" role="group" aria-label="Kapacity panství">
+      <div class="hud-status" role="group" aria-label="Kapacity panství" data-i18n-aria-label="Kapacity panství">
         <div class="storage-chips">
-          <div class="storage-chip" title="Obsazenost skladu dřevem, kamenem a železem">
+          <div class="storage-chip" title="Obsazenost skladu dřevem, kamenem a železem" data-i18n-title="Obsazenost skladu dřevem, kamenem a železem">
             <span aria-hidden="true">📦</span>
-            <div class="res-info"><span class="res-label">SKLAD</span><b id="store-value">0/500</b></div>
+            <div class="res-info"><span class="res-label" data-i18n="SKLAD">SKLAD</span><b id="store-value">0/500</b></div>
           </div>
-          <div class="storage-chip" title="Obsazenost sýpky">
+          <div class="storage-chip" title="Obsazenost sýpky" data-i18n-title="Obsazenost sýpky">
             <span aria-hidden="true">🌾</span>
-            <div class="res-info"><span class="res-label">SÝPKA</span><b id="food-store-value">0/300</b></div>
+            <div class="res-info"><span class="res-label" data-i18n="SÝPKA">SÝPKA</span><b id="food-store-value">0/300</b></div>
           </div>
         </div>
-        <div class="population-badge" title="Počet poddaných a kapacita panství">
+        <div class="population-badge" title="Počet poddaných a kapacita panství" data-i18n-title="Počet poddaných a kapacita panství">
           <span aria-hidden="true">👥</span>
-          <div class="res-info"><span class="res-label">OBYVATELÉ</span><b id="pop-value">20/20</b></div>
+          <div class="res-info"><span class="res-label" data-i18n="OBYVATELÉ">OBYVATELÉ</span><b id="pop-value">20/20</b></div>
         </div>
       </div>
 
       <div class="hud-controls">
         <span id="fps-counter" class="fps-counter hidden">0 FPS</span>
-        <button id="menu-button" class="hud-menu-btn" type="button" title="Herní menu (ESC)">
+        <button id="menu-button" class="hud-menu-btn" type="button" title="Herní menu (ESC)" data-i18n-title="Herní menu (ESC)">
           <span aria-hidden="true">☰</span> Menu <kbd>Esc</kbd>
         </button>
       </div>
@@ -100,7 +100,7 @@
       <section id="build-dock" class="build-dock"></section>
       <aside class="minimap-panel">
         <div class="minimap-frame">
-          <canvas id="minimap-canvas" width="256" height="256" title="Minimapa - kliknutím přesunete kameru"></canvas>
+          <canvas id="minimap-canvas" width="256" height="256" title="Minimapa - kliknutím přesunete kameru" data-i18n-title="Minimapa - kliknutím přesunete kameru"></canvas>
         </div>
         <div id="minimap-info" class="minimap-info hidden"></div>
       </aside>

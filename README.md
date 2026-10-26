@@ -20,7 +20,8 @@ Ujměte se vlády nad pouštním panstvím. Povolejte poddané k ohništi před 
 - **Mlha války** – volitelně zapnutelná, s prozkoumanými a neprozkoumanými oblastmi.
 - **Multiplayer až pro 4 hráče** – autoritativní server, automatické přiřazení do místnosti, odpočet startu, obnova spojení a výsledková obrazovka.
 - **Procedurální zvuk** – hudba, ambientní zvuky prostředí, hlášky písaře a fanfáry generované přes Web Audio API.
-- **Ukládání nastavení** – hlasitost, kvalita grafiky, rychlost kamery, FPS a nick se ukládají v prohlížeči.
+- **Čeština a angličtina** – jazyk přepnete v hlavním menu nad volbou herního režimu nebo v Nastavení. Překládá se menu, HUD, budovy, jednotky, nápověda i herní a multiplayerové hlášky.
+- **Ukládání nastavení** – jazyk, hlasitost, kvalita grafiky, rychlost kamery, FPS a nick se ukládají v prohlížeči. Výchozí jazyk je čeština.
 
 ---
 
@@ -133,7 +134,7 @@ Testy pokrývají simulaci, klientskou logiku, serverové místnosti a pravidla 
 ```bash
 npm test              # všechny testy včetně kontroly velikosti souborů
 npm run test:sim      # generování map, ekonomika, obchod, výcvik, opravy, bourání, mlha, sklady, boj, pathfinding
-npm run test:client   # meze zoomu, výběr kliknutím i obdélníkem, hitboxy
+npm run test:client   # zoom, výběr, hitboxy, stavba pravým tlačítkem, překlady a uložení jazyka
 npm run test:commit   # validátor zpráv commitů (Conventional Commits)
 npm run test:rooms    # připojení, lobby, obnovení spojení a životní cyklus hry
 npm run test:structure # maximum 500 řádků ve zdrojových souborech

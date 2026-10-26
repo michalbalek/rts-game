@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 import { RemoteSession } from './session.js';
 import { NetClient } from '../net.js';
@@ -54,7 +55,7 @@ export function applicationMultiplayer(app) {
       status = await NetClient.findServer(10000);
     } catch (err) {
       if (generation !== app.searchGeneration || app.searchCancelled) return;
-      app.menu.showMultiplayerError('Server na této adrese neodpovídá. Zkontrolujte, zda běží `npm start`, a zkuste to znovu.');
+      app.menu.showMultiplayerError(t("Server na této adrese neodpovídá. Zkontrolujte, zda běží `npm start`, a zkuste to znovu."));
       return;
     }
     if (generation !== app.searchGeneration || app.searchCancelled) return;
@@ -93,28 +94,28 @@ export function applicationMultiplayer(app) {
 
   function handleJoinError(err) {
     const code = err && err.code;
-    const message = err && err.message ? err.message : 'Server není dostupný.';
+    const message = err && err.message ? err.message : t("Server není dostupný.");
     if (code === 'FULL') {
-      app.menu.showMultiplayerError('Na serveru právě hraje maximální počet hráčů. Zkuste to znovu později.', { full: true });
+      app.menu.showMultiplayerError(t("Na serveru právě hraje maximální počet hráčů. Zkuste to znovu později."), { full: true });
       return;
     }
     if (code === 'NICK_TAKEN') {
       app.menu.showMultiplayer();
       app.modals.open({
-        title: 'Nick je obsazený',
+        title: t("Nick je obsazený"),
         icon: '👤',
-        body: `<p class="modal-paragraph">${escapeHtml(message)} Zvolte prosím jiný nick.</p>`,
-        actions: [{ label: 'Změnit nick', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${escapeHtml(t(message))} ${t("Zvolte prosím jiný nick.")}</p>`,
+        actions: [{ label: t("Změnit nick"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
       return;
     }
     if (code === 'BAD_NICK') {
       app.menu.showMultiplayer();
       app.modals.open({
-        title: 'Neplatný nick',
+        title: t("Neplatný nick"),
         icon: '👤',
-        body: `<p class="modal-paragraph">${escapeHtml(message)}</p>`,
-        actions: [{ label: 'Změnit nick', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${escapeHtml(t(message))}</p>`,
+        actions: [{ label: t("Změnit nick"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
       return;
     }
@@ -219,7 +220,7 @@ export function applicationMultiplayer(app) {
       case 'cmdResult': {
         const result = msg.result;
         if (result && result.ok === false && result.reason) {
-          app.ui.toast(result.reason, 'error');
+          app.ui.toast(result.message || result.reason, 'error');
           audio.play('error');
         }
         break;
@@ -228,13 +229,13 @@ export function applicationMultiplayer(app) {
         app.showMultiplayerResults(msg);
         break;
       case 'info':
-        if (app.screen === 'game') app.ui.toast(msg.text, msg.kind || 'info');
+        if (app.screen === 'game') app.ui.toast(msg.localized || msg.text, msg.kind || 'info');
         break;
       case 'error':
         if (app.screen === 'game') {
-          app.ui.toast(msg.message || 'Server odmítl požadavek.', 'error');
+          app.ui.toast(msg.message || t("Server odmítl požadavek."), 'error');
         } else if (app.screen === 'menu') {
-          app.menu.showMultiplayerError(msg.message || 'Server odmítl připojení.');
+          app.menu.showMultiplayerError(msg.message || t("Server odmítl připojení."));
         }
         break;
       default:
@@ -248,11 +249,11 @@ export function applicationMultiplayer(app) {
 
     if (app.screen === 'game') {
       app.multiplayer.disconnectedAt = Date.now();
-      app.ui.setConnection('Spojení přerušeno – pokoušíme se znovu připojit (max. 120 s)…');
+      app.ui.setConnection("Spojení přerušeno – pokoušíme se znovu připojit (max. 120 s)…");
       app.startReconnect();
     } else if (app.screen === 'menu') {
       if (!app.menuRoot.classList.contains('hidden')) {
-        app.menu.showMultiplayerError('Spojení se serverem bylo přerušeno. Zkuste se připojit znovu.');
+        app.menu.showMultiplayerError(t("Spojení se serverem bylo přerušeno. Zkuste se připojit znovu."));
       }
       app.multiplayer = null;
     }

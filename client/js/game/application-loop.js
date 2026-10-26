@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 
 export function applicationLoop(app) {
@@ -6,7 +7,7 @@ export function applicationLoop(app) {
   let fpsFrames = 0;
 
   function runCommand(cmd) {
-    if (!app.session) return { ok: false, reason: 'Hra neběží.' };
+    if (!app.session) return { ok: false, reason: t("Hra neběží.") };
     if (app.session.local) {
       const result = app.session.command(cmd);
       if (result && result.ok === false) audio.play('error', { throttle: 250 });
@@ -31,7 +32,7 @@ export function applicationLoop(app) {
       switch (ev.type) {
         case 'toast':
           if (mine) {
-            app.ui.toast(ev.text, ev.kind || 'info');
+            app.ui.toast(ev.message || ev.text, ev.kind || 'info');
             audio.play('scribe', { volume: 0.6, throttle: 120 });
           }
           break;

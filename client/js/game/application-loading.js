@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 import { LocalSession } from './session.js';
 import { GameSim } from '../sim/sim.js';
@@ -30,7 +31,7 @@ export function applicationLoading(app) {
     try {
       app.menu.setLoading(6);
       await app.delay(120);
-      const players = [{ name: 'Království', isBot: false }];
+      const players = [{ name: t("Království"), isBot: false }];
       if (options.mode === 'bots') {
         for (let i = 1; i <= options.bots; i++) {
           players.push({ name: `Bot ${i}`, isBot: true, difficulty: options.difficulty });
@@ -61,8 +62,8 @@ export function applicationLoading(app) {
       });
       audio.setMusicMode('game');
     } catch (err) {
-      console.error('Hru se nepodařilo spustit', err);
-      app.menu.showLoadingError(`Hru se nepodařilo načíst: ${err.message || err}`);
+      console.error(t("Hru se nepodařilo spustit"), err);
+      app.menu.showLoadingError(t("Hru se nepodařilo načíst: {0}", { 0: t(err.localized || err.message || String(err)) }));
     }
   }
 
@@ -71,10 +72,10 @@ export function applicationLoading(app) {
     const saved = readSave();
     if (!saved) {
       app.modals.open({
-        title: 'Uložená hra',
+        title: t("Uložená hra"),
         icon: '📜',
-        body: '<p class="modal-paragraph">V prohlížeči není žádná uložená hra. Rozehranou hru můžete uložit v jejím menu.</p>',
-        actions: [{ label: 'Rozumím', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${t("V prohlížeči není žádná uložená hra. Rozehranou hru můžete uložit v jejím menu.")}</p>`,
+        actions: [{ label: t("Rozumím"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
       return;
     }
@@ -105,10 +106,10 @@ export function applicationLoading(app) {
       await app.delay(130);
       app.enterGame(restored, { mapType: sim.mapType, center: true });
       audio.setMusicMode('game');
-      app.ui.toast(`Hra načtena. Zahájena ${formatDateTime(saved.meta.startedAt)}.`, 'success');
+      app.ui.toast(t("Hra načtena. Zahájena {0}.", { 0: formatDateTime(saved.meta.startedAt) }), 'success');
     } catch (err) {
-      console.error('Načtení hry se nepodařilo', err);
-      app.menu.showLoadingError(`Hru se nepodařilo načíst: ${err.message || err}`);
+      console.error(t("Načtení hry se nepodařilo"), err);
+      app.menu.showLoadingError(t("Hru se nepodařilo načíst: {0}", { 0: t(err.localized || err.message || String(err)) }));
     }
   }
 

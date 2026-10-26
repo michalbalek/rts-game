@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { BUILDING_DEFS, UNIT_DEFS, MARKET_PRICES, PLAYER_COLORS } from '../sim/constants.js';
 import { escapeHtml } from './modals.js';
 import { pct, assignedWorkers, workerLabel, resourceName } from './ui-format.js';
@@ -7,8 +8,8 @@ export function emptySelectionHtml() {
     <div class="selection-empty">
       <span class="empty-crest">✠</span>
       <div>
-        <strong>Vyberte budovu nebo jednotky</strong>
-        <span>Levým tlačítkem klepněte, tažením vyberte více jednotek. Pravým tlačítkem velíte pohyb.</span>
+        <strong>${t("Vyberte budovu nebo jednotky")}</strong>
+        <span>${t("Levým tlačítkem klepněte, tažením vyberte více jednotek. Pravým tlačítkem velíte pohyb.")}</span>
       </div>
     </div>`;
 }
@@ -18,12 +19,12 @@ export function buildingPanelHtml(b) {
   if (!def) return this.emptySelectionHtml();
   const owner = this.session.state.players.find(p => p.id === b.ownerId);
   const mine = b.ownerId === this.session.selfId;
-  const ownerName = mine ? 'Vaše panství' : (owner ? owner.name : 'Neutrální');
+  const ownerName = mine ? t("Vaše panství") : (owner ? owner.name : t("Neutrální"));
   const hpRatio = pct(b.hp, b.maxHp);
   const hpClass = hpRatio > 0.55 ? 'good' : hpRatio > 0.25 ? 'warn' : 'bad';
   const status = !b.complete
-    ? 'Rozestavěno'
-    : b.repair ? 'Probíhá oprava' : (b.hp < b.maxHp ? 'Poškozeno' : 'V plném stavu');
+    ? t("Rozestavěno")
+    : b.repair ? t("Probíhá oprava") : (b.hp < b.maxHp ? t("Poškozeno") : t("V plném stavu"));
 
   let body = '';
   if (!b.complete) {
@@ -41,19 +42,19 @@ export function buildingPanelHtml(b) {
     body += `
       <div class="sel-rows">
         <div class="sel-row">
-          <span>👤 Poddaní</span>
+          <span>${t("👤 Poddaní")}</span>
           <div class="worker-controls">
-            <button class="icon-btn" data-action="unassign" title="Odebrat dělníka" ${!mine || assigned <= 0 ? 'disabled' : ''}>−</button>
-            <b data-workers title="${enRoute ? `${enRoute} na cestě do budovy` : ''}">${workerLabel(b, def)}</b>
-            <button class="icon-btn" data-action="assign" title="Přiřadit dělníka" ${!mine || !b.complete || assigned >= def.workers ? 'disabled' : ''}>+</button>
+            <button class="icon-btn" data-action="unassign" title="${t("Odebrat dělníka")}" ${!mine || assigned <= 0 ? 'disabled' : ''}>−</button>
+            <b data-workers title="${enRoute ? t("{0} na cestě do budovy", { 0: enRoute }) : ''}">${workerLabel(b, def)}</b>
+            <button class="icon-btn" data-action="assign" title="${t("Přiřadit dělníka")}" ${!mine || !b.complete || assigned >= def.workers ? 'disabled' : ''}>+</button>
           </div>
         </div>
-        <div class="sel-row"><span>Produkce</span><b>${resourceName(def.produce)}</b></div>
+        <div class="sel-row"><span>${t("Produkce")}</span><b>${resourceName(def.produce)}</b></div>
       </div>`;
   }
 
   if (def.trains && def.trains.length && b.complete) {
-    body += `<div class="train-section"><div class="sub-heading">Výcvik</div><div class="train-buttons">`;
+    body += `<div class="train-section"><div class="sub-heading">${t("Výcvik")}</div><div class="train-buttons">`;
     for (const unitType of def.trains) {
       const unit = UNIT_DEFS[unitType];
       const cost = Object.entries(unit.cost).filter(([, v]) => v > 0)
@@ -62,7 +63,7 @@ export function buildingPanelHtml(b) {
         <button class="train-button" data-action="train" data-unit="${unitType}" ${!mine ? 'disabled' : ''}>
           <span class="train-icon">${unit.icon}</span>
           <span class="train-info">
-            <strong>${escapeHtml(unit.name)}</strong>
+            <strong>${escapeHtml(t(unit.name))}</strong>
             <span>${cost} · ${unit.trainTime} s</span>
           </span>
         </button>`;
@@ -75,7 +76,7 @@ export function buildingPanelHtml(b) {
         const ratio = item.total ? 1 - item.remaining / item.total : 0;
         body += `
           <div class="queue-item ${index === 0 ? 'current' : ''}">
-            <span>${unit ? unit.icon : '⚔️'} ${unit ? unit.name : item.unitType}</span>
+            <span>${unit ? unit.icon : '⚔️'} ${unit ? t(unit.name) : item.unitType}</span>
             ${index === 0
               ? `<div class="bar tiny"><div class="fill" data-queue-progress style="width:${Math.round(ratio * 100)}%"></div></div>`
               : `<span class="queue-count">${Math.ceil(item.remaining)} s</span>`}
@@ -87,7 +88,7 @@ export function buildingPanelHtml(b) {
   }
 
   if (def.market && b.complete && mine) {
-    body += `<button class="btn btn-secondary wide" data-action="market">🪙 Otevřít obchod</button>`;
+    body += `<button class="btn btn-secondary wide" data-action="market">${t("🪙 Otevřít obchod")}</button>`;
   }
 
   if (mine && b.complete && def.cost && (def.cost.money || def.cost.wood || def.cost.stone)) {
@@ -98,10 +99,10 @@ export function buildingPanelHtml(b) {
     body += `
       <div class="building-actions">
         <button class="btn btn-secondary btn-small" data-action="repair" ${b.hp >= b.maxHp || b.repair || !b.complete ? 'disabled' : ''}>
-          🔨 Opravit <span class="muted">(${repairCost})</span>
+          ${t("🔨 Opravit")} <span class="muted">(${repairCost})</span>
         </button>
-        ${b.type !== 'castle' ? '<button class="btn btn-danger btn-small" data-action="demolish">🧱 Zbourat</button>' : ''}
-        <button class="btn btn-secondary btn-small" data-action="focus">🎯 Najít</button>
+        ${b.type !== 'castle' ? `<button class="btn btn-danger btn-small" data-action="demolish">${t("🧱 Zbourat")}</button>` : ''}
+        <button class="btn btn-secondary btn-small" data-action="focus">${t("🎯 Najít")}</button>
       </div>`;
   }
 
@@ -109,9 +110,9 @@ export function buildingPanelHtml(b) {
     <div class="sel-head">
       <span class="sel-icon">${def.icon}</span>
       <div class="sel-title">
-        <h3>${escapeHtml(def.name)}</h3>
+        <h3>${escapeHtml(t(def.name))}</h3>
         <span class="sel-meta" style="--owner:${b.ownerId ? PLAYER_COLORS[(b.ownerId - 1) % 4] : '#9a9a92'}">
-          ${escapeHtml(ownerName)} · ${def.w}×${def.h} · ${status}
+          ${escapeHtml(ownerName)} · ${def.w}${t("×")}${def.h} · ${status}
         </span>
       </div>
     </div>
@@ -119,7 +120,7 @@ export function buildingPanelHtml(b) {
       <div class="bar"><div class="fill ${hpClass}" data-hp style="width:${Math.round(hpRatio * 100)}%"></div></div>
       <span data-hp-label>${Math.ceil(b.hp)} / ${b.maxHp}</span>
     </div>
-    <p class="sel-desc">${escapeHtml(def.desc)}</p>
+    <p class="sel-desc">${escapeHtml(t(def.desc))}</p>
     ${body}`;
 }
 
@@ -144,12 +145,12 @@ export function unitsPanelHtml(units) {
         <span data-hp-label>${Math.ceil(single.hp)} / ${single.maxHp}</span>
       </div>
       <div class="stat-grid">
-        <div><span>Poškození</span><b>${def.damage || 0}</b></div>
-        <div><span>Dostřel</span><b>${def.range || 0}</b></div>
-        <div><span>Rychlost</span><b>${def.speed}</b></div>
-        <div><span>Brnění</span><b>${def.armor || 0}</b></div>
+        <div><span>${t("Poškození")}</span><b>${def.damage || 0}</b></div>
+        <div><span>${t("Dostřel")}</span><b>${def.range || 0}</b></div>
+        <div><span>${t("Rychlost")}</span><b>${def.speed}</b></div>
+        <div><span>${t("Brnění")}</span><b>${def.armor || 0}</b></div>
       </div>
-      <p class="sel-desc">${escapeHtml(def.desc)}</p>`;
+      <p class="sel-desc">${escapeHtml(t(def.desc))}</p>`;
   } else {
     details = `
       <div class="unit-group-list">
@@ -158,8 +159,8 @@ export function unitsPanelHtml(units) {
           const ratio = pct(g.hp, g.maxHp);
           return `<div class="unit-group">
             <span class="group-icon">${def.icon}</span>
-            <span class="group-name">${escapeHtml(def.name)}</span>
-            <span class="group-count">${g.count}×</span>
+            <span class="group-name">${escapeHtml(t(def.name))}</span>
+            <span class="group-count">${g.count}${t("×")}</span>
             <div class="bar tiny"><div class="fill ${ratio > 0.5 ? 'good' : ratio > 0.25 ? 'warn' : 'bad'}" style="width:${Math.round(ratio * 100)}%"></div></div>
           </div>`;
         }).join('')}
@@ -173,16 +174,16 @@ export function unitsPanelHtml(units) {
     <div class="sel-head">
       <span class="sel-icon">${single ? UNIT_DEFS[single.type].icon : '⚔️'}</span>
       <div class="sel-title">
-        <h3>${single ? escapeHtml(UNIT_DEFS[single.type].name) : `${units.length} jednotek`}</h3>
+        <h3>${single ? escapeHtml(t(UNIT_DEFS[single.type].name)) : t('{0} jednotek', { 0: units.length })}</h3>
         <span class="sel-meta">${single
-          ? (singleMine ? 'Vaše jednotka' : 'Cizí jednotka')
-          : 'Vybraná skupina'} · ${units.filter(u => u.isVillager).length} poddaných</span>
+          ? (singleMine ? t("Vaše jednotka") : t("Cizí jednotka"))
+          : t("Vybraná skupina")} · ${units.filter(u => u.isVillager).length} ${t("poddaných")}</span>
       </div>
     </div>
     ${details}
     ${this.constructSectionHtml(units)}
     <div class="building-actions">
-      ${canRelease ? '<button class="btn btn-secondary btn-small" data-action="release-villagers">🏠 Uvolnit z práce</button>' : ''}
-      <button class="btn btn-secondary btn-small" data-action="clear-selection">✖ Zrušit výběr</button>
+      ${canRelease ? `<button class="btn btn-secondary btn-small" data-action="release-villagers">${t("🏠 Uvolnit z práce")}</button>` : ''}
+      <button class="btn btn-secondary btn-small" data-action="clear-selection">${t("✖ Zrušit výběr")}</button>
     </div>`;
 }

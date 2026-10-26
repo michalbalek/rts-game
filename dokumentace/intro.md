@@ -15,6 +15,7 @@ Po otevření aplikace hráč vidí na výběr dva režimy:
   - mapu, startovní kapitál a mlhu určí server (viz [multiplayer.md](multiplayer.md)).
 - **Nastavení**, **Nápověda** a **Kredity** – pomocná tlačítka.
 - **Konec** – ukončí aplikaci (v prohlížeči se zavře záložka, pokud to prohlížeč dovolí).
+- **Jazyk / Language** – selector nad nabídkou herních režimů přepíná mezi češtinou a angličtinou. Změna se projeví ihned a uloží se v prohlížeči.
 
 ## Průběh spuštění hry
 Po kliknutí na Start hráč nastaví:
@@ -27,7 +28,7 @@ Po kliknutí na Start hráč nastaví:
 
 ## Nastavení
 - **Hlasitost**: hudba a zvukové efekty zvlášť, 0–100 %.
-- **Jazyk**: čeština (jediný dostupný jazyk).
+- **Jazyk**: čeština nebo angličtina, výchozí čeština. Jazyk lze změnit také v hlavním menu. Překládá se celé rozhraní, popisy budov a jednotek, nápověda, chybové i herní hlášky a popisky uložených her. Změna během hry nepřeruší rozehranou partii. Jména hráčů se nepřekládají; v multiplayeru může mít každý hráč svůj jazyk.
 - **Rychlost kamery**: nízká, střední, vysoká.
 - **Kvalita grafiky**: nízká, střední, vysoká.
 - **Zobrazení FPS**: zapnuto nebo vypnuto, výchozí vypnuto.

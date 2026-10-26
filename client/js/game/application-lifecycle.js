@@ -1,3 +1,4 @@
+import { t, getLanguage, setLanguage, translatePage } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 import { Input } from './input.js';
 import { escapeHtml } from './modals.js';
@@ -6,12 +7,24 @@ import { saveLocalSession, formatSaveLabel } from './save.js';
 
 export function applicationLifecycle(app) {
   function applySettings(updated) {
+    const previousLanguage = getLanguage();
     Object.assign(app.settings, updated || {});
-    saveSettings(app.settings);
+    setLanguage(app.settings.language);
+    if (!saveSettings(app.settings)) app.ui.toast(t('Nastavení se nepodařilo uložit.'), 'error');
     audio.setVolumes(app.settings.musicVolume, app.settings.sfxVolume);
     audio.setMuted(app.settings.musicMuted, app.settings.sfxMuted);
     app.renderer.setQuality(app.settings.quality);
     app.ui.setShowFps(app.settings.showFps);
+    if (previousLanguage !== getLanguage()) {
+      translatePage();
+      app.ui.buildDock();
+      app.ui.renderSelection(true);
+      if (app.ui.session) {
+        app.ui.setBuildMode(app.ui.buildMode);
+        app.ui.renderLegend(true);
+      }
+      if (app.ui.connectionText) app.ui.setConnection(app.ui.connectionText);
+    }
   }
 
   function unlockAudio() {
@@ -90,11 +103,11 @@ export function applicationLifecycle(app) {
       onSave: isMultiplayer ? null : () => {
         try {
           const meta = saveLocalSession(app.session);
-          app.ui.toast(`Hra uložena. ${formatSaveLabel(meta)}.`, 'success');
+          app.ui.toast(t("Hra uložena. {0}.", { 0: formatSaveLabel(meta) }), 'success');
           audio.play('success');
         } catch (err) {
-          console.error('Uložení hry se nepodařilo', err);
-          app.ui.toast('Hru se nepodařilo uložit. Zkontrolujte volné místo v prohlížeči.', 'error');
+          console.error(t("Uložení hry se nepodařilo"), err);
+          app.ui.toast(t("Hru se nepodařilo uložit. Zkontrolujte volné místo v prohlížeči."), 'error');
           audio.play('error');
         }
       },
@@ -121,10 +134,10 @@ export function applicationLifecycle(app) {
     app.menu.showMain();
     if (message) {
       app.modals.open({
-        title: 'Hra ukončena',
+        title: t("Hra ukončena"),
         icon: '📜',
-        body: `<p class="modal-paragraph">${escapeHtml(message)}</p>`,
-        actions: [{ label: 'Rozumím', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${escapeHtml(t(message))}</p>`,
+        actions: [{ label: t("Rozumím"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
     }
   }
@@ -171,10 +184,10 @@ export function applicationLifecycle(app) {
     setTimeout(() => {
       if (app.modals.isOpen()) return;
       app.modals.open({
-        title: 'Ukončení hry',
+        title: t("Ukončení hry"),
         icon: '🚪',
-        body: '<p class="modal-paragraph">Prohlížeč nedovolil zavřít tuto záložku. Můžete ji zavřít ručně nebo se vrátit do menu.</p>',
-        actions: [{ label: 'Zpět do menu', kind: 'btn-primary', onClick: (m) => m.close() }]
+        body: `<p class="modal-paragraph">${t("Prohlížeč nedovolil zavřít tuto záložku. Můžete ji zavřít ručně nebo se vrátit do menu.")}</p>`,
+        actions: [{ label: t("Zpět do menu"), kind: 'btn-primary', onClick: (m) => m.close() }]
       });
     }, 350);
   }

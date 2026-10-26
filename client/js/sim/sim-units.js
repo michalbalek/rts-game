@@ -2,6 +2,7 @@ import { START_POSITIONS, UNIT_DEFS } from './constants.js';
 import { Building, Unit } from './entities.js';
 import { findNearestWalkable } from './pathfinding.js';
 import { dist } from './sim-geometry.js';
+import { notice } from './messages.js';
 
 export class SimulationUnits {
   createStartingPositions() {
@@ -123,7 +124,7 @@ export class SimulationUnits {
     this.recountPopulation(playerId);
     this.emit('toast', {
       playerId,
-      text: `Výcvik zahájen: ${def.name} (${def.trainTime} s)`,
+      ...notice('Výcvik zahájen: {0} ({1} s)', { 0: { key: def.name }, 1: def.trainTime }),
       kind: 'info'
     });
     return { ok: true };

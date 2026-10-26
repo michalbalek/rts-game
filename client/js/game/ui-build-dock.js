@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { BUILDING_DEFS, BUILD_MENU, MARKET_PRICES } from '../sim/constants.js';
 import { escapeHtml } from './modals.js';
 import { audio } from '../engine/audio.js';
@@ -11,21 +12,21 @@ export function buildDock() {
       .map(([key, value]) => `${MARKET_PRICES[key]?.icon || '🪙'} ${value}`)
       .join(' · ');
     return `
-      <button class="build-card" data-type="${type}" title="${escapeHtml(def.name)}">
+      <button class="build-card" data-type="${type}" title="${escapeHtml(t(def.name))}">
         <span class="build-icon">${def.icon}</span>
-        <span class="build-name">${escapeHtml(def.name)}</span>
+        <span class="build-name">${escapeHtml(t(def.name))}</span>
         <span class="build-cost">${cost}</span>
-        <span class="build-size">${def.w}×${def.h}</span>
+        <span class="build-size">${def.w}${t("×")}${def.h}</span>
         <span class="build-tip">
-          <strong>${escapeHtml(def.name)}</strong>
-          <span>${escapeHtml(def.desc)}</span>
-          <span class="tip-line">⏱ ${def.buildTime} s · ${def.w}×${def.h} · ❤️ ${def.hp}</span>
+          <strong>${escapeHtml(t(def.name))}</strong>
+          <span>${escapeHtml(t(def.desc))}</span>
+          <span class="tip-line">⏱ ${def.buildTime} ${t("s ·")} ${def.w}${t("×")}${def.h} · ❤️ ${def.hp}</span>
           <span class="tip-line">${cost}</span>
         </span>
       </button>`;
   }).join('');
   this.el.buildDock.innerHTML = `
-    <div class="dock-heading">Stavby <span>odstup 20 bloků od nepřítele</span></div>
+    <div class="dock-heading">${t("Stavby")} <span>${t("odstup 20 bloků od nepřítele")}</span></div>
     <div class="dock-cards">${cards}</div>`;
 
   this.el.buildDock.querySelectorAll('.build-card').forEach(card => {
@@ -69,10 +70,10 @@ export function setBuildMode(type) {
   this.el.buildBanner.innerHTML = `
     <span class="banner-icon">${def.icon}</span>
     <span class="banner-text">
-      <strong>Stavím: ${escapeHtml(def.name)}</strong>
-      <span>Levé tlačítko umístí budovu · pravé tlačítko nebo ESC zruší</span>
+      <strong>${t("Stavím:")} ${escapeHtml(t(def.name))}</strong>
+      <span>${t("Levé tlačítko umístí budovu · pravé tlačítko nebo ESC zruší")}</span>
     </span>
-    <button class="btn btn-secondary btn-small" id="cancel-build">Zrušit</button>`;
+    <button class="btn btn-secondary btn-small" id="cancel-build">${t("Zrušit")}</button>`;
   const cancel = this.el.buildBanner.querySelector('#cancel-build');
   if (cancel) cancel.addEventListener('click', () => this.setBuildMode(null));
 }

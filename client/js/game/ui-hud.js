@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml } from './modals.js';
 import { fmt } from './ui-format.js';
 
@@ -8,7 +9,7 @@ export function setGameCountdown(seconds) {
     return;
   }
   this.el.countdown.classList.remove('hidden');
-  this.el.countdown.innerHTML = `<span class="countdown-label">Hra začíná</span><span class="countdown-value">${seconds}</span>`;
+  this.el.countdown.innerHTML = `<span class="countdown-label">${t("Hra začíná")}</span><span class="countdown-value">${seconds}</span>`;
 }
 
 export function updateTopBar() {
@@ -61,6 +62,6 @@ export function renderLegend(force) {
       <span class="legend-dot" style="background:${p.color}"></span>
       <span class="legend-name">${escapeHtml(p.name)}</span>
       <span class="legend-pop">${p.alive ? p.population : '—'}</span>
-    </div>`).join('') || '<div class="legend-row">Žádní hráči</div>';
+    </div>`).join('') || `<div class="legend-row">${t("Žádní hráči")}</div>`;
   if (force) this.el.minimapInfo.classList.remove('hidden');
 }

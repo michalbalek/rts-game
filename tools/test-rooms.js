@@ -45,6 +45,8 @@ console.log('--- Server: připojení, lobby a obnovení spojení ---');
     assert.equal(room.state, 'lobby');
     assert.equal(first.latest('welcome').resumed, false);
     assert.equal(first.latest('welcome').lobby.players.length, 1);
+    assert.deepEqual(first.latest('welcome').lobby.serverNameMessage,
+      { key: 'Království #{0}', params: { 0: room.id } });
     assert.equal(manager.onlinePlayers, 1);
     assert.equal(manager.findByToken(first.participant.token).room, room);
 
@@ -116,6 +118,12 @@ console.log('--- Server: životní cyklus hry ---');
     room.handleDisconnect(participant);
     assert.equal(room.connected().length, 1);
     assert.equal(room.state, 'playing');
+    const disconnect = second.latest('info');
+    assert.deepEqual(disconnect.localized, {
+      key: '{0} se odpojil. Má {1} s na návrat.',
+      params: { 0: 'Player One', 1: RECONNECT_SECONDS }
+    });
+    assert.equal(disconnect.text, `Player One se odpojil. Má ${RECONNECT_SECONDS} s na návrat.`);
     const resumed = new TestSocket();
     room.reconnect(participant, resumed);
     assert.equal(resumed.latest('welcome').resumed, true);
