@@ -1,142 +1,149 @@
-import { HALF_TILE_WIDTH, HALF_TILE_HEIGHT, TILE_HEIGHT } from './isometric.js';
-import { TILE_TYPES } from '../sim/constants.js';
+import { HALF_TILE_WIDTH, TILE_HEIGHT } from './isometric.js';
+import { visibleTileRows } from './viewport.js';
+import { paintTerrainChunk } from './terrain-chunk.js';
 
-const TILE_COLORS = {
-  [TILE_TYPES.SAND]: '#d8b171',
-  [TILE_TYPES.DUNE]: '#cba05f',
-  [TILE_TYPES.CLAY]: '#b88c53',
-  [TILE_TYPES.GRASS]: '#4f7d38',
-  [TILE_TYPES.WATER_DEEP]: '#1d6276',
-  [TILE_TYPES.WATER_SHALLOW]: '#3d929e',
-  [TILE_TYPES.ROCK]: '#a1815a'
-};
+export { hash } from './terrain-textures.js';
 
-export const hash = (x, y) => {
-  let h = (x * 374761393 + y * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
-};
+/**
+ * Terén se nemění (mění se jen přírodní zdroje), proto se kreslí po blocích
+ * do mezipaměti a každý snímek je jen několik drawImage. Blok je obdélník
+ * ve světových pixelech; rozlišení odpovídá zoomu a hustotě pixelů displeje.
+ */
+const CHUNK = 512;
+const PAD = 2;
+const PIXEL_BUDGET = 24 * 1024 * 1024;
+const BUILD_BUDGET_MS = 8;
 
 export class RendererTerrain {
-  drawTerrain(ctx, rows) {
-    const map = this.map;
-    const paths = new Map();
-    const water = [];
-    // Při oddálení nejsou jemné textury vidět – jejich kreslení jen zdržuje.
-    const detail = this.quality !== 'low' && this.zoom >= 0.8;
+  resetTerrainCache() {
+    this.terrainChunks = new Map();
+    this.terrainPixels = 0;
+    this.terrainFrame = 0;
+    this.terrainCacheMap = this.map;
+    this.terrainCacheQuality = this.quality;
+  }
 
-    const sandDots = new Path2D();
-    const duneLines = new Path2D();
-    const clayCracks = new Path2D();
-    const grassTufts = new Path2D();
-    const rockStrata = new Path2D();
+  terrainScale() {
+    const density = this.zoom * (this.dpr || 1);
+    if (this.quality === 'low') return density > 0.8 ? 1 : 0.5;
+    if (density > 1.45) return 2;
+    return density > 0.72 ? 1 : 0.5;
+  }
+
+  drawTerrain(ctx, rows, camera) {
+    if (!this.terrainChunks || this.terrainCacheMap !== this.map || this.terrainCacheQuality !== this.quality) {
+      this.resetTerrainCache();
+    }
+    if (typeof document === 'undefined' || !camera) return;
+    this.terrainFrame++;
+    const scale = this.terrainScale();
+    const size = this.map.size;
+    const a = camera.screenToWorld(0, 0);
+    const b = camera.screenToWorld(this.viewWidth, this.viewHeight);
+    const minX = Math.max(a.x, -size * HALF_TILE_WIDTH);
+    const maxX = Math.min(b.x, size * HALF_TILE_WIDTH);
+    const minY = Math.max(a.y, 0);
+    const maxY = Math.min(b.y, size * TILE_HEIGHT);
+    if (minX >= maxX || minY >= maxY) return;
+
+    const deadline = performance.now() + BUILD_BUDGET_MS;
+    const visible = [];
+    for (let cy = Math.floor(minY / CHUNK); cy <= Math.floor(maxY / CHUNK); cy++) {
+      for (let cx = Math.floor(minX / CHUNK); cx <= Math.floor(maxX / CHUNK); cx++) {
+        let chunk = this.terrainChunks.get(chunkKey(cx, cy, scale));
+        if (!chunk) {
+          // Po změně zoomu se bloky v novém rozlišení dokreslují postupně;
+          // do té doby poslouží blok v jiném rozlišení.
+          const fallback = this.anyTerrainChunk(cx, cy, scale);
+          chunk = fallback && performance.now() > deadline ? fallback : this.buildTerrainChunk(cx, cy, scale);
+        }
+        chunk.used = this.terrainFrame;
+        visible.push(chunk);
+        if (chunk.empty) continue;
+        ctx.drawImage(chunk.canvas, cx * CHUNK - PAD, cy * CHUNK - PAD, CHUNK + PAD * 2, CHUNK + PAD * 2);
+      }
+    }
+    this.drawWaterSurface(ctx, visible);
+    this.evictTerrainChunks();
+  }
+
+  anyTerrainChunk(cx, cy, wanted) {
+    for (const scale of [1, 2, 0.5]) {
+      if (scale === wanted) continue;
+      const chunk = this.terrainChunks.get(chunkKey(cx, cy, scale));
+      if (chunk) return chunk;
+    }
+    return null;
+  }
+
+  buildTerrainChunk(cx, cy, scale) {
+    const x0 = cx * CHUNK;
+    const y0 = cy * CHUNK;
+    const rows = visibleTileRows(x0 - PAD, y0 - PAD, x0 + CHUNK + PAD, y0 + CHUNK + PAD, this.map.size, 1);
+    const chunk = { key: chunkKey(cx, cy, scale), canvas: null, pixels: 0, water: [], empty: !rows.length, used: 0 };
+    if (!chunk.empty) {
+      const px = Math.ceil((CHUNK + PAD * 2) * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = px;
+      canvas.height = px;
+      const g = canvas.getContext('2d');
+      g.setTransform(scale, 0, 0, scale, (PAD - x0) * scale, (PAD - y0) * scale);
+      const core = { x0, y0, x1: x0 + CHUNK, y1: y0 + CHUNK };
+      chunk.water = paintTerrainChunk(g, this.map, rows, core, this.quality !== 'low', scale);
+      chunk.canvas = canvas;
+      chunk.pixels = px * px;
+      this.terrainPixels += chunk.pixels;
+    }
+    this.terrainChunks.set(chunk.key, chunk);
+    return chunk;
+  }
+
+  /** Uvolní nejdéle nepoužité bloky, nikdy však bloky z aktuálního snímku. */
+  evictTerrainChunks() {
+    if (this.terrainPixels <= PIXEL_BUDGET) return;
+    const old = [...this.terrainChunks.values()]
+      .filter(chunk => chunk.used !== this.terrainFrame)
+      .sort((p, q) => p.used - q.used);
+    for (const chunk of old) {
+      if (this.terrainPixels <= PIXEL_BUDGET) break;
+      this.terrainChunks.delete(chunk.key);
+      this.terrainPixels -= chunk.pixels;
+    }
+  }
+
+  /** Animované odlesky a vlnky na hladině; jen pro vodu ve viditelných blocích. */
+  drawWaterSurface(ctx, chunks) {
+    if (this.quality === 'low' || this.zoom < 0.6) return;
+    const t = this.time;
     const glints = new Path2D();
-
-    for (const row of rows) {
-      const y = row.y;
-      for (let x = row.x0; x <= row.x1; x++) {
-        const i = y * map.size + x;
-        const type = map.tiles[i];
-        let p = paths.get(type);
-        if (!p) { p = new Path2D(); paths.set(type, p); }
-        const sx = (x - y) * HALF_TILE_WIDTH;
-        const sy = (x + y) * HALF_TILE_HEIGHT;
-        p.moveTo(sx, sy);
-        p.lineTo(sx + HALF_TILE_WIDTH, sy + HALF_TILE_HEIGHT);
-        p.lineTo(sx, sy + TILE_HEIGHT);
-        p.lineTo(sx - HALF_TILE_WIDTH, sy + HALF_TILE_HEIGHT);
-        p.closePath();
-
-        if (!detail) continue;
-        const cx = sx;
-        const cy = sy + HALF_TILE_HEIGHT;
-        const h = hash(x, y);
-
-        switch (type) {
-          case TILE_TYPES.SAND:
-            if (h < 0.12) {
-              sandDots.moveTo(cx + (h - 0.5) * 30, cy + (hash(y, x) - 0.5) * 12);
-              sandDots.arc(cx + (h - 0.5) * 30, cy + (hash(y, x) - 0.5) * 12, 1.1, 0, Math.PI * 2);
-            }
-            break;
-          case TILE_TYPES.DUNE:
-            if (h < 0.36) {
-              duneLines.moveTo(cx - 20, cy + 3);
-              duneLines.quadraticCurveTo(cx, cy - 5, cx + 20, cy + 3);
-            }
-            break;
-          case TILE_TYPES.CLAY:
-            if (h < 0.28) {
-              const ox = (h - 0.5) * 20;
-              clayCracks.moveTo(cx - 12 + ox, cy - 2);
-              clayCracks.lineTo(cx - 2 + ox, cy + 3);
-              clayCracks.lineTo(cx + 8 + ox, cy - 4);
-              clayCracks.lineTo(cx + 14 + ox, cy + 2);
-            }
-            break;
-          case TILE_TYPES.GRASS:
-            if (h < 0.42) {
-              const ox = (h - 0.5) * 34;
-              const oy = (hash(y, x) - 0.5) * 12;
-              grassTufts.moveTo(cx + ox, cy + oy + 3);
-              grassTufts.lineTo(cx + ox - 2, cy + oy - 4);
-              grassTufts.moveTo(cx + ox + 2, cy + oy + 3);
-              grassTufts.lineTo(cx + ox + 4, cy + oy - 5);
-              grassTufts.moveTo(cx + ox, cy + oy + 3);
-              grassTufts.lineTo(cx + ox, cy + oy - 6);
-            }
-            break;
-          case TILE_TYPES.ROCK:
-            if (h < 0.5) {
-              rockStrata.moveTo(cx - 19, cy - 3 + h * 8);
-              rockStrata.quadraticCurveTo(cx, cy + 2 + h * 8, cx + 19, cy - 3 + h * 8);
-            }
-            break;
-          case TILE_TYPES.WATER_DEEP:
-          case TILE_TYPES.WATER_SHALLOW:
-            if (h < 0.18) {
-              glints.moveTo(cx - 8, cy);
-              glints.quadraticCurveTo(cx - 2, cy - 3, cx + 6, cy);
-            }
-            if (type === TILE_TYPES.WATER_SHALLOW) water.push({ cx, cy, h });
-            break;
+    const waves = new Path2D();
+    for (const chunk of chunks) {
+      const water = chunk.water;
+      for (let i = 0; i < water.length; i += 4) {
+        const cx = water[i];
+        const cy = water[i + 1];
+        const h = water[i + 2];
+        if (h < 0.22) {
+          const drift = Math.sin(t * 0.9 + h * 40) * 4;
+          glints.moveTo(cx - 8 + drift, cy);
+          glints.quadraticCurveTo(cx - 2 + drift, cy - 3, cx + 6 + drift, cy);
+        }
+        if (water[i + 3] && h > 0.55 && h < 0.85) {
+          const off = Math.sin(t * 2 + cx * 0.2) * 3;
+          waves.moveTo(cx - 12, cy + off);
+          waves.quadraticCurveTo(cx, cy - 2 + off, cx + 12, cy + off);
         }
       }
     }
-
-    for (const [type, path] of paths) {
-      ctx.fillStyle = TILE_COLORS[type] || '#c9a05f';
-      ctx.fill(path);
-    }
-
-    if (detail) {
-      ctx.fillStyle = 'rgba(120, 83, 37, 0.22)';
-      ctx.fill(sandDots);
-      ctx.strokeStyle = 'rgba(150, 105, 52, 0.23)';
-      ctx.lineWidth = 1.2;
-      ctx.stroke(duneLines);
-      ctx.strokeStyle = 'rgba(92, 61, 28, 0.23)';
-      ctx.stroke(clayCracks);
-      ctx.strokeStyle = 'rgba(43, 88, 31, 0.55)';
-      ctx.lineWidth = 1;
-      ctx.stroke(grassTufts);
-      ctx.strokeStyle = 'rgba(96, 72, 44, 0.32)';
-      ctx.stroke(rockStrata);
-
-      ctx.strokeStyle = `rgba(210, 245, 255, ${0.14 + Math.sin(this.time * 1.8) * 0.07})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke(glints);
-
-      // Vlnky na hladině – jen část dlaždic.
-      ctx.strokeStyle = `rgba(220, 250, 255, ${0.1 + Math.sin(this.time * 1.4) * 0.04})`;
-      const waves = new Path2D();
-      for (const w of water) {
-        if (w.h > 0.3) continue;
-        const off = Math.sin(this.time * 2 + w.cx * 0.2) * 3;
-        waves.moveTo(w.cx - 12, w.cy + off);
-        waves.quadraticCurveTo(w.cx, w.cy - 2 + off, w.cx + 12, w.cy + off);
-      }
-      ctx.stroke(waves);
-    }
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = `rgba(210, 245, 255, ${0.16 + Math.sin(t * 1.8) * 0.07})`;
+    ctx.stroke(glints);
+    ctx.strokeStyle = `rgba(220, 250, 255, ${0.11 + Math.sin(t * 1.4) * 0.04})`;
+    ctx.stroke(waves);
   }
+}
+
+function chunkKey(cx, cy, scale) {
+  return `${scale}:${cx}:${cy}`;
 }

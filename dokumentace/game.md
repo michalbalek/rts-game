@@ -76,7 +76,8 @@ Projekt se skládá z:
 ---
 
 ## 7. Boti (hra s boty)
-- **Stavba**: bot staví v pořadí hrad, Dřevorubec, Kamenolom, Obydlí, Jabloňový sad, Kasárna, Sklad, Sýpka, Železný důl, Obchod. Dbá na volný pruh mezi budovami. Na staveniště posílá volné poddané stejně jako hráč.
+- **Stavba**: bot staví v pořadí hrad, Dřevorubec, Kamenolom, Obydlí, Jabloňový sad, Obchod, Kasárna, Sklad, Sýpka, Železný důl. Dbá na volný pruh mezi budovami. Na staveniště posílá volné poddané stejně jako hráč; když volní nestačí, odvolá na stavbu přímé sběrače bez nákladu. Pokud by další stavba snížila pokladnu pod cenu Obchodu, postaví Obchod přednostně; sad staví přednostně, jakmile jídlo klesne pod 150. Zaniklého dřevorubce, sad nebo lom postaví znovu. Obydlí přistaví i během pořadí, když narazí na limit obyvatel a má volné peníze (nejvýše 8 obydlí).
+- **Hospodaření**: peníze bot získává jen prodejem v Obchodu. Prodává suroviny nad zásobu potřebnou na další stavbu a výcvik; při hladu nebo naléhavé stavbě prodává i zásobu a za výtěžek kupuje jídlo. Výcvik neutratí peníze, které potřebuje na stavby až po Obchod (kromě obrany, když je u hradu nepřítel). Chybí-li na stavbu dřevo nebo kámen, pošle poddané sbírat je přímo. Má-li Obchod i sad, zaměstná volné poddané nad zálohu pro armádu (nejvýše 12) přímou těžbou dřeva na prodej.
 - **Obrana**: bot drží u hradu alespoň třetinu vojska, zbytek posílá na útok.
 - **Útok**: bot zaútočí, když má aspoň 15 vojáků. Útočí na nejbližší budovu soupeře.
 - **Počet botů**: 1 až 3, výchozí 1. Mapa musí mít dostatek startovních pozic.

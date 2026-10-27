@@ -189,49 +189,86 @@ export class SimulationNavigation {
     }
   }
 
+  // Párové porovnání všech jednotek bylo O(n²) a zabíralo přes polovinu času
+  // simulace. Jednotky se proto roztřídí do buněk o velikosti jedné dlaždice
+  // a každá se porovná jen s jednotkami se stejným nebo vyšším indexem
+  // v sousedních buňkách (každá dvojice se tak zpracuje právě jednou).
   separateUnits() {
     const list = this.units;
-    for (let i = 0; i < list.length; i++) {
+    const count = list.length;
+    if (count < 2) return;
+    const size = this.map.size;
+    if (!this.separationHead || this.separationHead.length !== size * size) {
+      this.separationHead = new Int32Array(size * size);
+    }
+    if (!this.separationNext || this.separationNext.length < count) {
+      this.separationNext = new Int32Array(Math.max(64, count * 2));
+    }
+    const head = this.separationHead;
+    const next = this.separationNext;
+    head.fill(-1);
+    for (let i = 0; i < count; i++) {
+      const u = list[i];
+      if (u.garrison?.entered) continue;
+      const key = clamp(Math.floor(u.y), 0, size - 1) * size + clamp(Math.floor(u.x), 0, size - 1);
+      next[i] = head[key];
+      head[key] = i;
+    }
+    for (let i = 0; i < count; i++) {
       const a = list[i];
       if (a.garrison?.entered) continue;
-      for (let j = i + 1; j < list.length; j++) {
-        const b = list[j];
-        if (b.garrison?.entered) continue;
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const d = Math.hypot(dx, dy);
-        if (d <= 0.001 || d >= 0.55) continue;
-
-        const overlap = 0.55 - d;
-        const nx = dx / d;
-        const ny = dy / d;
-
-        // Jednotka, která dostala povel k přesunu, má přednost. Necháme ji
-        // projít davem a uhnout spíš tomu, kdo stojí na místě – jinak se
-        // vojáci u hradu navzájem vytlačovali a sotva se hnuli z místa.
-        const aMoving = a.path.length > 0 || !!a.moveTarget;
-        const bMoving = b.path.length > 0 || !!b.moveTarget;
-        let aShare = 0.5;
-        if (aMoving !== bMoving) aShare = aMoving ? 0.15 : 0.85;
-
-        // Tlačení nesmí vystrčit jednotku na neprůchozí dlaždici (budova, strom).
-        const aX = a.x - nx * overlap * aShare;
-        const aY = a.y - ny * overlap * aShare;
-        if (this.isWalkableTile(Math.floor(aX), Math.floor(aY))) {
-          const oldX = a.x, oldY = a.y;
-          a.x = aX;
-          a.y = aY;
-          this.trackGateEntry(a, oldX, oldY);
-        }
-        const bX = b.x + nx * overlap * (1 - aShare);
-        const bY = b.y + ny * overlap * (1 - aShare);
-        if (this.isWalkableTile(Math.floor(bX), Math.floor(bY))) {
-          const oldX = b.x, oldY = b.y;
-          b.x = bX;
-          b.y = bY;
-          this.trackGateEntry(b, oldX, oldY);
+      const cx = clamp(Math.floor(a.x), 0, size - 1);
+      const cy = clamp(Math.floor(a.y), 0, size - 1);
+      for (let oy = -1; oy <= 1; oy++) {
+        const ny = cy + oy;
+        if (ny < 0 || ny >= size) continue;
+        for (let ox = -1; ox <= 1; ox++) {
+          const nx = cx + ox;
+          if (nx < 0 || nx >= size) continue;
+          for (let j = head[ny * size + nx]; j !== -1; j = next[j]) {
+            if (j > i) this.separatePair(a, list[j]);
+          }
         }
       }
+    }
+  }
+
+  separatePair(a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    if (dx >= 0.55 || dx <= -0.55 || dy >= 0.55 || dy <= -0.55) return;
+    const d2 = dx * dx + dy * dy;
+    if (d2 <= 0.000001 || d2 >= 0.3025) return;
+    const d = Math.sqrt(d2);
+
+    const overlap = 0.55 - d;
+    const nx = dx / d;
+    const ny = dy / d;
+
+    // Jednotka, která dostala povel k přesunu, má přednost. Necháme ji
+    // projít davem a uhnout spíš tomu, kdo stojí na místě – jinak se
+    // vojáci u hradu navzájem vytlačovali a sotva se hnuli z místa.
+    const aMoving = a.path.length > 0 || !!a.moveTarget;
+    const bMoving = b.path.length > 0 || !!b.moveTarget;
+    let aShare = 0.5;
+    if (aMoving !== bMoving) aShare = aMoving ? 0.15 : 0.85;
+
+    // Tlačení nesmí vystrčit jednotku na neprůchozí dlaždici (budova, strom).
+    const aX = a.x - nx * overlap * aShare;
+    const aY = a.y - ny * overlap * aShare;
+    if (this.isWalkableTile(Math.floor(aX), Math.floor(aY))) {
+      const oldX = a.x, oldY = a.y;
+      a.x = aX;
+      a.y = aY;
+      this.trackGateEntry(a, oldX, oldY);
+    }
+    const bX = b.x + nx * overlap * (1 - aShare);
+    const bY = b.y + ny * overlap * (1 - aShare);
+    if (this.isWalkableTile(Math.floor(bX), Math.floor(bY))) {
+      const oldX = b.x, oldY = b.y;
+      b.x = bX;
+      b.y = bY;
+      this.trackGateEntry(b, oldX, oldY);
     }
   }
 }

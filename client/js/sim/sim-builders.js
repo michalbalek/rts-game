@@ -110,7 +110,9 @@ export class SimulationBuilders {
       this.releaseBuilder(unit, true);
       return;
     }
-    if (player.foodShortage) {
+    // Stavba sadu pokračuje i při hladu – stejně jako práce v sadu. Jinak by
+    // hráč bez jídla i peněz nikdy nedostavěl jediný zdroj jídla.
+    if (player.foodShortage && b.config.produce !== 'food') {
       unit.workPaused = true;
       unit.setPath([]);
       return;

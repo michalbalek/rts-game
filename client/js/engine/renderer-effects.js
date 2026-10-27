@@ -121,6 +121,12 @@ export class RendererEffects {
   handleEvents(events) {
     for (const ev of events) {
       switch (ev.type) {
+        case 'underAttack':
+          if (this.session && ev.playerId === this.session.selfId) {
+            this.addMinimapPing(ev.x, ev.y);
+            this.addEffect('ring', ev.x, ev.y, { color: '#ef4444', life: 1.4, size: 2.6 });
+          }
+          break;
         case 'gather':
           this.addText(ev.x, ev.y - 1.5, `+${ev.amount} ${RESOURCE_ICONS[ev.resource] || ''}`,
             RESOURCE_TEXT_COLORS[ev.resource] || '#fde047');

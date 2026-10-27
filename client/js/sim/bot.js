@@ -1,9 +1,14 @@
 import {
-  BOT_BUILD_ORDER, BUILDING_DEFS, UNIT_DEFS, BOT_DIFFICULTIES,
-  RESOURCE_TYPES
+  BOT_BUILD_ORDER, BUILDING_DEFS, UNIT_DEFS, BOT_DIFFICULTIES
 } from './constants.js';
+import {
+  needsMarketFirst, moneyReserve, enemiesNearCastle, gatherMissing, sellSurplus, foodLow, wantsHousing,
+  urgentBuilding, employIdle
+} from './bot-economy.js';
+import { findBuildSpot } from './bot-placement.js';
 
 const BOT_BUILDERS = 3;
+const EXTRA_PRODUCTION = { lumberjack: 3, orchard: 2 };
 
 /**
  * Jednoduchý, ale schopný bot podle dokumentace:
@@ -35,44 +40,59 @@ function assignBuilders(sim, player) {
   const idle = sim.units.filter(u =>
     u.ownerId === player.id && u.isVillager && !u.work && !u.build && !u.repairBuildingId && !u.fleeing
   );
+  // Když volní poddaní nestačí, převezmou stavbu přímí sběrači bez nákladu –
+  // stavba (např. obydlí) má přednost před těžbou na prodej.
+  const gatherers = sim.units.filter(u =>
+    u.ownerId === player.id && u.work?.direct && u.work.carry === 0 && !u.fleeing
+  );
   for (const site of sites) {
     const need = BOT_BUILDERS - (counts.get(site.id)?.total || 0);
-    if (need <= 0 || !idle.length) continue;
-    idle.sort((a, c) =>
+    if (need <= 0) continue;
+    const pool = idle.length ? idle : gatherers;
+    if (!pool.length) continue;
+    pool.sort((a, c) =>
       Math.hypot(a.x - site.centerX, a.y - site.centerY) - Math.hypot(c.x - site.centerX, c.y - site.centerY)
     );
-    const unitIds = idle.splice(0, need).map(u => u.id);
+    const unitIds = pool.splice(0, need).map(u => u.id);
     sim.command(player.id, { op: 'construct', buildingId: site.id, unitIds });
   }
 }
 
 function assignWorkers(sim, player, castle) {
-  const workers = sim.units.filter(u => u.ownerId === player.id && u.isVillager && u.work);
   const idle = sim.units.filter(u =>
     u.ownerId === player.id && u.isVillager && !u.work && !u.build && !u.repairBuildingId && !u.fleeing
   );
   // Necháváme část poddaných k dispozici pro armádu.
   const reserve = Math.max(4, Math.ceil(player.capacity * 0.22));
-  if (idle.length <= reserve) return;
-
   const production = sim.buildings.filter(b =>
     b.ownerId === player.id && b.complete && (b.config.workers || 0) > 0
   );
+  const hasFreeSlot = b => {
+    if ((b.assignedWorkerIds ? b.assignedWorkerIds.length : b.workers) >= b.config.workers) return false;
+    if (b.type !== 'ironmine' && b.type !== 'quarry') return true;
+    const dep = sim.map.deposits.find(d => d.id === b.depositId);
+    return !!dep && dep.active;
+  };
+  if (idle.length <= reserve) {
+    // Pracoviště mají přednost před přímým sběrem, který je daleko od skladu.
+    // Uvolněný sběrač se hned přiřadí, jinak by ho přímý sběr vzápětí znovu odvedl.
+    const workplace = production.find(hasFreeSlot);
+    if (!workplace) return;
+    const gatherer = sim.units.find(u => u.ownerId === player.id && u.work?.direct && u.work.carry === 0);
+    if (gatherer && sim.command(player.id, { op: 'release', unitIds: [gatherer.id] }).ok) {
+      sim.command(player.id, { op: 'assign', buildingId: workplace.id, count: 1 });
+    }
+    return;
+  }
+
   const priority = ['orchard', 'lumberjack', 'quarry', 'ironmine'];
   if (player.resources.food > 120) priority.sort((a, b) => orderIndex(a) - orderIndex(b));
 
   for (const type of priority) {
     // Na cestě do budovy už dělník zabírá místo, i když se do b.workers
     // započítá až po příchodu.
-    const b = production.find(x =>
-      x.type === type &&
-      (x.assignedWorkerIds ? x.assignedWorkerIds.length : x.workers) < x.config.workers
-    );
+    const b = production.find(x => x.type === type && hasFreeSlot(x));
     if (!b) continue;
-    if (b.type === 'ironmine' || b.type === 'quarry') {
-      const dep = sim.map.deposits.find(d => d.id === b.depositId);
-      if (!dep || !dep.active) continue;
-    }
     if (idle.length <= reserve) break;
     const res = sim.command(player.id, { op: 'assign', buildingId: b.id, count: 1 });
     if (res.ok) {
@@ -92,6 +112,7 @@ function assignWorkers(sim, player, castle) {
     sim.command(player.id, { op: 'unassign', buildingId: lumber.id, count: 1 });
     sim.command(player.id, { op: 'assign', buildingId: orchard.id, count: 1 });
   }
+  employIdle(sim, player, castle, reserve);
 }
 
 function orderIndex(type) {
@@ -102,12 +123,38 @@ function orderIndex(type) {
 function tryBuild(sim, player, castle) {
   const bot = player.bot;
 
+  if (needsMarketFirst(sim, player)) {
+    const market = BUILDING_DEFS.market;
+    if (!sim.canAfford(player.id, market.cost)) {
+      gatherMissing(sim, player, castle, market.cost, 6);
+      return;
+    }
+    const spot = findBuildSpot(sim, player, castle, 'market');
+    if (spot) sim.command(player.id, { op: 'build', buildingType: 'market', x: spot.x, y: spot.y });
+    return;
+  }
+
+  const urgent = urgentBuilding(sim, player);
+  if (urgent) {
+    const def = BUILDING_DEFS[urgent];
+    if (!sim.canAfford(player.id, def.cost)) {
+      gatherMissing(sim, player, castle, def.cost);
+      return;
+    }
+    const spot = findBuildSpot(sim, player, castle, urgent);
+    if (spot) {
+      sim.command(player.id, { op: 'build', buildingType: urgent, x: spot.x, y: spot.y });
+      return;
+    }
+  }
+
   // Po dokončení základního pořadí řeší kapacitu a sklady.
   if (bot.nextBuild >= BOT_BUILD_ORDER.length) {
     maybeExpand(sim, player, castle);
     bot.nextBuild = BOT_BUILD_ORDER.length;
     return;
   }
+  if (wantsHousing(sim, player)) buildExtra(sim, player, castle, 'dwelling');
 
   let guard = 0;
   while (bot.nextBuild < BOT_BUILD_ORDER.length && guard++ < BOT_BUILD_ORDER.length) {
@@ -124,7 +171,10 @@ function tryBuild(sim, player, castle) {
       continue;
     }
 
-    if (!sim.canAfford(player.id, def.cost)) return;
+    if (!sim.canAfford(player.id, def.cost)) {
+      gatherMissing(sim, player, castle, def.cost);
+      return;
+    }
 
     const spot = findBuildSpot(sim, player, castle, type);
     if (!spot) {
@@ -146,8 +196,7 @@ function tryBuild(sim, player, castle) {
 }
 
 function maybeExpand(sim, player, castle) {
-  const hasDwellingBuilding = sim.buildings.some(b => b.ownerId === player.id && b.type === 'dwelling' && !b.complete);
-  if (player.capacity - player.population <= 3 && !hasDwellingBuilding) {
+  if (wantsHousing(sim, player)) {
     buildExtra(sim, player, castle, 'dwelling');
     return;
   }
@@ -161,7 +210,27 @@ function maybeExpand(sim, player, castle) {
   if (caps.food > 0 && player.resources.food / caps.food > 0.85) {
     const building = sim.buildings.some(b => b.ownerId === player.id && b.type === 'granary' && !b.complete);
     if (!building) buildExtra(sim, player, castle, 'granary');
+    return;
   }
+  expandProduction(sim, player, castle);
+}
+
+// Stojí-li u ohniště mnoho volných poddaných a všechna pracoviště jsou plná,
+// postaví bot další dřevorubce nebo sad – víc surovin znamená víc peněz z prodeje.
+function expandProduction(sim, player, castle) {
+  const own = sim.buildings.filter(b => b.ownerId === player.id);
+  if (own.some(b => !b.complete)) return;
+  const freeSlots = own.some(b => b.complete && (b.config.workers || 0) > 0 &&
+    (b.assignedWorkerIds ? b.assignedWorkerIds.length : b.workers) < b.config.workers);
+  if (freeSlots) return;
+  const idle = sim.units.filter(u =>
+    u.ownerId === player.id && u.isVillager && !u.work && !u.build && !u.repairBuildingId).length;
+  if (idle < Math.max(4, Math.ceil(player.capacity * 0.22)) + 4) return;
+  const count = type => own.filter(b => b.type === type).length;
+  const wantFood = player.resources.food < player.population * 3;
+  const order = wantFood ? ['orchard', 'lumberjack'] : ['lumberjack', 'orchard'];
+  const type = order.find(t => count(t) < EXTRA_PRODUCTION[t]);
+  if (type) buildExtra(sim, player, castle, type);
 }
 
 function buildExtra(sim, player, castle, type) {
@@ -173,85 +242,18 @@ function buildExtra(sim, player, castle, type) {
   }
 }
 
-function findBuildSpot(sim, player, castle, type) {
-  const def = BUILDING_DEFS[type];
-  if (type === 'quarry' || type === 'ironmine') {
-    const wanted = type === 'quarry' ? 'stone' : 'iron';
-    const deposits = sim.map.deposits
-      .filter(d => d.active && d.type === wanted)
-      .sort((a, b) => depositDistance(a, castle, sim.map.size) - depositDistance(b, castle, sim.map.size));
-    for (const dep of deposits) {
-      for (const idx of dep.tiles) {
-        const x = idx % sim.map.size;
-        const y = Math.floor(idx / sim.map.size);
-        const check = sim.canPlaceBuilding(player.id, type, x, y);
-        if (check.valid) return { x, y };
-      }
-    }
-    return null;
-  }
-
-  if (type === 'lumberjack') {
-    let best = null;
-    let bestD = Infinity;
-    const cx = Math.floor(castle.centerX);
-    const cy = Math.floor(castle.centerY);
-    const r = 34;
-    for (let y = Math.max(1, cy - r); y <= Math.min(sim.map.size - 2, cy + r); y++) {
-      for (let x = Math.max(1, cx - r); x <= Math.min(sim.map.size - 2, cx + r); x++) {
-        if (sim.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const tx = x + dx;
-            const ty = y + dy;
-            const d = Math.hypot(tx - cx, ty - cy);
-            if (d >= bestD || !sim.canPlaceBuilding(player.id, type, tx, ty).valid) continue;
-            best = { x: tx, y: ty };
-            bestD = d;
-          }
-        }
-      }
-    }
-    if (best) return best;
-  }
-
-  // Obecná stavba – spirála kolem hradu.
-  const centerX = castle.centerX;
-  const centerY = castle.centerY;
-  for (let ring = 5; ring <= 38; ring += 1.5) {
-    const steps = Math.max(10, Math.round(ring * 2.1));
-    for (let i = 0; i < steps; i++) {
-      const angle = (i / steps) * Math.PI * 2 + (ring % 3) * 0.4;
-      const x = Math.round(centerX + Math.cos(angle) * ring - def.w / 2);
-      const y = Math.round(centerY + Math.sin(angle) * ring - def.h / 2);
-      if (sim.canPlaceBuilding(player.id, type, x, y).valid) return { x, y };
-    }
-  }
-  return null;
-}
-
-function depositDistance(dep, castle, size) {
-  let best = Infinity;
-  for (const idx of dep.tiles) {
-    const x = idx % size;
-    const y = Math.floor(idx / size);
-    const d = Math.hypot(x - castle.centerX, y - castle.centerY);
-    if (d < best) best = d;
-  }
-  return best;
-}
-
 function tryTrade(sim, player) {
   const market = sim.buildings.find(b => b.ownerId === player.id && b.complete && b.type === 'market');
   if (!market) return;
-  if (player.resources.food < player.population * 0.45 && player.resources.money >= 80) {
+  sellSurplus(sim, player);
+  const hungry = foodLow(player);
+  if (hungry && player.resources.money >= 40) {
     const caps = sim.getStorageCaps(player.id);
     const free = caps.food - player.resources.food;
     const amount = Math.min(50, Math.floor(player.resources.money / 8), Math.floor(free));
     if (amount >= 5) sim.command(player.id, { op: 'buy', resource: 'food', amount });
   }
-  if (player.resources.wood < 40 && player.resources.money >= 80) {
+  if (!hungry && player.resources.wood < 40 && player.resources.money >= 80) {
     const caps = sim.getStorageCaps(player.id);
     const free = caps.resources - sim.getStoredResources(player.id);
     const amount = Math.min(20, Math.floor(player.resources.money / 10), Math.floor(free));
@@ -277,6 +279,8 @@ function trainArmy(sim, player, castle) {
   const unitType = barracks ? 'archer' : 'swordsman';
   const def = UNIT_DEFS[unitType];
   if (!sim.canAfford(player.id, def.cost)) return;
+  const threatened = enemiesNearCastle(sim, player, castle);
+  if (!threatened && player.resources.money - def.cost.money < moneyReserve(sim, player)) return;
   if (!sim.findIdleVillager(player.id)) return;
   sim.command(player.id, { op: 'train', buildingId: producer.id, unitType });
 }

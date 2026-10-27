@@ -91,6 +91,12 @@ export class AudioEffects {
       case 'hit':
         this.tone(120, 0.12, 'square', 0.035 * vol, 80);
         break;
+      case 'alarm':
+        // Dva tóny válečného rohu.
+        this.tone(294, 0.34, 'sawtooth', 0.045 * vol, 288);
+        this.tone(220, 0.5, 'sawtooth', 0.045 * vol, 214, 0.32);
+        this.tone(147, 0.8, 'triangle', 0.04 * vol, 140, 0.32);
+        break;
       case 'victory':
         this.playVictory();
         break;

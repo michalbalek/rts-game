@@ -16,8 +16,10 @@ Ujměte se vlády nad pouštním panstvím. Povolejte poddané k ohništi před 
 - **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky a obchod s pevnými cenami a volitelným automatickým nákupem a prodejem. Daně a ukazatel spokojenosti jsou zatím odstraněné; peníze pocházejí ze startovního kapitálu a prodeje surovin.
 - **14 staveb** – hospodářské a vojenské budovy včetně hradeb, obranné věže a dvou velikostí brány.
 - **3 typy jednotek** – Pěšák, Lučištník a Poddaný. Pěšáci a lučištníci bojují, poddaní pracují a staví.
-- **Boti** – 1–3 protivníci ve třech obtížnostech. Staví podle dokumentovaného pořadí, drží část vojska u hradu a útočí.
-- **Mlha války** – volitelně zapnutelná, s prozkoumanými a neprozkoumanými oblastmi.
+- **Boti** – 1–3 protivníci ve třech obtížnostech. Staví podle dokumentovaného pořadí, vydělávají prodejem surovin v Obchodu, drží část vojska u hradu a útočí.
+- **Mlha války** – volitelně zapnutelná, s prozkoumanými a neprozkoumanými oblastmi a měkkým okrajem dohledu.
+- **Procedurální grafika** – organické přechody terénu, pěna u břehů, zrnitá půda, stromy ve větru; terén se vykresluje z mezipaměti, takže hra je plynulá i při oddálení.
+- **Hlášení útoků a rychlost hry** – při napadení zazní roh a místo zabliká na minimapě (`Backspace` na něj přesune kameru); v singleplayeru lze hru zrychlit až na 3×.
 - **Multiplayer až pro 4 hráče** – autoritativní server, automatické přiřazení do místnosti, odpočet startu, obnova spojení a výsledková obrazovka.
 - **Procedurální zvuk** – hudba, ambientní zvuky prostředí, hlášky písaře a fanfáry generované přes Web Audio API.
 - **Čeština a angličtina** – jazyk přepnete v hlavním menu nad volbou herního režimu nebo v Nastavení. Překládá se menu, HUD, budovy, jednotky, nápověda i herní a multiplayerové hlášky.
@@ -76,6 +78,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | :--- | :--- |
 | Výběr jednotky / budovy | Levé tlačítko |
 | Výběr více jednotek | Levé tlačítko a tažení obdélníkem |
+| Výběr všech jednotek stejného typu na obrazovce | Dvojklik na jednotku nebo `Ctrl` + klik |
 | Pohyb a povely | Pravé tlačítko |
 | Zadání stavby poddaným | Vyberte poddané a klikněte pravým na vlastní staveniště, nebo v jejich panelu na stavbu v sekci Stavět |
 | Umístění stavby | Levé tlačítko |
@@ -90,16 +93,18 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Otočení budovy před umístěním | `R` (o 90°) |
 | Uložení skupiny jednotek | `Ctrl` + `1`–`9` |
 | Výběr uložené skupiny | `1`–`9` |
+| Přesun kamery na místo posledního útoku | `Backspace` nebo `Home` |
+| Rychlost hry v singleplayeru (0,5×–3×) | `+` / `−` (i na numerické klávesnici) |
 | Zrušení stavby nebo výběru | `ESC` |
 | Otevření herního menu | `ESC` (když nic není vybráno) |
 | Zbourání vybrané budovy | `Delete` (s potvrzením) |
 
 ### HUD
 
-- **Horní lišta** – peníze, dřevo, kámen, jídlo, železo a obyvatelstvo.
+- **Horní lišta** – peníze, dřevo, kámen, jídlo, železo a obyvatelstvo. Při změněné rychlosti hry se vedle tlačítka Menu zobrazí její ukazatel.
 - **Spodní dok** – nabídka staveb rozdělená na suroviny, hospodářství, vojsko a opevnění.
 - **Výběrový panel** – informace o budově, staveništi nebo jednotkách, přiřazení dělníků, výcvik, oprava a bourání.
-- **Minimapa** – přehled mapy včetně mlhy války; kliknutím nebo tažením se kamera přesune.
+- **Minimapa** – přehled mapy včetně mlhy války; kliknutím nebo tažením se kamera přesune. Při napadení vašich jednotek nebo budov zazní roh, písař útok ohlásí a místo zabliká na minimapě červeně.
 
 ---
 
@@ -137,8 +142,8 @@ Testy pokrývají simulaci, klientskou logiku, serverové místnosti a pravidla 
 
 ```bash
 npm test              # všechny testy včetně kontroly velikosti souborů
-npm run test:sim      # generování map, ekonomika, obchod, výcvik, opravy, bourání, mlha, sklady, boj, pathfinding
-npm run test:client   # zoom, výběr, hitboxy, stavba pravým tlačítkem, překlady a uložení jazyka
+npm run test:sim      # generování map, ekonomika, obchod, výcvik, opravy, bourání, mlha, sklady, boj, hlášení útoků, pathfinding, hospodaření botů
+npm run test:client   # zoom, výběr (i dvojklikem), hitboxy, stavba pravým tlačítkem, rychlost hry, překlady a uložení jazyka
 npm run test:commit   # validátor zpráv commitů (Conventional Commits)
 npm run test:rooms    # připojení, lobby, obnovení spojení a životní cyklus hry
 npm run test:structure # maximum 500 řádků ve zdrojových souborech

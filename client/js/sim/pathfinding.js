@@ -25,6 +25,9 @@ const DIRS = [
 /**
  * Vrátí pole dlaždic [{x,y}, ...] nebo null.
  * blockGrid: Uint8Array velikosti mapy (budovy).
+ *
+ * Pracovní pole se nealokují při každém hledání (dříve ~360 kB na cestu),
+ * ale sdílí se a jejich platnost určuje číslo běhu `stamp`.
  */
 export function findPath(map, blockGrid, startX, startY, targetX, targetY, maxNodes = 6000) {
   const size = map.size;
@@ -42,52 +45,93 @@ export function findPath(map, blockGrid, startX, startY, targetX, targetY, maxNo
 
   if (sx === tx && sy === ty) return [{ x: tx, y: ty }];
 
-  const total = size * size;
-  const open = new MinHeap();
-  const gScore = new Float32Array(total).fill(Infinity);
-  const cameFrom = new Int32Array(total).fill(-1);
-  const closed = new Uint8Array(total);
+  const ws = workspace(size * size);
+  const stamp = nextStamp(ws);
+  const { gScore, cameFrom, seen, closed, heap } = ws;
+  const tiles = map.tiles;
+  const resources = map.resources;
+  const passable = (i) => {
+    if (tiles[i] === TILE_TYPES.WATER_DEEP || blockGrid[i]) return false;
+    const res = resources[i];
+    return res !== RESOURCE_TYPES.TREE && res !== RESOURCE_TYPES.STONE && res !== RESOURCE_TYPES.IRON;
+  };
 
   const startIdx = sy * size + sx;
   const goalIdx = ty * size + tx;
+  seen[startIdx] = stamp;
   gScore[startIdx] = 0;
-  open.push({ idx: startIdx, f: heuristic(sx, sy, tx, ty) });
+  cameFrom[startIdx] = -1;
+  heap.clear();
+  heap.push(startIdx, heuristic(sx, sy, tx, ty));
 
   let visited = 0;
-  while (open.size > 0 && visited < maxNodes) {
-    const current = open.pop();
-    if (current.idx === goalIdx) {
-      return reconstruct(cameFrom, current.idx, size);
+  while (heap.size > 0 && visited < maxNodes) {
+    const currentIdx = heap.pop();
+    if (currentIdx === goalIdx) {
+      return reconstruct(cameFrom, currentIdx, size);
     }
-    if (closed[current.idx]) continue;
-    closed[current.idx] = 1;
+    if (closed[currentIdx] === stamp) continue;
+    closed[currentIdx] = stamp;
     visited++;
 
-    const cx = current.idx % size;
-    const cy = (current.idx - cx) / size;
+    const cx = currentIdx % size;
+    const cy = (currentIdx - cx) / size;
+    const currentG = gScore[currentIdx];
 
-    for (const [dx, dy, weight] of DIRS) {
+    for (let d = 0; d < 8; d++) {
+      const dx = DIR_X[d];
+      const dy = DIR_Y[d];
       const nx = cx + dx;
       const ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
       const nIdx = ny * size + nx;
-      if (closed[nIdx] || blockGrid[nIdx]) continue;
-      if (!isTileWalkable(map, nx, ny)) continue;
+      if (closed[nIdx] === stamp || !passable(nIdx)) continue;
       // Zamezíme prořezávání rohů mezi dvěma překážkami.
       if (dx !== 0 && dy !== 0) {
-        if (!isTileWalkable(map, cx + dx, cy) || !isTileWalkable(map, cx, cy + dy)) continue;
-        if (blockGrid[cy * size + (cx + dx)] || blockGrid[(cy + dy) * size + cx]) continue;
+        if (!passable(cy * size + nx) || !passable(ny * size + cx)) continue;
       }
 
-      const tentative = gScore[current.idx] + weight;
-      if (tentative < gScore[nIdx]) {
+      const tentative = currentG + DIR_W[d];
+      if (seen[nIdx] !== stamp || tentative < gScore[nIdx]) {
+        seen[nIdx] = stamp;
         gScore[nIdx] = tentative;
-        cameFrom[nIdx] = current.idx;
-        open.push({ idx: nIdx, f: tentative + heuristic(nx, ny, tx, ty) });
+        cameFrom[nIdx] = currentIdx;
+        heap.push(nIdx, tentative + heuristic(nx, ny, tx, ty));
       }
     }
   }
   return null;
+}
+
+const DIR_X = Int8Array.from(DIRS, d => d[0]);
+const DIR_Y = Int8Array.from(DIRS, d => d[1]);
+const DIR_W = Float64Array.from(DIRS, d => d[2]);
+
+let shared = null;
+
+function workspace(total) {
+  if (!shared || shared.total !== total) {
+    shared = {
+      total,
+      stamp: 0,
+      gScore: new Float32Array(total),
+      cameFrom: new Int32Array(total),
+      seen: new Uint32Array(total),
+      closed: new Uint32Array(total),
+      heap: new MinHeap()
+    };
+  }
+  return shared;
+}
+
+function nextStamp(ws) {
+  ws.stamp++;
+  if (ws.stamp >= 0xffffffff) {
+    ws.seen.fill(0);
+    ws.closed.fill(0);
+    ws.stamp = 1;
+  }
+  return ws.stamp;
 }
 
 function heuristic(ax, ay, bx, by) {
@@ -131,43 +175,67 @@ function clampInt(v, min, max) {
   return Math.max(min, Math.min(max, Math.floor(v)));
 }
 
-/** Jednoduchá binární halda pro A*. */
+/** Binární halda pro A* nad typovanými poli (index dlaždice + odhad f). */
 class MinHeap {
-  constructor() {
-    this.items = [];
+  constructor(capacity = 1024) {
+    this.idx = new Int32Array(capacity);
+    this.f = new Float64Array(capacity);
+    this.size = 0;
   }
-  get size() {
-    return this.items.length;
+  clear() {
+    this.size = 0;
   }
-  push(item) {
-    const a = this.items;
-    a.push(item);
-    let i = a.length - 1;
+  grow() {
+    const idx = new Int32Array(this.idx.length * 2);
+    const f = new Float64Array(this.f.length * 2);
+    idx.set(this.idx);
+    f.set(this.f);
+    this.idx = idx;
+    this.f = f;
+  }
+  push(item, score) {
+    if (this.size === this.idx.length) this.grow();
+    const idx = this.idx;
+    const f = this.f;
+    let i = this.size++;
+    idx[i] = item;
+    f[i] = score;
     while (i > 0) {
       const p = (i - 1) >> 1;
-      if (a[p].f <= a[i].f) break;
-      [a[p], a[i]] = [a[i], a[p]];
+      if (f[p] <= f[i]) break;
+      swap(idx, f, p, i);
       i = p;
     }
   }
   pop() {
-    const a = this.items;
-    const top = a[0];
-    const last = a.pop();
-    if (a.length > 0) {
-      a[0] = last;
+    const idx = this.idx;
+    const f = this.f;
+    const top = idx[0];
+    const last = --this.size;
+    if (last > 0) {
+      idx[0] = idx[last];
+      f[0] = f[last];
       let i = 0;
       for (;;) {
         const l = i * 2 + 1;
         const r = l + 1;
         let smallest = i;
-        if (l < a.length && a[l].f < a[smallest].f) smallest = l;
-        if (r < a.length && a[r].f < a[smallest].f) smallest = r;
+        if (l < last && f[l] < f[smallest]) smallest = l;
+        if (r < last && f[r] < f[smallest]) smallest = r;
         if (smallest === i) break;
-        [a[i], a[smallest]] = [a[smallest], a[i]];
+        swap(idx, f, i, smallest);
         i = smallest;
       }
     }
     return top;
   }
+}
+
+function swap(idx, f, a, b) {
+  const ti = idx[a];
+  idx[a] = idx[b];
+  idx[b] = ti;
+  const tf = f[a];
+  f[a] = f[b];
+  f[b] = tf;
 }

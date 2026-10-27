@@ -170,6 +170,18 @@
   padding: 3px 6px;
 }
 
+.speed-indicator {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe2a3;
+  font-variant-numeric: tabular-nums;
+  background: rgba(74, 44, 12, 0.7);
+  border: 1px solid rgba(240, 192, 90, 0.55);
+  border-radius: 4px;
+  padding: 3px 7px;
+  box-shadow: 0 0 10px rgba(240, 192, 90, 0.25);
+}
+
 .hud-menu-btn {
   display: flex;
   align-items: center;

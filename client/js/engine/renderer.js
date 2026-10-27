@@ -61,6 +61,7 @@ export class Renderer {
     this.map = session.state.map || session.map;
     this.effects.length = 0;
     this.texts.length = 0;
+    this.minimapPings = [];
     this.unitAnimations = new WeakMap();
     this.minimapFogTimer = 0;
     this.fogMaskTimer = 0;

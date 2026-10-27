@@ -1,8 +1,11 @@
 import { t } from '../i18n/index.js';
 import { CAMERA_SPEEDS } from './settings.js';
 import { audio } from '../engine/audio.js';
+import { nextSpeed, formatSpeed } from './game-speed.js';
 
 const EDGE_MARGIN = 22;
+// Fyzické klávesy, nezávislé na rozložení (na české klávesnici je „+“ na jedničce).
+const SPEED_KEYS = { Equal: 1, NumpadAdd: 1, Minus: -1, NumpadSubtract: -1 };
 
 export function onWheel(e) {
   if (this.isBlocked()) return;
@@ -55,6 +58,18 @@ export function onKeyDown(e) {
   if (e.code === 'Space') {
     e.preventDefault();
     this.centerOnCastle();
+    return;
+  }
+
+  if (e.code === 'Backspace' || e.code === 'Home') {
+    e.preventDefault();
+    this.focusLastAlert();
+    return;
+  }
+
+  if (!e.ctrlKey && !e.metaKey && !e.altKey && SPEED_KEYS[e.code]) {
+    e.preventDefault();
+    if (!e.repeat) this.changeGameSpeed(SPEED_KEYS[e.code]);
     return;
   }
 
@@ -122,6 +137,30 @@ export function centerOnCastle() {
     this.camera.clampToMap(this.session.state.map.size);
     audio.play('click');
   }
+}
+
+export function focusLastAlert() {
+  const alert = this.session.lastAlert;
+  if (!alert) {
+    this.ui.toast(t("Zatím nebyl ohlášen žádný útok."), 'info');
+    return;
+  }
+  this.camera.centerOnTile(alert.x, alert.y);
+  this.camera.clampToMap(this.session.state.map.size);
+  audio.play('click');
+}
+
+export function changeGameSpeed(direction) {
+  if (!this.session.local) {
+    this.ui.toast(t("V multiplayeru nelze měnit rychlost hry."), 'info');
+    return;
+  }
+  const speed = nextSpeed(this.session.speed || 1, direction);
+  if (speed === this.session.speed) return;
+  this.session.speed = speed;
+  this.ui.setSpeed(speed);
+  this.ui.toast(t("Rychlost hry: {0}", { 0: formatSpeed(speed) }), 'info');
+  audio.play('click');
 }
 
 export function onMinimapDown(e) {

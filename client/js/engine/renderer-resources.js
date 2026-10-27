@@ -1,13 +1,18 @@
 import { HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from './isometric.js';
 import { RESOURCE_TYPES } from '../sim/constants.js';
 import { hash } from './renderer-terrain.js';
+import { treeSprite, treeVariant } from './tree-sprites.js';
 
 export class RendererResources {
   drawResources(ctx, rows) {
     const map = this.map;
-    // Při oddálení kreslíme jen drobné značky – tisíce detailních stromů
-    // by jinak zbytečně brzdily vykreslování.
+    // Při oddálení kreslíme ložiska jen drobnými značkami a stromy bez pohupování.
     const simple = this.zoom < 0.7;
+    const sprites = typeof document !== 'undefined';
+    const base = sprites ? ctx.getTransform() : null;
+    const resolution = this.terrainScale ? this.terrainScale() : 1;
+    const style = map.type === 'canyon' ? 'acacia' : map.type === 'oasis' ? 'oasis' : 'palm';
+    let shifted = false;
     for (const row of rows) {
       const y = row.y;
       for (let x = row.x0; x <= row.x1; x++) {
@@ -17,6 +22,15 @@ export class RendererResources {
         if (!this.isExplored(x, y)) continue;
         const sx = (x - y) * HALF_TILE_WIDTH;
         const sy = (x + y) * HALF_TILE_HEIGHT;
+        if (res === RESOURCE_TYPES.TREE && sprites) {
+          this.drawTreeSprite(ctx, base, sx, sy, x, y, style, resolution, !simple && this.quality !== 'low');
+          shifted = true;
+          continue;
+        }
+        if (shifted) {
+          ctx.setTransform(base);
+          shifted = false;
+        }
         if (simple) {
           this.drawResourceMarker(ctx, sx, sy, res, x, y);
         } else if (res === RESOURCE_TYPES.TREE) {
@@ -28,6 +42,21 @@ export class RendererResources {
         }
       }
     }
+    if (shifted) ctx.setTransform(base);
+  }
+
+  /**
+   * Strom ze spritu. Vítr strom zkosí kolem paty kmene, takže koruna se
+   * pohupuje a kmen zůstává pevně na zemi.
+   */
+  drawTreeSprite(ctx, base, sx, sy, tx, ty, style, resolution, animate) {
+    const { variant, flip } = treeVariant(tx, ty);
+    const sprite = treeSprite(style, variant, flip, resolution);
+    const by = sy + HALF_TILE_HEIGHT;
+    const skew = animate ? -Math.sin(this.time * 1.7 + tx * 0.7 + ty * 0.3) * 0.05 : 0;
+    const { a, b, c, d, e, f } = base;
+    ctx.setTransform(a, b, a * skew + c, b * skew + d, a * sx + c * by + e, b * sx + d * by + f);
+    ctx.drawImage(sprite.canvas, sprite.x, sprite.y, sprite.w, sprite.h);
   }
 
   drawResourceMarker(ctx, sx, sy, res, tx, ty) {

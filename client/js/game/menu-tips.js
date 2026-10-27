@@ -10,5 +10,8 @@ export const TIPS = [
   'Zničená budova vrátí 50 % surovin. Při bourání vlastní budovy se vrací také 50 %.',
   'V multiplayeru platí: kdo ztratí hrad, prohrává. Hra pokračuje, dokud nezůstane jediný hrad.',
   'Ctrl + 1–9 uloží skupinu jednotek, samotné číslo ji vybere.',
-  'Mezerník kdykoli vycentruje kameru na váš Královský hrad.'
+  'Mezerník kdykoli vycentruje kameru na váš Královský hrad.',
+  'Dvojklikem na jednotku vyberete všechny vlastní jednotky stejného typu na obrazovce.',
+  'Při útoku zazní roh a místo zabliká na minimapě. Backspace na něj přesune kameru.',
+  'V singleplayeru měníte rychlost hry klávesami + a −.'
 ];

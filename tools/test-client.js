@@ -6,6 +6,7 @@ import { testFortificationInput } from './client-tests/fortifications.js';
 import { testBuildingRotationInput } from './client-tests/building-rotation.js';
 import { testTileSize } from './client-tests/tile-size.js';
 import { testAutoMarketUi } from './client-tests/auto-market.js';
+import { testGameControls } from './client-tests/game-controls.js';
 import { GameUI } from '../client/js/game/ui.js';
 import { Renderer } from '../client/js/engine/renderer.js';
 import { unitAnimation } from '../client/js/engine/unit-animation.js';
@@ -453,6 +454,7 @@ testFortificationInput(assert);
 testBuildingRotationInput(assert);
 testTileSize(assert);
 testAutoMarketUi(assert);
+testGameControls(assert);
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy klienta prošly.');
 process.exit(failures ? 1 : 0);

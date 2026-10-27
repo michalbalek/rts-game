@@ -13,6 +13,7 @@ import { testFortifications } from './sim-tests/fortifications.js';
 import { testBuildingRotation } from './sim-tests/building-rotation.js';
 import { testAutoBuilders } from './sim-tests/auto-builders.js';
 import { testAutoMarket } from './sim-tests/auto-market.js';
+import { testBotEconomy, testFamineOrchardConstruction } from './sim-tests/bot-economy.js';
 
 testMaps();
 const world = testBots();
@@ -33,6 +34,8 @@ testFortifications();
 testBuildingRotation();
 testAutoBuilders();
 testAutoMarket();
+testBotEconomy();
+testFamineOrchardConstruction();
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');
 process.exit(failures ? 1 : 0);

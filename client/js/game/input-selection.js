@@ -1,6 +1,8 @@
 import { pickEntityAtWorld, pickResourceAtWorld, unitsInWorldRect } from './picking.js';
 import { audio } from '../engine/audio.js';
 
+const DOUBLE_CLICK_MS = 400;
+
 export function onRightClick(e) {
   if (!this.session) return;
   if (this.ui.buildMode) {
@@ -70,11 +72,12 @@ export function onRightClick(e) {
   }
 }
 
-export function selectAt(clientX, clientY, additive) {
+export function selectAt(clientX, clientY, additive, sameType = false) {
   if (!this.session) return;
   const world = this.camera.screenToWorld(clientX, clientY);
   const found = pickEntityAtWorld(this.session, world.x, world.y);
   if (!found) {
+    this.lastClick = null;
     if (!additive) {
       this.session.clearSelection();
       this.ui.renderSelection(true);
@@ -92,6 +95,13 @@ export function selectAt(clientX, clientY, additive) {
       audio.play('select', { volume: 0.6 });
       return;
     }
+    const now = performance.now();
+    const doubleClick = !!this.lastClick && this.lastClick.id === unit.id && now - this.lastClick.time <= DOUBLE_CLICK_MS;
+    this.lastClick = doubleClick ? null : { id: unit.id, time: now };
+    if (doubleClick || sameType) {
+      this.selectSameType(unit, additive);
+      return;
+    }
     if (additive) {
       const exists = selection.some(u => u.id === unit.id);
       selection = exists ? selection.filter(u => u.id !== unit.id) : [...selection, unit];
@@ -102,10 +112,26 @@ export function selectAt(clientX, clientY, additive) {
     this.ui.renderSelection(true);
     audio.play('select');
   } else {
+    this.lastClick = null;
     this.session.selectBuilding(found.entity);
     this.ui.renderSelection(true);
     audio.play('select', { volume: 0.6 });
   }
+}
+
+/** Vybere všechny vlastní jednotky stejného typu viditelné na obrazovce. */
+export function selectSameType(unit, additive = false) {
+  const a = this.camera.screenToWorld(0, 0);
+  const b = this.camera.screenToWorld(this.camera.viewWidth, this.camera.viewHeight);
+  const sameType = unitsInWorldRect(this.session, a.x, a.y, b.x, b.y, 0).filter(u => u.type === unit.type);
+  if (!sameType.some(u => u.id === unit.id)) sameType.unshift(unit);
+  const selection = additive ? this.session.selection.slice() : [];
+  for (const u of sameType) {
+    if (!selection.some(s => s.id === u.id)) selection.push(u);
+  }
+  this.session.selectUnits(selection);
+  this.ui.renderSelection(true);
+  audio.play('select');
 }
 
 export function selectInRect(drag, additive) {

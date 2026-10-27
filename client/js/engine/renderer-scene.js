@@ -16,11 +16,15 @@ export class RendererScene {
     ctx.clearRect(0, 0, this.viewWidth, this.viewHeight);
 
     // Atmosférické pozadí mimo mapu.
-    const bg = ctx.createLinearGradient(0, 0, 0, this.viewHeight);
-    bg.addColorStop(0, '#8a6636');
-    bg.addColorStop(0.55, '#b48950');
-    bg.addColorStop(1, '#75512a');
-    ctx.fillStyle = bg;
+    if (!this.background || this.backgroundHeight !== this.viewHeight) {
+      const bg = ctx.createLinearGradient(0, 0, 0, this.viewHeight);
+      bg.addColorStop(0, '#8a6636');
+      bg.addColorStop(0.55, '#b48950');
+      bg.addColorStop(1, '#75512a');
+      this.background = bg;
+      this.backgroundHeight = this.viewHeight;
+    }
+    ctx.fillStyle = this.background;
     ctx.fillRect(0, 0, this.viewWidth, this.viewHeight);
 
     ctx.save();
@@ -28,12 +32,14 @@ export class RendererScene {
 
     const bounds = this.getVisibleBounds(camera);
     const rows = this.getVisibleRows(camera);
-    this.drawTerrain(ctx, rows);
+    this.drawTerrain(ctx, rows, camera);
     this.drawResources(ctx, rows);
     this.drawBuildingsGround(ctx, bounds, ui);
 
     const renderList = [];
+    const towers = new Map();
     for (const b of this.session.state.buildings) {
+      if (b.type === 'tower') towers.set(b.id, b);
       if (!this.entityVisible(b)) continue;
       if (!this.inBounds(b.centerX, b.centerY, bounds, 8)) continue;
 
@@ -83,7 +89,7 @@ export class RendererScene {
     for (const u of this.session.state.units) {
       if (!this.entityVisible(u)) continue;
       if (!this.inBounds(u.x, u.y, bounds, 3)) continue;
-      const tower = u.garrison?.entered && this.session.state.buildings.find(b => b.id === u.garrison.towerId);
+      const tower = u.garrison?.entered && towers.get(u.garrison.towerId);
       renderList.push({ kind: 'unit', entity: u, depth: tower
         ? tower.tileX + tower.tileY + Math.max(tower.width, tower.height) + 0.1
         : u.x + u.y + 0.35 });

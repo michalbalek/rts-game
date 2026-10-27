@@ -9,6 +9,7 @@ import { emptySelectionHtml, buildingPanelHtml, unitsPanelHtml } from './ui-sele
 import { openSettings, openHelp, openCredits, showPause, confirmDemolish } from './ui-dialogs.js';
 import { showMarket, refreshMarket } from './ui-market.js';
 import { showResults, updateResultsCountdown, closeResults } from './ui-results.js';
+import { formatSpeed } from './game-speed.js';
 
 export class GameUI {
   constructor({ hooks = {}, settings, modals } = {}) {
@@ -36,6 +37,7 @@ export class GameUI {
       connectionBanner: document.getElementById('connection-banner'),
       minimapInfo: document.getElementById('minimap-info'),
       fps: document.getElementById('fps-counter'),
+      speed: document.getElementById('speed-indicator'),
       countdown: document.getElementById('game-countdown'),
       resMoney: document.getElementById('res-money'),
       resWood: document.getElementById('res-wood'),
@@ -73,6 +75,7 @@ export class GameUI {
     this.refreshBuildDock();
     this.update(1);
     this.renderLegend(true);
+    this.setSpeed(session.speed || 1);
   }
 
   clearSession() {
@@ -85,6 +88,7 @@ export class GameUI {
     this.hideBanner();
     this.setConnection(null);
     this.closeResults();
+    this.setSpeed(1);
   }
 
   showHud(show) {
@@ -101,6 +105,12 @@ export class GameUI {
     if (this.el.fps && this.settings.showFps) {
       this.el.fps.textContent = `${Math.round(value)} FPS`;
     }
+  }
+
+  setSpeed(speed = 1) {
+    if (!this.el.speed) return;
+    this.el.speed.textContent = formatSpeed(speed);
+    this.el.speed.classList.toggle('hidden', speed === 1);
   }
 
   setConnection(text, kind = 'warning') {

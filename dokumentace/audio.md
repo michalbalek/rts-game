@@ -13,6 +13,7 @@
 - **Oprava**: údery kladiv a skřípání kladky.
 - **Bourání**: hlasité sesouvání sutě.
 - **Nové ložisko**: krátký zvonivý tón.
+- **Napadení**: dvojitý tón válečného rohu, když nepřítel zasáhne vaši jednotku nebo budovu (nejvýš jednou za 4 s).
 
 ## Hlášky jednotek a písaře
 - **Výběr a povel**: krátká hláška jednotky při výběru a při přijetí povelu.

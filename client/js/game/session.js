@@ -4,6 +4,7 @@ import { GameMap } from '../sim/mapgen.js';
 import { validatePlacement } from '../sim/placement.js';
 import { validateWallLine } from '../sim/wall-line.js';
 import { rotatedBuildingSize } from '../sim/building-orientation.js';
+import { stepSimulation } from './game-speed.js';
 import {
   BUILDING_DEFS, UNIT_DEFS, FOG_RANGES, GAME_MODES
 } from '../sim/constants.js';
@@ -18,6 +19,7 @@ class BaseSession {
     this.selectedBuilding = null;
     this.eventCursor = 0;
     this.pendingEvents = [];
+    this.lastAlert = null;
   }
 
   get player() {
@@ -113,10 +115,11 @@ export class LocalSession extends BaseSession {
     this.lastEvent = 0;
     this.startedAt = opts.startedAt || new Date().toISOString();
     this.startOptions = opts.startOptions ? { ...opts.startOptions } : null;
+    this.speed = 1;
   }
 
   tick(dt) {
-    this.sim.tick(dt);
+    stepSimulation(this.sim, dt, this.speed);
     this.pruneSelection();
   }
 

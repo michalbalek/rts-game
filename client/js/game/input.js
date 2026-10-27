@@ -2,8 +2,11 @@ import { worldToTile } from '../engine/isometric.js';
 import { BUILDING_DEFS } from '../sim/constants.js';
 import { rotatedBuildingSize } from '../sim/building-orientation.js';
 import { pickEntityAtWorld } from './picking.js';
-import { onRightClick, selectAt, selectInRect, tryPlaceBuilding } from './input-selection.js';
-import { onWheel, onKeyDown, onKeyUp, saveGroup, selectGroup, centerOnCastle, onMinimapDown, moveCameraFromMinimap, update } from './input-navigation.js';
+import { onRightClick, selectAt, selectInRect, selectSameType, tryPlaceBuilding } from './input-selection.js';
+import {
+  onWheel, onKeyDown, onKeyUp, saveGroup, selectGroup, centerOnCastle, focusLastAlert, changeGameSpeed,
+  onMinimapDown, moveCameraFromMinimap, update
+} from './input-navigation.js';
 
 const DRAG_THRESHOLD = 6;
 
@@ -221,7 +224,7 @@ export class Input {
       return;
     }
 
-    this.selectAt(e.clientX, e.clientY, e.shiftKey);
+    this.selectAt(e.clientX, e.clientY, e.shiftKey, e.ctrlKey || e.metaKey);
   }
 
   onRightClick(...args) {
@@ -234,6 +237,10 @@ export class Input {
 
   selectInRect(...args) {
     return selectInRect.apply(this, args);
+  }
+
+  selectSameType(...args) {
+    return selectSameType.apply(this, args);
   }
 
   tryPlaceBuilding(...args) {
@@ -262,6 +269,14 @@ export class Input {
 
   centerOnCastle(...args) {
     return centerOnCastle.apply(this, args);
+  }
+
+  focusLastAlert(...args) {
+    return focusLastAlert.apply(this, args);
+  }
+
+  changeGameSpeed(...args) {
+    return changeGameSpeed.apply(this, args);
   }
 
   onMinimapDown(...args) {

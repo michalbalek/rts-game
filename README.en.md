@@ -16,8 +16,10 @@ Take charge of a desert domain. Summon your subjects to the campfire in front of
 - **Full economy** – wood, stone, food, iron and money. Warehouses, granaries and a market with fixed prices and optional automatic buying and selling. Taxes and the happiness indicator are removed for now; money comes from starting capital and resource sales.
 - **14 structures** – economic and military buildings, including walls, a defensive tower and two gate sizes.
 - **3 unit types** – Footman (Pěšák), Archer (Lučištník) and Subject (Poddaný). Footmen and archers fight; subjects work and build.
-- **Bots** – 1–3 opponents across three difficulty levels. They build in a documented order, keep part of their army near the castle and attack.
-- **Fog of war** – optional, with explored and unexplored areas.
+- **Bots** – 1–3 opponents across three difficulty levels. They build in a documented order, earn money by selling resources at the Market, keep part of their army near the castle and attack.
+- **Fog of war** – optional, with explored and unexplored areas and a soft edge of vision.
+- **Procedural graphics** – organic terrain transitions, shoreline foam, grainy ground and trees swaying in the wind; terrain is drawn from a cache, so the game stays smooth even when zoomed out.
+- **Attack alerts and game speed** – a horn sounds and the spot flashes on the minimap when you are attacked (`Backspace` moves the camera there); single player can run at up to 3× speed.
 - **Multiplayer for up to 4 players** – authoritative server, automatic room assignment, start countdown, connection recovery and a results screen.
 - **Procedural audio** – music, ambient environment sounds, scribe announcements and fanfares generated via the Web Audio API.
 - **Czech and English** – switch languages above the game-mode choices in the main menu or in Settings. Menus, HUD, buildings, units, help, gameplay notices and multiplayer messages are translated.
@@ -76,6 +78,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | :--- | :--- |
 | Select unit / building | Left button |
 | Select multiple units | Left button and drag a rectangle |
+| Select all units of one type on screen | Double-click a unit or `Ctrl` + click |
 | Movement and orders | Right button |
 | Order subjects to build | Select subjects, then right-click your construction site or click its button in the Construction section of their panel |
 | Place a building | Left button |
@@ -90,16 +93,18 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Rotate a building before placement | `R` (90°) |
 | Save a unit group | `Ctrl` + `1`–`9` |
 | Select a saved group | `1`–`9` |
+| Jump to the latest attack | `Backspace` or `Home` |
+| Game speed in single player (0.5×–3×) | `+` / `−` (also on the numeric keypad) |
 | Cancel building or selection | `ESC` |
 | Open the game menu | `ESC` (when nothing is selected) |
 | Demolish the selected building | `Delete` (with confirmation) |
 
 ### HUD
 
-- **Top bar** – money, wood, stone, food, iron and population.
+- **Top bar** – money, wood, stone, food, iron and population. When the game speed is changed, a speed badge appears next to the menu button.
 - **Bottom dock** – building menu grouped into resources, economy, military and fortifications.
 - **Selection panel** – information about the selected building, construction site or units, worker assignment, training, repair and demolition.
-- **Minimap** – map overview including fog of war; clicking or dragging moves the camera.
+- **Minimap** – map overview including fog of war; clicking or dragging moves the camera. When your units or buildings are attacked, a horn sounds, the scribe reports it and the spot flashes red on the minimap.
 
 ---
 
@@ -137,8 +142,8 @@ The tests cover simulation, client logic, server rooms and repository rules:
 
 ```bash
 npm test              # all tests including source file size checks
-npm run test:sim      # map generation, economy, market, training, repairs, demolition, fog, warehouses, combat, pathfinding
-npm run test:client   # zoom limits, click and rectangle selection, hitboxes
+npm run test:sim      # map generation, economy, market, training, repairs, demolition, fog, warehouses, combat, attack alerts, pathfinding, bot economy
+npm run test:client   # zoom limits, click, double-click and rectangle selection, hitboxes, game speed
 npm run test:commit   # commit message validator (Conventional Commits)
 npm run test:rooms    # connections, lobby, reconnection and match lifecycle
 npm run test:structure # maximum of 500 lines per source file

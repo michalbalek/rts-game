@@ -1,6 +1,8 @@
 import { worldToTile } from './isometric.js';
 import { TILE_TYPES, RESOURCE_TYPES, ENEMY_BUILD_DISTANCE } from '../sim/constants.js';
 
+const MINIMAP_PING_LIFE = 4;
+
 /**
  * Jemné rozostření minimapy. Samostatné pixely stromů a kamení by jinak
  * vypadaly jako šum a terénní skvrny by měly ostré hrany.
@@ -121,6 +123,7 @@ export class RendererMinimap {
     }
 
     // Výřez kamery – jemný zlatý kosočtverec s tmavým podkresem.
+    this.drawMinimapPings(ctx, scale, dt);
     const corners = [
       camera.screenToWorld(0, 0),
       camera.screenToWorld(this.viewWidth, 0),
@@ -148,6 +151,41 @@ export class RendererMinimap {
     ctx.strokeStyle = 'rgba(240, 192, 90, 0.45)';
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+  }
+
+  /** Místo napadení bliká na minimapě rozbíhajícími se kruhy. */
+  addMinimapPing(x, y) {
+    if (!this.minimapPings) this.minimapPings = [];
+    this.minimapPings.push({ x, y, age: 0 });
+    if (this.minimapPings.length > 6) this.minimapPings.shift();
+  }
+
+  drawMinimapPings(ctx, scale, dt) {
+    if (!this.minimapPings || !this.minimapPings.length) return;
+    ctx.save();
+    for (let i = this.minimapPings.length - 1; i >= 0; i--) {
+      const ping = this.minimapPings[i];
+      ping.age += dt;
+      if (ping.age >= MINIMAP_PING_LIFE) {
+        this.minimapPings.splice(i, 1);
+        continue;
+      }
+      const x = ping.x * scale;
+      const y = ping.y * scale;
+      for (let ring = 0; ring < 2; ring++) {
+        const phase = (ping.age * 1.4 + ring * 0.5) % 1;
+        ctx.beginPath();
+        ctx.arc(x, y, 3 + phase * 14, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 72, 56, ${(1 - phase) * (1 - ping.age / MINIMAP_PING_LIFE)})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ff4838';
+      ctx.beginPath();
+      ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   drawMinimapBuildZone(ctx, scale) {

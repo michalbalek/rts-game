@@ -1,4 +1,5 @@
 import { GameSim } from '../../client/js/sim/sim.js';
+import { ATTACK_ALERT } from '../../client/js/sim/constants.js';
 import { assert } from './helpers.js';
 
 export function testVictory() {
@@ -73,4 +74,29 @@ export function testCombat() {
   for (let i = 0; i < 20 * 2; i++) sim6.tick(1 / 20);
   assert(own6.x < moveStartX - 0.8, 'jednotka se po povelu skutečně vzdálila od nepřítele');
 
+  console.log('\n--- Hlášení o napadení ---');
+  const sim7 = new GameSim({
+    seed: 8123, mapType: 'desert', mode: 'sandbox', capital: 'rich',
+    players: [{ name: 'Hráč', isBot: false }, { name: 'Soupeř', isBot: false }]
+  });
+  const alerts = () => sim7.events.filter(e => e.type === 'underAttack');
+  const castle7 = sim7.getCastle(1);
+  const victim = sim7.units.find(u => u.ownerId === 1);
+  sim7.dealDamage(victim, 1, 2);
+  sim7.dealDamage(victim, 1, 2);
+  assert(alerts().length === 1 && alerts()[0].playerId === 1 && !alerts()[0].building,
+    'opakované zásahy na stejném místě vyvolají jediné hlášení napadeného hráče');
+  sim7.time += ATTACK_ALERT.minGap;
+  sim7.dealDamage(sim7.getCastle(2), 1, 1);
+  const enemyAlert = alerts().at(-1);
+  assert(alerts().length === 2 && enemyAlert.playerId === 2 && enemyAlert.building,
+    'každý hráč má vlastní hlášení, útok na budovu se rozliší');
+  const outpost = sim7.addUnit('swordsman', 1, castle7.centerX + 30, castle7.centerY);
+  sim7.dealDamage(outpost, 1, 2);
+  assert(alerts().length === 3, 'útok v jiné oblasti se ohlásí i během odstupu');
+  sim7.dealDamage(castle7, 1, 2);
+  assert(alerts().length === 3, 'těsně po hlášení se další oblast neohlásí hned');
+  sim7.time += ATTACK_ALERT.cooldown;
+  sim7.dealDamage(castle7, 1, 2);
+  assert(alerts().length === 4, 'po uplynutí odstupu se útok ohlásí znovu');
 }

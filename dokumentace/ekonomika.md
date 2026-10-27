@@ -38,7 +38,7 @@
 - **Voják**: spotřebuje 1 jídlo za minutu.
 - **Nepracující obyvatelé**: jídlo nespotřebovávají.
 - **Zdroj**: jídlo se odebírá z celkových zásob panství. Spotřeba se počítá průběžně, ze zásob se odečítají celé jednotky.
-- **Nedostatek**: když v zásobách není dost jídla, dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní. Výjimkou jsou dělníci v jabloňovém sadu: ti dál sbírají jablka a odnášejí je do nejbližší sýpky (bez sýpky do hradu), takže se zásoba jídla obnoví i z nuly.
+- **Nedostatek**: když v zásobách není dost jídla, dělníci přestanou těžit a stavitelé stavět, dokud se jídlo nedoplní. Výjimkou je jabloňový sad: jeho dělníci dál sbírají jablka a odnášejí je do nejbližší sýpky (bez sýpky do hradu) a pokračuje i stavba sadu, takže se zásoba jídla obnoví i z nuly.
 
 ## Hospodářské řetězce
 - Jabloňový sad zajišťuje jídlo. Sad je otevřená plocha, kde dělníci viditelně sbírají jablka mezi stromy a odnášejí je do nejbližší sýpky, bez sýpky do hradu. Každá sýpka zvyšuje kapacitu jídla o 300 jednotek.

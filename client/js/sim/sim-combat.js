@@ -1,4 +1,5 @@
 import { dist, distanceToBuilding, isEnemy } from './sim-geometry.js';
+import { ATTACK_ALERT } from './constants.js';
 
 export class SimulationCombat {
   nearestEnemy(unit, radius) {
@@ -69,6 +70,7 @@ export class SimulationCombat {
   dealDamage(target, amount, attackerOwnerId) {
     if (!target) return;
     const attacker = this.getPlayer(attackerOwnerId);
+    this.reportAttack(target, attackerOwnerId);
     if (target.width !== undefined) {
       // Budova – obrana 0, poškození přímo.
       target.hp -= amount;
@@ -90,6 +92,32 @@ export class SimulationCombat {
         this.removeUnit(target, { killed: true, byPlayerId: attackerOwnerId });
       }
     }
+  }
+
+  /**
+   * Ohlásí napadení hráče. Hlášení se omezuje na jedno za ATTACK_ALERT.cooldown
+   * sekund, pokud útok nepřijde z jiné oblasti (dál než ATTACK_ALERT.distance).
+   */
+  reportAttack(target, attackerOwnerId) {
+    const victimId = target.ownerId;
+    if (!victimId || victimId === attackerOwnerId) return;
+    const x = target.width !== undefined ? target.centerX : target.x;
+    const y = target.width !== undefined ? target.centerY : target.y;
+    if (!this.attackAlerts) this.attackAlerts = new Map();
+    const last = this.attackAlerts.get(victimId);
+    if (last) {
+      const elapsed = this.time - last.time;
+      const far = dist(x, y, last.x, last.y) > ATTACK_ALERT.distance;
+      if (elapsed < ATTACK_ALERT.cooldown && !(far && elapsed >= ATTACK_ALERT.minGap)) return;
+    }
+    this.attackAlerts.set(victimId, { time: this.time, x, y });
+    this.emit('underAttack', {
+      playerId: victimId,
+      x,
+      y,
+      building: target.width !== undefined,
+      byPlayerId: attackerOwnerId || null
+    });
   }
 
   findAttackerId(target, attackerOwnerId) {

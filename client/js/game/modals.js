@@ -214,9 +214,12 @@ export function helpContent() {
           <li><strong>${t("Kolečko myši")}</strong> ${t("– přiblížení a oddálení.")}</li>
           <li><strong>${t("Levé tlačítko")}</strong> ${t("– výběr jednotek a budov, potvrzení stavby.")}</li>
           <li><strong>${t("Tažení levým tlačítkem")}</strong> ${t("– výběr více jednotek obdélníkem.")}</li>
+          <li><strong>${t("Dvojklik / Ctrl + klik")}</strong> ${t("– výběr všech vlastních jednotek stejného typu na obrazovce.")}</li>
           <li><strong>${t("Pravé tlačítko")}</strong> ${t("– pohyb, útok, stavba na vlastním staveništi, zrušení akce.")}</li>
           <li><strong>${t("Ctrl + 1–9")}</strong> ${t("– uložení skupiny,")} <strong>1–9</strong> ${t("– její výběr.")}</li>
           <li><strong>${t("Mezerník")}</strong> ${t("– vycentrování na Královský hrad.")}</li>
+          <li><strong>Backspace / Home</strong> ${t("– přesun kamery na místo posledního útoku.")}</li>
+          <li><strong>+ / −</strong> ${t("– rychlost hry v singleplayeru (0,5× až 3×).")}</li>
           <li><strong>R</strong> ${t("– otočení budovy před umístěním o 90°.")}</li>
           <li><strong>${t("ESC")}</strong> ${t("– zruší stavbu/výběr, jinak otevře herní menu.")}</li>
           <li><strong>${t("Delete")}</strong> ${t("– zbourání vybrané vlastní budovy (po potvrzení).")}</li>

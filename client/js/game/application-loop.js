@@ -64,6 +64,15 @@ export function applicationLoop(app) {
         case 'defeat':
           if (ev.playerId === app.session.selfId) audio.play('defeat');
           break;
+        case 'underAttack':
+          if (ev.playerId === app.session.selfId) {
+            app.session.lastAlert = { x: ev.x, y: ev.y };
+            app.ui.toast(t(ev.building
+              ? "Nepřítel útočí na naši budovu! Backspace přesune kameru na místo útoku."
+              : "Naši lidé jsou napadeni! Backspace přesune kameru na místo útoku."), 'error');
+            audio.play('alarm', { throttle: 4000 });
+          }
+          break;
         case 'gameEnd':
           if (app.session.local) app.showSingleResults();
           break;

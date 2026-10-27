@@ -5,6 +5,8 @@
 - **Projekce**: izometrická, mřížka je natočena o 45°.
 - **Vrstvy**: terén, vodní toky a přírodní zdroje, budovy, jednotky.
 - **Výška**: terén je plochý, bez výškových úrovní.
+- **Vzhled terénu**: hranice mezi pískem, dunami, hlínou, skálou, trávou a vodou se kreslí plynule a organicky (nekopírují zuby dlaždic). Odstín půdy se mění v plynulých skvrnách, souš má jemné zrno a drobné detaily (trsy trávy, vlnky dun, praskliny, kamínky). U břehu se tvoří pěna a mokrý písek, mělčina plynule přechází v hlubokou vodu a hladina se třpytí. Stromy se pohupují ve větru a jsou vidět i při oddálení.
+- **Vykreslování**: terén se kreslí jednou po blocích do mezipaměti v rozlišení podle přiblížení a hustoty pixelů displeje; každý snímek pak jen skládá hotové bloky. Stromy se kreslí z předpřipravených spritů. Hra tak zůstává plynulá i při největším oddálení.
 
 ## Biomy a terény
 Hra má tři mapy, které hráč vybírá při spuštění:
@@ -52,3 +54,4 @@ Každá mapa se generuje náhodně v rámci svého biomu. Níže je popsaný typ
 - **Neprozkoumaná oblast** je černá a hráč na ní nevidí nic.
 - **Prozkoumaná oblast mimo dohled** je šedá a zobrazuje poslední známý stav. Jednotky a stavby na ní nejsou vidět.
 - **Dohled**: odhaluje oblast kolem jednotek, budov a strážních věží. Dosah: jednotky 6 dlaždí, budovy 4 dlaždice, strážní věže 10 dlaždí.
+- **Okraj dohledu** je měkký – mlha k hranici dohledu plynule řídne. Při nízké kvalitě grafiky zůstávají okraje ostré po dlaždicích.

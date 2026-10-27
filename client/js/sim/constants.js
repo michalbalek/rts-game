@@ -122,10 +122,11 @@ export const BOT_DIFFICULTIES = {
   }
 };
 
-// Pořadí staveb bota podle dokumentace.
+// Pořadí staveb bota podle dokumentace. Obchod je brzy, protože prodej
+// surovin je jediný zdroj peněz.
 export const BOT_BUILD_ORDER = [
-  'lumberjack', 'quarry', 'dwelling', 'orchard', 'barracks',
-  'warehouse', 'granary', 'ironmine', 'market'
+  'lumberjack', 'quarry', 'dwelling', 'orchard', 'market',
+  'barracks', 'warehouse', 'granary', 'ironmine'
 ];
 
 // Kapacity: hrad slouží jako první sklad i sýpka.
@@ -146,6 +147,13 @@ export const FOG_RANGES = {
   unit: 6,
   building: 4,
   tower: 10
+};
+
+// Hlášení o napadení: nejvýš jednou za cooldown s, dřív jen při útoku jinde na mapě.
+export const ATTACK_ALERT = {
+  cooldown: 15,
+  minGap: 4,
+  distance: 18
 };
 
 export const WORK = {
