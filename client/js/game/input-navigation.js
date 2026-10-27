@@ -145,7 +145,7 @@ export function update(dt) {
   if (this.keys.has('a') || this.keys.has('arrowleft') || this.keys.has('KeyA')) dx += step;
   if (this.keys.has('d') || this.keys.has('arrowright') || this.keys.has('KeyD')) dx -= step;
 
-  if (this.mouse.inside) {
+  if (this.mouse.valid && !this.minimapDragging) {
     if (this.mouse.x < EDGE_MARGIN) dx += step;
     else if (this.mouse.x > window.innerWidth - EDGE_MARGIN) dx -= step;
     if (this.mouse.y < EDGE_MARGIN) dy += step;

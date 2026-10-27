@@ -34,6 +34,7 @@ export class Input {
       keyup: (e) => this.onKeyUp(e),
       blur: () => this.onBlur(),
       windowMove: (e) => this.onWindowMove(e),
+      windowOut: (e) => this.onWindowOut(e),
       windowUp: (e) => this.onMouseUp(e),
       minimapDown: (e) => this.onMinimapDown(e)
     };
@@ -45,6 +46,7 @@ export class Input {
     canvas.addEventListener('wheel', this.handlers.wheel, { passive: false });
     window.addEventListener('mouseup', this.handlers.mouseup);
     window.addEventListener('mousemove', this.handlers.windowMove);
+    window.addEventListener('mouseout', this.handlers.windowOut);
     window.addEventListener('keydown', this.handlers.keydown);
     window.addEventListener('keyup', this.handlers.keyup);
     window.addEventListener('blur', this.handlers.blur);
@@ -61,6 +63,7 @@ export class Input {
     c.removeEventListener('wheel', this.handlers.wheel);
     window.removeEventListener('mouseup', this.handlers.mouseup);
     window.removeEventListener('mousemove', this.handlers.windowMove);
+    window.removeEventListener('mouseout', this.handlers.windowOut);
     window.removeEventListener('keydown', this.handlers.keydown);
     window.removeEventListener('keyup', this.handlers.keyup);
     window.removeEventListener('blur', this.handlers.blur);
@@ -117,6 +120,14 @@ export class Input {
     if (!this.isBlocked()) this.setHover(e.clientX, e.clientY);
   }
 
+  onWindowOut(e) {
+    if (!e.relatedTarget) {
+      this.mouse.x = e.clientX;
+      this.mouse.y = e.clientY;
+      this.mouse.valid = true;
+    }
+  }
+
   onMouseLeave() {
     this.mouse.inside = false;
     if (!this.drag) {
@@ -127,6 +138,7 @@ export class Input {
 
   onBlur() {
     this.keys.clear();
+    this.mouse.valid = false;
     this.minimapDragging = false;
     if (!this.drag) return;
     this.drag = null;

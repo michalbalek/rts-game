@@ -6,6 +6,136 @@ import { Camera } from '../../client/js/engine/camera.js';
 import { tileToScreen } from '../../client/js/engine/isometric.js';
 import { pickResourceAtWorld } from '../../client/js/game/picking.js';
 
+export function testCameraNavigation(assert) {
+  console.log('\n--- Posun kamery myší ---');
+  function eventTarget() {
+    const listeners = new Map();
+    return {
+      addEventListener(type, handler) { listeners.set(type, handler); },
+      removeEventListener(type, handler) {
+        if (listeners.get(type) === handler) listeners.delete(type);
+      },
+      emit(type, event = {}) {
+        const handler = listeners.get(type);
+        if (handler) handler(event);
+      },
+      hasListener(type) { return listeners.has(type); }
+    };
+  }
+
+  const originalWindow = globalThis.window;
+  const win = Object.assign(eventTarget(), { innerWidth: 1600, innerHeight: 900 });
+  globalThis.window = win;
+  try {
+    const canvas = Object.assign(eventTarget(), {
+      classList: { add() {}, remove() {} }
+    });
+    const minimap = Object.assign(eventTarget(), {
+      getBoundingClientRect: () => ({ left: 1400, top: 700, width: 200, height: 200 })
+    });
+    const moves = [];
+    const centers = [];
+    const camera = {
+      pan(x, y) { moves.push({ x, y }); },
+      clampToMap() {},
+      centerOnTile(x, y) { centers.push({ x, y }); }
+    };
+    let blocked = false;
+    const input = new Input({
+      canvas, minimapCanvas: minimap, camera,
+      session: { state: { map: { size: 100 } } },
+      ui: {}, settings: { cameraSpeed: 'medium' },
+      isBlocked: () => blocked
+    });
+    let hovers = 0;
+    input.setHover = () => { hovers++; };
+
+    input.update(0.1);
+    assert(moves.length === 0, 'kamera se nepohybuje před prvním pohybem myši');
+    canvas.emit('mousemove', { clientX: 800, clientY: 300 });
+    win.emit('mousemove', { clientX: 800, clientY: 300 });
+    input.update(0.1);
+    canvas.emit('mouseleave');
+    assert(hovers === 2 && input.ui.hoverTile === null && input.ui.hoverEntity === null,
+      'přejetí z mapy na panel zruší zvýraznění na mapě');
+    const cases = [
+      ['nahoru přes horní lištu', 800, 1, 0, 56],
+      ['dolů přes spodní panel', 800, 899, 0, -56],
+      ['doleva', 1, 450, 56, 0],
+      ['doprava', 1599, 450, -56, 0]
+    ];
+    for (const [label, x, y, dx, dy] of cases) {
+      win.emit('mousemove', { clientX: x, clientY: y });
+      input.update(0.1);
+      const move = moves.pop();
+      assert(move && move.x === dx && move.y === dy, `kamera se posune ${label}`);
+    }
+    assert(hovers === 2, 'kurzor nad panelem nevybírá objekty na mapě');
+
+    win.emit('mousemove', { clientX: 1, clientY: 1 });
+    input.update(0.1);
+    const diagonal = moves.pop();
+    assert(diagonal && Math.abs(Math.hypot(diagonal.x, diagonal.y) - 56) < 1e-9 &&
+      diagonal.x > 0 && diagonal.y > 0, 'diagonální posun má stejnou rychlost');
+    win.emit('mouseout', { relatedTarget: {} });
+    input.update(0.1);
+    assert(moves.length === 1, 'přechod mezi prvky stránky nezastaví posun');
+    moves.length = 0;
+    const exits = [
+      ['nahoru', 800, -1, 0, 56],
+      ['dolů', 800, 900, 0, -56],
+      ['doleva', -1, 450, 56, 0],
+      ['doprava', 1600, 450, -56, 0]
+    ];
+    for (const [label, x, y, dx, dy] of exits) {
+      win.emit('mousemove', { clientX: 800, clientY: 450 });
+      win.emit('mouseout', { relatedTarget: null, clientX: x, clientY: y });
+      input.update(0.1);
+      input.update(0.1);
+      assert(moves.length === 2 && moves.every(move => move.x === dx && move.y === dy),
+        `po vyjetí z okna pokračuje posun ${label}`);
+      moves.length = 0;
+    }
+
+    win.emit('mousemove', { clientX: -1, clientY: 1 });
+    input.update(0.1);
+    const outsideDiagonal = moves.pop();
+    assert(outsideDiagonal && outsideDiagonal.x > 0 && outsideDiagonal.y > 0 &&
+      Math.abs(Math.hypot(outsideDiagonal.x, outsideDiagonal.y) - 56) < 1e-9,
+    'pohyb mimo okno zachovává normalizovaný diagonální posun');
+    win.emit('mousemove', { clientX: 800, clientY: 450 });
+    input.update(0.1);
+    assert(moves.length === 0, 'návrat kurzoru mimo okraj posun zastaví');
+    win.emit('mousemove', { clientX: 800, clientY: 1 });
+    blocked = true;
+    input.update(0.1);
+    assert(moves.length === 0, 'otevřený dialog brání posunu');
+    blocked = false;
+
+    minimap.emit('mousedown', { clientX: 1590, clientY: 890, preventDefault() {} });
+    win.emit('mousemove', { clientX: 1599, clientY: 899 });
+    input.update(0.1);
+    assert(centers.length === 2 && moves.length === 0,
+      'při tažení minimapy se kamera nepohybuje současně i od okraje');
+    win.emit('mouseup', { button: 0 });
+    input.update(0.1);
+    assert(moves.length === 1, 'po ukončení tažení minimapy se posun obnoví');
+    moves.length = 0;
+
+    win.emit('blur');
+    input.update(0.1);
+    assert(moves.length === 0, 'ztráta zaměření okna zastaví posun');
+    input.keys.add('w');
+    input.update(0.1);
+    assert(moves.length === 1 && moves[0].y === 56, 'pohyb klávesnicí zůstává funkční');
+    input.detach();
+    assert(!win.hasListener('mouseout'), 'odpojení odstraní posluchač opuštění okna');
+  } finally {
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
+  }
+}
+
 export function testRightClick(assert) {
   console.log('\n--- Pravé kliknutí na staveniště ---');
   const villager = { id: 1, ownerId: 1, isVillager: true };

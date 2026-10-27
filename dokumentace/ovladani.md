@@ -1,7 +1,7 @@
 # Ovládání a uživatelské rozhraní (HUD)
 
 ## Ovládání kamery
-- **Posun**: klávesy WASD nebo šipky. Kamera se posouvá také při najetí myší k okraji obrazovky.
+- **Posun**: klávesy WASD nebo šipky. Kamera se posouvá také při najetí myší k okraji obrazovky, včetně míst překrytých herními panely. Po vyjetí kurzoru z okna posun pokračuje, dokud se kurzor nevrátí mimo okraj nebo okno neztratí zaměření. Při tažení minimapy se posun myší u okraje pozastaví.
 - **Zoom**: kolečko myši.
 
 ## Práce s myší
