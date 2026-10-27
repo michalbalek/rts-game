@@ -64,6 +64,11 @@ export class SimulationCommands {
         if (!units.length) return { ok: false, reason: 'Nejsou vybráni žádní poddaní.' };
         return this.assignBuilders(playerId, cmd.buildingId, units);
       }
+      case 'gather': {
+        const units = this.getOwnedUnits(playerId, cmd.unitIds);
+        if (!units.length) return { ok: false, reason: 'Nejsou vybráni žádní poddaní.' };
+        return this.assignDirectGatherers(playerId, units, cmd.x, cmd.y);
+      }
       case 'release': {
         const units = this.getOwnedUnits(playerId, cmd.unitIds);
         let released = 0;

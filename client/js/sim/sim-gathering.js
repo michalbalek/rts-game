@@ -7,6 +7,23 @@ export class SimulationGathering {
   findSource(unit, b) {
     const player = this.getPlayer(unit.ownerId);
     if (!player) return null;
+    if (unit.work.direct) {
+      const work = unit.work;
+      if (work.produce === 'wood') {
+        if (this.map.getResource(work.targetX, work.targetY) === RESOURCE_TYPES.TREE) {
+          const approach = this.findTreeApproach(work.targetX, work.targetY, this.unitRegions(unit));
+          if (approach) return { sx: work.targetX, sy: work.targetY, px: approach.x, py: approach.y };
+        }
+        return this.findTreeSource(unit, { centerX: work.targetX, centerY: work.targetY });
+      }
+      const dep = this.map.deposits.find(d => d.id === work.depositId && d.active);
+      if (!dep) {
+        work.depleted = true;
+        return null;
+      }
+      const approach = this.findTreeApproach(work.targetX, work.targetY, this.unitRegions(unit));
+      return approach ? { sx: work.targetX, sy: work.targetY, px: approach.x, py: approach.y, depositId: dep.id } : null;
+    }
     const def = b.config;
     if (def.produce === 'wood') return this.findTreeSource(unit, b);
     if (def.produce === 'stone' || def.produce === 'iron') {
@@ -81,21 +98,30 @@ export class SimulationGathering {
   }
 
   harvest(unit, b) {
-    const def = b.config;
+    const work = unit.work;
+    const produce = work.produce;
     const source = unit.work.source;
     const player = this.getPlayer(unit.ownerId);
     const mult = player ? (player.gatherMultiplier || 1) : 1;
-    const carry = Math.max(1, Math.round(WORK.carry * mult));
-    if (def.produce === 'wood') {
+    const carry = work.direct ? 1 : Math.max(1, Math.round(WORK.carry * mult));
+    if (produce === 'wood') {
       if (this.map.getResource(source.sx, source.sy) !== RESOURCE_TYPES.TREE) return 0;
+      const idx = this.map.idx(source.sx, source.sy);
+      const harvested = this.map.treeHarvested.get(idx) || 0;
+      if (work.direct && harvested + 1 < WORK.carry) {
+        this.map.treeHarvested.set(idx, harvested + 1);
+        return 1;
+      }
       this.map.chopTree(source.sx, source.sy);
-      return carry;
+      return work.direct ? 1 : Math.max(1, carry - harvested);
     }
-    if (def.produce === 'stone' || def.produce === 'iron') {
+    if (produce === 'stone' || produce === 'iron') {
       const dep = this.map.deposits.find(d => d.id === source.depositId);
       if (!dep || !dep.active) {
-        this.releaseAllWorkers(b);
-        this.emit('depositDepleted', { x: source.sx, y: source.sy, type: dep ? dep.type : 'stone' });
+        if (b) {
+          this.releaseAllWorkers(b);
+          this.emit('depositDepleted', { x: source.sx, y: source.sy, type: dep ? dep.type : 'stone' });
+        } else work.depleted = true;
         return 0;
       }
       const taken = this.map.extractDeposit(dep, carry);
@@ -107,11 +133,18 @@ export class SimulationGathering {
         });
         this.emit('depositDepleted', { x: source.sx, y: source.sy, type: dep.type, playerId: unit.ownerId });
         unit.work.depleted = true;
-        this.releaseAllWorkers(b, unit);
+        for (const building of this.buildings) {
+          if (building.depositId === dep.id) this.releaseAllWorkers(building, unit);
+        }
+        for (const other of this.units) {
+          if (other === unit || !other.work || !other.work.direct || other.work.depositId !== dep.id) continue;
+          if (other.work.carry > 0) other.work.depleted = true;
+          else this.releaseWorker(other, true);
+        }
       }
       return taken;
     }
-    if (def.produce === 'food') return carry;
+    if (produce === 'food') return carry;
     return 0;
   }
 

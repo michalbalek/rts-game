@@ -1,4 +1,4 @@
-import { pickEntityAtWorld, unitsInWorldRect } from './picking.js';
+import { pickEntityAtWorld, pickResourceAtWorld, unitsInWorldRect } from './picking.js';
 import { audio } from '../engine/audio.js';
 
 export function onRightClick(e) {
@@ -48,9 +48,14 @@ export function onRightClick(e) {
   const villagers = units.filter(u => u.isVillager);
   const site = target && target.type === 'building' &&
     target.entity.ownerId === this.session.selfId && !target.entity.complete;
+  const world = !target && villagers.length && this.camera
+    ? this.camera.screenToWorld(e.clientX, e.clientY) : null;
+  const resource = world ? pickResourceAtWorld(this.session, world.x, world.y) : null;
   const command = site && villagers.length
     ? { op: 'construct', buildingId: target.entity.id, unitIds: villagers.map(u => u.id) }
-    : { op: 'move', unitIds, x: dest.x, y: dest.y };
+    : resource
+      ? { op: 'gather', unitIds: villagers.map(u => u.id), x: resource.x, y: resource.y }
+      : { op: 'move', unitIds, x: dest.x, y: dest.y };
   const result = this.session.command(command);
   if (result && result.ok === false) {
     this.ui.toast(result.message || result.reason, 'error');

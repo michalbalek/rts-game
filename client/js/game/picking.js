@@ -1,4 +1,5 @@
-import { tileToScreen, HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from '../engine/isometric.js';
+import { tileToScreen, worldToTile, HALF_TILE_WIDTH, HALF_TILE_HEIGHT } from '../engine/isometric.js';
+import { RESOURCE_TYPES } from '../sim/constants.js';
 
 /**
  * Výběr entit v izometrickém světě.
@@ -64,6 +65,37 @@ function isVisible(session, entity) {
 
 function unitDepth(unit) {
   return (unit.x || 0) + (unit.y || 0);
+}
+
+export function pickResourceAtWorld(session, worldX, worldY) {
+  const map = session && session.state && session.state.map;
+  if (!map) return null;
+  const tile = worldToTile(worldX, worldY);
+  const tx = Math.floor(tile.x);
+  const ty = Math.floor(tile.y);
+  let best = null;
+  let bestScore = Infinity;
+  for (let y = Math.max(0, ty - 2); y <= Math.min(map.size - 1, ty + 3); y++) {
+    for (let x = Math.max(0, tx - 2); x <= Math.min(map.size - 1, tx + 3); x++) {
+      const resource = map.getResource(x, y);
+      if (resource === RESOURCE_TYPES.NONE || !session.isExploredAt(x, y)) continue;
+      const p = tileToScreen(x, y);
+      const baseY = p.y + HALF_TILE_HEIGHT;
+      const tree = resource === RESOURCE_TYPES.TREE;
+      const dx = (worldX - p.x) / (tree ? 19 : 14);
+      const dy = (worldY - (baseY - (tree ? 21 : 6))) / (tree ? 24 : 10);
+      const score = dx * dx + dy * dy;
+      if (score <= 1 && score < bestScore) {
+        bestScore = score;
+        best = { x, y };
+      }
+    }
+  }
+  if (!best && tx >= 0 && ty >= 0 && tx < map.size && ty < map.size &&
+      session.isExploredAt(tx, ty) && map.getResource(tx, ty) !== RESOURCE_TYPES.NONE) {
+    return { x: tx, y: ty };
+  }
+  return best;
 }
 
 /**

@@ -8,6 +8,7 @@ import { testSaving } from './sim-tests/saving.js';
 import { testConstruction, testPlacement, testCollisions } from './sim-tests/construction.js';
 import { testCarriers, testOrchards } from './sim-tests/deliveries.js';
 import { testGathering } from './sim-tests/gathering.js';
+import { testDirectGathering } from './sim-tests/direct-gathering.js';
 
 testMaps();
 const world = testBots();
@@ -22,6 +23,7 @@ testCarriers();
 testOrchards();
 testPlacement();
 testGathering(saved.serialized);
+testDirectGathering();
 testCollisions();
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');

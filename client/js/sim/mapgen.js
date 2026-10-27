@@ -18,6 +18,7 @@ export class GameMap {
     this.deposits = [];
     this.nextDepositId = 1;
     this.treeTimers = [];
+    this.treeHarvested = new Map();
     this.onChange = null;
     this.generate();
   }
@@ -47,6 +48,7 @@ export class GameMap {
   setResource(x, y, res) {
     const i = this.idx(x, y);
     if (i === -1) return;
+    if (res !== RESOURCE_TYPES.TREE) this.treeHarvested.delete(i);
     this.resources[i] = res;
     if (this.onChange) this.onChange(i, res, null);
   }
@@ -375,7 +377,8 @@ export class GameMap {
       depositAt: Array.from(this.depositAt),
       deposits: this.deposits.map(d => ({ ...d, tiles: d.tiles.slice() })),
       nextDepositId: this.nextDepositId,
-      treeTimers: this.treeTimers.map(t => ({ ...t }))
+      treeTimers: this.treeTimers.map(t => ({ ...t })),
+      treeHarvested: Array.from(this.treeHarvested)
     };
   }
 
@@ -398,6 +401,7 @@ export class GameMap {
     }));
     map.nextDepositId = data.nextDepositId || (map.deposits.length + 1);
     map.treeTimers = (data.treeTimers || []).map(t => ({ ...t }));
+    map.treeHarvested = new Map(data.treeHarvested || []);
     map.onChange = null;
     return map;
   }

@@ -7,6 +7,7 @@
 ## Práce s myší
 - **Levé tlačítko**: výběr jednotek a budov, potvrzení stavby. Přidržením tažení vybere více jednotek obdélníkem.
 - **Pravé tlačítko**: pohyb a povel jednotkám, zrušení akce. Vybraným poddaným zadáte stavbu pravým kliknutím na vlastní staveniště. Nadále lze použít tlačítko stavby v sekci Stavět v jejich panelu. Ve smíšeném výběru se ke stavbě přiřadí pouze poddaní; vojáci si ponechají své dosavadní rozkazy.
+- **Přímá těžba**: vyberte poddané a pravým tlačítkem klikněte na strom nebo ložisko kamene či železa. Těžit začnou pouze poddaní, vojáci si ponechají dosavadní rozkazy. Poddaný s nákladem musí před přeřazením náklad odevzdat.
 
 ## Klávesové zkratky (Hotkeys)
 - **Ctrl + 1–9**: uložení skupiny jednotek.

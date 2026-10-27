@@ -1,6 +1,57 @@
 import { dist } from './sim-geometry.js';
+import { RESOURCE_TYPES } from './constants.js';
+import { findPath } from './pathfinding.js';
+import { NAV_MAX_NODES } from './sim-navigation.js';
 
 export class SimulationWorkers {
+  assignDirectGatherers(playerId, units, x, y) {
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !this.isExplored(playerId, x, y)) {
+      return { ok: false, reason: 'Neplatný cíl.' };
+    }
+    const resource = this.map.getResource(x, y);
+    const produce = resource === RESOURCE_TYPES.TREE ? 'wood'
+      : resource === RESOURCE_TYPES.STONE ? 'stone'
+        : resource === RESOURCE_TYPES.IRON ? 'iron' : null;
+    const deposit = produce && produce !== 'wood' ? this.map.getDepositAt(x, y) : null;
+    if (!produce || (produce !== 'wood' && !deposit)) return { ok: false, reason: 'Neplatný cíl.' };
+    let assigned = 0;
+    let carrying = 0;
+    for (const u of units) {
+      if (!u.isVillager || u.hp <= 0 || u.fleeing) continue;
+      if (u.work && u.work.carry > 0) {
+        carrying++;
+        continue;
+      }
+      const approach = this.findTreeApproach(x, y, this.unitRegions(u));
+      const path = approach && findPath(this.map, this.blockGrid, u.x, u.y,
+        approach.x + 0.5, approach.y + 0.5, NAV_MAX_NODES);
+      if (!path) continue;
+      if (u.work) this.releaseWorker(u, false);
+      this.releaseBuilder(u, false);
+      this.releaseRepair(u);
+      u.clearOrders();
+      u.autoAttack = false;
+      u.workPaused = false;
+      u.work = {
+        buildingId: null, direct: true, targetX: x, targetY: y,
+        depositId: deposit ? deposit.id : null, produce, phase: 'toSource',
+        carry: 0, timer: 0, source: { sx: x, sy: y, px: approach.x, py: approach.y,
+          depositId: deposit ? deposit.id : null },
+        storageId: null, waitTimer: 0, roamWait: 0, arrived: true,
+        depleted: false, fullStorage: false
+      };
+      u.setPath(path);
+      assigned++;
+    }
+    if (!assigned) {
+      return { ok: false, reason: carrying
+        ? 'Vybraní poddaní nejdřív odevzdají náklad do skladu.'
+        : 'Cesta k cíli neexistuje.' };
+    }
+    if (carrying) this.noticeCarrying(playerId);
+    return { ok: true, assigned };
+  }
+
   assignWorkers(playerId, buildingId, count = 1) {
     const player = this.getPlayer(playerId);
     const b = this.buildings.find(x => x.id === buildingId);

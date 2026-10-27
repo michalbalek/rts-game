@@ -4,6 +4,7 @@ import { Input } from '../../client/js/game/input.js';
 import { LocalSession } from '../../client/js/game/session.js';
 import { Camera } from '../../client/js/engine/camera.js';
 import { tileToScreen } from '../../client/js/engine/isometric.js';
+import { pickResourceAtWorld } from '../../client/js/game/picking.js';
 
 export function testRightClick(assert) {
   console.log('\n--- Pravé kliknutí na staveniště ---');
@@ -76,9 +77,40 @@ export function testRightClick(assert) {
         'pravé kliknutí v režimu umístění pouze zruší stavbu');
     }
     testConstructionClick(assert);
+    testGatheringClick(assert);
   } finally {
     audio.play = originalPlay;
   }
+}
+
+function testGatheringClick(assert) {
+  const session = new LocalSession({
+    seed: 1234, mapType: 'desert', mode: 'sandbox', capital: 'rich', fog: false,
+    players: [{ name: 'Test', isBot: false }]
+  });
+  const villager = session.state.units.find(u => u.isVillager);
+  const tree = session.sim.findTreeSource(villager, session.castle);
+  assert(!!tree, 'pro kliknutí existuje dostupný strom');
+  if (!tree) return;
+  const point = tileToScreen(tree.sx, tree.sy);
+  const hit = pickResourceAtWorld(session, point.x, point.y - 16);
+  assert(hit && hit.x === tree.sx && hit.y === tree.sy, 'koruna stromu patří ke správné dlaždici');
+  const soldier = session.sim.addUnit('swordsman', session.selfId, villager.x, villager.y);
+  soldier.moveTarget = { x: 10, y: 10 };
+  session.selectUnits([villager, soldier]);
+  const camera = new Camera({ clientWidth: 1600, clientHeight: 900 });
+  camera.centerOnTile(tree.sx, tree.sy);
+  const click = camera.worldToScreen(point.x, point.y - 16);
+  const input = {
+    session, camera,
+    ui: { hoverTile: null, hoverEntity: null, toast() {} },
+    setHover: Input.prototype.setHover
+  };
+  onRightClick.call(input, { clientX: click.x, clientY: click.y });
+  assert(villager.work && villager.work.direct && villager.work.targetX === tree.sx &&
+    villager.work.targetY === tree.sy, 'pravé kliknutí na korunu zadá přímou těžbu stromu');
+  assert(soldier.moveTarget && soldier.moveTarget.x === 10 && soldier.moveTarget.y === 10,
+    'příkaz ke sběru ve smíšeném výběru nemění rozkaz vojáka');
 }
 
 function testConstructionClick(assert) {

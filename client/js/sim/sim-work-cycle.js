@@ -38,7 +38,7 @@ export class SimulationWorkCycle {
     if (!player || !unit.work) return;
     const work = unit.work;
     const b = this.buildings.find(x => x.id === work.buildingId);
-    if (!b || !b.complete || b.ownerId !== unit.ownerId) {
+    if (!work.direct && (!b || !b.complete || b.ownerId !== unit.ownerId)) {
       // Zdrojová budova zanikla: dělník s nákladem ho ještě doručí, ostatní odejdou.
       if (work.carry <= 0) {
         this.releaseWorker(unit, true);
