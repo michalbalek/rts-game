@@ -56,6 +56,39 @@ export function testGathering(serialized) {
       assert(ints, `${site.label}: suroviny jsou během dovozu celá čísla`);
     }
 
+    {
+      const s = ecoSim();
+      res(s).stone = 0;
+      const b = startLumberjack(s, 36, 47);
+      assert(!!b, 'sekání: dřevorubec byl postaven');
+      if (b) {
+        const workers = s.units.filter(u => u.work && u.work.buildingId === b.id);
+        const worker = workers[0];
+        for (const other of workers.slice(1)) {
+          s.releaseWorker(other, false);
+          other.clearOrders();
+        }
+        for (let t = 0; t < 20 * 180 && worker.work && worker.work.phase !== 'gather'; t++) s.tick(1 / 20);
+        assert(worker.work && worker.work.phase === 'gather', 'dělník dřevorubce dorazil ke stromu');
+        if (worker.work && worker.work.phase === 'gather') {
+          let choppingAtTree = true;
+          for (let t = 0; t < 20 * 19; t++) {
+            s.tick(1 / 20);
+            const source = worker.work && worker.work.source;
+            const dx = source ? source.sx + 0.5 - worker.x : 0;
+            const dy = source ? source.sy + 0.5 - worker.y : 0;
+            choppingAtTree = choppingAtTree && worker.work && worker.work.phase === 'gather' &&
+              worker.path.length === 0 && Math.hypot(dx, dy) <= 2.2 &&
+              Math.cos(worker.angle) * dx + Math.sin(worker.angle) * dy > 0;
+          }
+          assert(choppingAtTree, 'dělník celou dobu seká u stromu místo obcházení');
+          const wood = res(s).wood;
+          for (let t = 0; t < 20 * 180 && res(s).wood === wood; t++) s.tick(1 / 20);
+          assert(res(s).wood >= wood + 10, 'po sekání odnese náklad do skladu');
+        }
+      }
+    }
+
     // Plný sklad: dělník drží celý náklad a čeká. Složí se jen celý náklad, a jen když se vejde.
     {
       const s = ecoSim();

@@ -335,6 +335,21 @@ console.log('\n--- Animace podle pohybu a činnosti ---');
   assert(unitActivity(unit) === 'idle', 'cesta ke zdroji není práce nástrojem');
   unit.work.phase = 'gather';
   assert(unitAnimation(unit, 1, pose).activity === 'work', 'dělník těží jen ve fázi sběru');
+  unit.angle = Math.PI / 2;
+  const choppingPose = unitAnimation(unit, 1);
+  unit.x += 0.01;
+  const nudgedPose = unitAnimation(unit, 1.05, choppingPose);
+  assert(nudgedPose.activity === 'work' && !nudgedPose.moving && nudgedPose.facing === -1,
+    'postrčený dřevorubec stále seká směrem ke stromu místo animace chůze');
+  const remoteChopper = {
+    id: unit.id, type: 'villager', x: 10, y: 10, angle: Math.PI / 2,
+    work: true, activity: 'work', carryResource: 'wood', moving: false
+  };
+  const remotePose = unitAnimation(remoteChopper, 1);
+  remoteChopper.x += 0.01;
+  const nudgedRemote = unitAnimation(remoteChopper, 1.05, remotePose);
+  assert(nudgedRemote.activity === 'work' && !nudgedRemote.moving && nudgedRemote.facing === -1,
+    'síťový dřevorubec při postrčení zachová animaci a směr sekání');
   unit.workPaused = true;
   assert(unitAnimation(unit, 1, pose).effort === 0, 'pozastavená práce nemává nástrojem');
   unit.workPaused = false;

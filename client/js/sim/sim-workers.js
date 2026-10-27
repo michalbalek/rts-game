@@ -22,7 +22,7 @@ export class SimulationWorkers {
         carrying++;
         continue;
       }
-      const approach = this.findTreeApproach(x, y, this.unitRegions(u));
+      const approach = this.findTreeApproach(x, y, this.unitRegions(u), produce === 'wood' ? 1 : 2, u);
       const path = approach && findPath(this.map, this.blockGrid, u.x, u.y,
         approach.x + 0.5, approach.y + 0.5, NAV_MAX_NODES);
       if (!path) continue;

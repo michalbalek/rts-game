@@ -30,7 +30,16 @@ export function testDirectGathering() {
     tickUntil(sim, () => unit.work && unit.work.phase === 'gather');
     assert(unit.work && unit.work.phase === 'gather', 'poddaný dojde ke zvolenému stromu');
     const initialWood = sim.getPlayer(1).resources.wood;
-    for (let i = 0; i < (WORK.gatherTime - 1) * 20; i++) sim.tick(1 / 20);
+    let choppingAtTree = true;
+    for (let i = 0; i < (WORK.gatherTime - 1) * 20; i++) {
+      sim.tick(1 / 20);
+      const source = unit.work && unit.work.source;
+      const dx = source ? source.sx + 0.5 - unit.x : 0;
+      const dy = source ? source.sy + 0.5 - unit.y : 0;
+      choppingAtTree = choppingAtTree && unit.work && unit.work.phase === 'gather' && unit.path.length === 0 &&
+        Math.hypot(dx, dy) <= 2.2 && Math.cos(unit.angle) * dx + Math.sin(unit.angle) * dy > 0;
+    }
+    assert(choppingAtTree, 'přímý těžař během sekání zůstává u stromu a je otočený k němu');
     assert(unit.work.carry === 0 && sim.getPlayer(1).resources.wood === initialWood,
       'před uplynutím 20 sekund není náklad vytěžen');
     tickUntil(sim, () => unit.work && unit.work.carry === 1, 10);
@@ -65,6 +74,19 @@ export function testDirectGathering() {
     delete legacy.sim.map.treeHarvested;
     const restored = GameSim.fromSaveState(legacy);
     assert(restored.map.treeHarvested.size === 0, 'staré uložení bez stavu stromů zůstává načitatelné');
+  }
+  {
+    const sim = makeSim();
+    const unit = sim.units.find(u => u.isVillager);
+    const tree = sim.findTreeSource(unit, sim.getCastle(1));
+    if (!tree) return;
+    sim.command(1, { op: 'gather', unitIds: [unit.id], x: tree.sx, y: tree.sy });
+    tickUntil(sim, () => unit.work && unit.work.phase === 'gather');
+    assert(unit.work && unit.work.phase === 'gather', 'dělník začal sekat vybraný strom');
+    sim.map.chopTree(tree.sx, tree.sy);
+    sim.tick(1 / 20);
+    assert(unit.work && unit.work.phase === 'toSource' && !unit.work.source,
+      'po pokácení stromu jiným dělníkem nehledá náklad u neexistujícího stromu');
   }
   for (const type of ['stone', 'iron']) {
     const sim = makeSim();

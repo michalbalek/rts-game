@@ -11,7 +11,7 @@ export class SimulationGathering {
       const work = unit.work;
       if (work.produce === 'wood') {
         if (this.map.getResource(work.targetX, work.targetY) === RESOURCE_TYPES.TREE) {
-          const approach = this.findTreeApproach(work.targetX, work.targetY, this.unitRegions(unit));
+          const approach = this.findTreeApproach(work.targetX, work.targetY, this.unitRegions(unit), 1, unit);
           if (approach) return { sx: work.targetX, sy: work.targetY, px: approach.x, py: approach.y };
         }
         return this.findTreeSource(unit, { centerX: work.targetX, centerY: work.targetY });
@@ -58,7 +58,7 @@ export class SimulationGathering {
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
         if (this.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-        const approach = this.findTreeApproach(x, y, regions);
+        const approach = this.findTreeApproach(x, y, regions, 1, unit);
         if (!approach) continue;
         candidates.push({
           toBuilding: dist(x, y, b.centerX, b.centerY),
@@ -79,17 +79,20 @@ export class SimulationGathering {
     return null;
   }
 
-  findTreeApproach(x, y, regions) {
+  findTreeApproach(x, y, regions, radius = 2, unit = null) {
     const size = this.map.size;
     let best = null;
     let bestD = Infinity;
-    for (let ty = Math.max(0, y - 2); ty <= Math.min(size - 1, y + 2); ty++) {
-      for (let tx = Math.max(0, x - 2); tx <= Math.min(size - 1, x + 2); tx++) {
+    let bestUnitD = Infinity;
+    for (let ty = Math.max(0, y - radius); ty <= Math.min(size - 1, y + radius); ty++) {
+      for (let tx = Math.max(0, x - radius); tx <= Math.min(size - 1, x + radius); tx++) {
         if (!this.isWalkableTile(tx, ty)) continue;
         if (!regions.includes(this.regionGrid[ty * size + tx])) continue;
         const d = dist(tx, ty, x, y);
-        if (d < bestD) {
+        const unitD = unit ? dist(tx + 0.5, ty + 0.5, unit.x, unit.y) : 0;
+        if (d < bestD || (d === bestD && unitD < bestUnitD)) {
           bestD = d;
+          bestUnitD = unitD;
           best = { x: tx, y: ty };
         }
       }

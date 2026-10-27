@@ -147,10 +147,10 @@ export const FOG_RANGES = {
 
 export const WORK = {
   carry: 10,
-  gatherTime: 20,       // sekund sběru na jeden náklad; během nich se dělník toulá kolem zdroje
+  gatherTime: 20,       // sekund sběru na jeden náklad
   foodPerWorkerMinute: 2,
   foodPerSoldierMinute: 1,
-  roamRadius: 3,        // dělník se během práce toulá v tomto okruhu kolem místa práce
+  roamRadius: 3,        // okruh pohybu při sběru mimo těžbu dřeva
   roamPause: [1, 3]     // pauza mezi jednotlivými toulkami v sekundách [min, max]
 };
 

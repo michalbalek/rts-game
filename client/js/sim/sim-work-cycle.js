@@ -1,4 +1,4 @@
-import { WORK } from './constants.js';
+import { RESOURCE_TYPES, WORK } from './constants.js';
 
 export class SimulationWorkCycle {
   // Dělník s nákladem vyrazí do skladu. Když žádný není, náklad si drží a zkusí to později.
@@ -99,8 +99,10 @@ export class SimulationWorkCycle {
           }
           this.navigateTo(unit, work.source.px + 0.5, work.source.py + 0.5);
         }
-        if (this.unitAt(unit, work.source.px + 0.5, work.source.py + 0.5, 1.0) || unit.path.length === 0) {
-          if (this.unitAt(unit, work.source.px + 0.5, work.source.py + 0.5, 2.2)) {
+        const arrival = work.produce === 'wood' ? 0.25 : 1.0;
+        const tolerance = work.produce === 'wood' ? 0.5 : 2.2;
+        if (this.unitAt(unit, work.source.px + 0.5, work.source.py + 0.5, arrival) || unit.path.length === 0) {
+          if (this.unitAt(unit, work.source.px + 0.5, work.source.py + 0.5, tolerance)) {
             work.phase = 'gather';
             work.timer = WORK.gatherTime;
             work.roamWait = 0;
@@ -115,6 +117,25 @@ export class SimulationWorkCycle {
         break;
       }
       case 'gather': {
+        if (work.produce === 'wood') {
+          if (!work.source || this.map.getResource(work.source.sx, work.source.sy) !== RESOURCE_TYPES.TREE) {
+            unit.setPath([]);
+            work.source = null;
+            work.phase = 'toSource';
+            break;
+          }
+          if (!this.unitAt(unit, work.source.sx + 0.5, work.source.sy + 0.5, 2.2)) {
+            unit.setPath([]);
+            work.source = null;
+            work.phase = 'toSource';
+            break;
+          }
+          unit.setPath([]);
+          unit.angle = Math.atan2(work.source.sy + 0.5 - unit.y, work.source.sx + 0.5 - unit.x);
+          work.timer -= dt;
+          if (work.timer <= 0) work.phase = 'pick';
+          break;
+        }
         work.timer -= dt;
         if (work.timer <= 0) {
           unit.setPath([]);

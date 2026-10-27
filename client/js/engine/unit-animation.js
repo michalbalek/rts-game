@@ -10,11 +10,13 @@ export function unitAnimation(unit, time, previous) {
     ? (unit.pathIndex || 0) < unit.path.length
     : !!unit.moving;
   const lastMoved = moved ? time : (previous?.lastMoved ?? -1);
-  const moving = moved || (hasPath && time - lastMoved < 0.12);
+  const chopping = unitActivity(unit) === 'work' &&
+    (typeof unit.work === 'object' ? unit.work?.produce : unit.carryResource) === 'wood';
+  const moving = chopping && !hasPath ? false : moved || (hasPath && time - lastMoved < 0.12);
   const phase = (previous?.phase || 0) + (moved ? distance * 7.5 : 0);
   const angle = unit.angle || 0;
-  const sx = moved ? (dx - dy) / distance : Math.cos(angle) - Math.sin(angle);
-  const sy = moved ? (dx + dy) / distance : Math.cos(angle) + Math.sin(angle);
+  const sx = moved && moving ? (dx - dy) / distance : Math.cos(angle) - Math.sin(angle);
+  const sy = moved && moving ? (dx + dy) / distance : Math.cos(angle) + Math.sin(angle);
   const facing = Math.abs(sx) < 0.05 ? (previous?.facing || 1) : Math.sign(sx);
   const activity = moving ? 'walk' : unitActivity(unit);
   const workCycle = time * 5.5 + unit.id * 2.4;
