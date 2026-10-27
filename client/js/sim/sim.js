@@ -15,6 +15,7 @@ import { SimulationCombat } from './sim-combat.js';
 import { SimulationLifecycle } from './sim-lifecycle.js';
 import { SimulationCommands } from './sim-commands.js';
 import { SimulationSave } from './sim-save.js';
+import { SimulationGarrison } from './sim-garrison.js';
 
 export { distanceToBuilding, isEnemy } from './sim-geometry.js';
 
@@ -153,7 +154,8 @@ export class GameSim {
       if (this.effects[i].life <= 0) this.effects.splice(i, 1);
     }
 
-    this.map.update(dt, this.blockGrid);
+    this.map.update(dt, this.blockGrid, (x, y) => this.buildings.some(b =>
+      b.config.gate && b.containsTile(x, y)));
 
     if (this.fogEnabled) {
       this.fogTimer -= dt;
@@ -202,7 +204,8 @@ for (const domain of [
   SimulationCombat,
   SimulationLifecycle,
   SimulationCommands,
-  SimulationSave
+  SimulationSave,
+  SimulationGarrison
 ]) {
   const descriptors = Object.getOwnPropertyDescriptors(domain.prototype);
   delete descriptors.constructor;

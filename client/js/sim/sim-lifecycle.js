@@ -81,6 +81,10 @@ export class SimulationLifecycle {
     }
 
     this.rebuildBlockGrid();
+    for (const unit of this.units.slice()) {
+      if (unit.garrison?.towerId !== b.id) continue;
+      if (!this.leaveGarrison(unit)) this.removeUnit(unit, { killed: true, byPlayerId: opts.byPlayerId });
+    }
     this.updateAllCapacities();
   }
 

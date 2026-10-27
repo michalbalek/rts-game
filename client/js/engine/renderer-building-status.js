@@ -2,7 +2,8 @@ import { clamp } from './isometric.js';
 
 export const BUILDING_TOP = {
   castle: 72, barracks: 38, lumberjack: 30, quarry: 42, orchard: 16,
-  market: 30, dwelling: 40, granary: 76, warehouse: 38, ironmine: 34
+  market: 30, dwelling: 40, granary: 76, warehouse: 38, ironmine: 34,
+  wall: 46, gate: 48, gate_large: 58, tower: 72
 };
 
 export class RendererBuildingStatus {
@@ -57,6 +58,7 @@ export class RendererBuildingStatus {
   }
 
   drawOwnerFlag(ctx, b, def) {
+    if (b.type === 'wall' || def.gate) return;
     if (!b.ownerId) return;
     const top = BUILDING_TOP[b.type] || 34;
     const p = this.isoPoint(b.width / 2, b.height / 2, top);

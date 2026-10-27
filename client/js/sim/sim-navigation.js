@@ -10,9 +10,18 @@ export const NAV_MAX_NODES = 12000;
 export class SimulationNavigation {
   rebuildBlockGrid() {
     this.blockGrid.fill(0);
+    this.openGateTiles = new Map();
     this.regionsDirty = true;
     for (const b of this.buildings) {
       // Průchozí budova po dokončení neblokuje chůzi.
+      if (b.complete && b.config.gate && b.gateOpen) {
+        for (let dy = 0; dy < b.height; dy++) {
+          for (let dx = 0; dx < b.width; dx++) {
+            this.openGateTiles.set(this.map.idx(b.tileX + dx, b.tileY + dy), b.id);
+          }
+        }
+        continue;
+      }
       if (b.complete && b.config.passable) continue;
       for (let dy = 0; dy < b.height; dy++) {
         for (let dx = 0; dx < b.width; dx++) {
@@ -139,6 +148,12 @@ export class SimulationNavigation {
     let guard = 0;
     while (remaining > 0 && unit.pathIndex < unit.path.length && guard++ < 20) {
       const wp = unit.path[unit.pathIndex];
+      if (!this.isWalkableTile(wp.x, wp.y)) {
+        const goal = unit.pathGoal || unit.moveTarget;
+        if (goal) this.navigateTo(unit, goal.x, goal.y);
+        else unit.setPath([]);
+        return;
+      }
       const tx = wp.x + 0.5;
       const ty = wp.y + 0.5;
       const dx = tx - unit.x;
@@ -150,8 +165,11 @@ export class SimulationNavigation {
         continue;
       }
       const step = Math.min(remaining, d);
+      const oldX = unit.x;
+      const oldY = unit.y;
       unit.x += (dx / d) * step;
       unit.y += (dy / d) * step;
+      this.trackGateEntry(unit, oldX, oldY);
       unit.angle = Math.atan2(dy, dx);
       remaining -= step;
       if (step >= d - 0.001) unit.pathIndex++;
@@ -162,12 +180,23 @@ export class SimulationNavigation {
     }
   }
 
+  trackGateEntry(unit, oldX, oldY) {
+    const gateId = this.openGateTiles.get(this.map.idx(Math.floor(unit.x), Math.floor(unit.y)));
+    if (!gateId) {
+      unit.gateEntry = null;
+    } else if (!unit.gateEntry || unit.gateEntry.gateId !== gateId) {
+      unit.gateEntry = { gateId, x: oldX, y: oldY };
+    }
+  }
+
   separateUnits() {
     const list = this.units;
     for (let i = 0; i < list.length; i++) {
       const a = list[i];
+      if (a.garrison?.entered) continue;
       for (let j = i + 1; j < list.length; j++) {
         const b = list[j];
+        if (b.garrison?.entered) continue;
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const d = Math.hypot(dx, dy);
@@ -189,14 +218,18 @@ export class SimulationNavigation {
         const aX = a.x - nx * overlap * aShare;
         const aY = a.y - ny * overlap * aShare;
         if (this.isWalkableTile(Math.floor(aX), Math.floor(aY))) {
+          const oldX = a.x, oldY = a.y;
           a.x = aX;
           a.y = aY;
+          this.trackGateEntry(a, oldX, oldY);
         }
         const bX = b.x + nx * overlap * (1 - aShare);
         const bY = b.y + ny * overlap * (1 - aShare);
         if (this.isWalkableTile(Math.floor(bX), Math.floor(bY))) {
+          const oldX = b.x, oldY = b.y;
           b.x = bX;
           b.y = bY;
+          this.trackGateEntry(b, oldX, oldY);
         }
       }
     }

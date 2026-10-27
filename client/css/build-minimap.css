@@ -32,9 +32,33 @@
   color: var(--text-dim);
 }
 
+.dock-categories {
+  display: flex;
+  gap: 4px;
+  padding: 0 0 5px;
+  overflow-x: auto;
+}
+
+.dock-category {
+  flex: 1 0 auto;
+  padding: 4px 6px;
+  border: 1px solid rgba(222, 179, 112, 0.24);
+  border-radius: var(--radius-sm);
+  background: rgba(37, 24, 13, 0.86);
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.dock-category:hover,
+.dock-category.active {
+  border-color: #f0b45a;
+  color: var(--parchment);
+  background: rgba(150, 98, 40, 0.7);
+}
+
 .dock-cards {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   flex: 1 1 auto;
   min-height: 0;
@@ -232,4 +256,3 @@
   font-size: 10px;
   color: var(--text-dim);
 }
-

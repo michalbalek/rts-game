@@ -1,3 +1,5 @@
+import { tileToScreen, TILE_WIDTH } from './isometric.js';
+
 export class AudioAmbient {
   makeNoise() {
     const len = this.ctx.sampleRate * 2;
@@ -50,10 +52,9 @@ export class AudioAmbient {
           b.type === 'ironmine' || b.type === 'orchard') {
         if (seen.has(b.type)) continue;
         // Vzdálenost od středu kamery ve světových pixelech.
-        const wx = (b.centerX - b.centerY) * 32;
-        const wy = (b.centerX + b.centerY) * 16;
-        const d = Math.hypot(wx - camera.x, wy - camera.y);
-        const factor = 1 - Math.min(1, d / 1500);
+        const p = tileToScreen(b.centerX, b.centerY);
+        const d = Math.hypot(p.x - camera.x, p.y - camera.y);
+        const factor = 1 - Math.min(1, d / (1500 * TILE_WIDTH / 64));
         if (factor < 0.2) continue;
         seen.add(b.type);
         if (b.type === 'castle' && !b.complete) continue;

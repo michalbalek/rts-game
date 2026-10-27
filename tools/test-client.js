@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import { testRightClick, testCameraNavigation, testLumberPlacementPreview } from './client-tests/input.js';
 import { testLocalization } from './client-tests/localization.js';
 import { testAudio } from './client-tests/audio.js';
+import { testFortificationInput } from './client-tests/fortifications.js';
+import { testBuildingRotationInput } from './client-tests/building-rotation.js';
+import { testTileSize } from './client-tests/tile-size.js';
 import { GameUI } from '../client/js/game/ui.js';
 import { Renderer } from '../client/js/engine/renderer.js';
 import { unitAnimation } from '../client/js/engine/unit-animation.js';
@@ -246,7 +249,7 @@ console.log('\n--- Hitboxy ---');
   const castle = { type: 'castle', tileX: 2, tileY: 3, width: 4, height: 4 };
   const bb = buildingHitBox(castle);
   assert(bb.minY < tileToScreen(2, 3).y, 'hitbox budovy sahá nad půdorys');
-  assert(bb.maxX - bb.minX >= 8 * 32, 'hitbox budovy pokrývá celý půdorys');
+  assert(bb.maxX - bb.minX >= 8 * HALF_TILE_WIDTH, 'hitbox budovy pokrývá celý půdorys');
 }
 
 console.log('\n--- Stín budov ---');
@@ -445,6 +448,9 @@ testCameraNavigation(assert);
 testLumberPlacementPreview(assert);
 testLocalization(assert);
 testAudio(assert);
+testFortificationInput(assert);
+testBuildingRotationInput(assert);
+testTileSize(assert);
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy klienta prošly.');
 process.exit(failures ? 1 : 0);

@@ -76,6 +76,8 @@ export function applicationLoop(app) {
   function buildRenderState() {
     return {
       buildMode: app.ui.buildMode,
+      buildRotation: app.ui.buildRotation,
+      wallDrag: app.ui.wallDrag,
       hoverTile: app.ui.hoverTile,
       hoverEntity: app.ui.hoverEntity,
       dragRect: app.ui.dragRect,

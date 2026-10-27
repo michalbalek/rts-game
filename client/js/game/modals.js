@@ -216,6 +216,7 @@ export function helpContent() {
           <li><strong>${t("Pravé tlačítko")}</strong> ${t("– pohyb, útok, stavba na vlastním staveništi, zrušení akce.")}</li>
           <li><strong>${t("Ctrl + 1–9")}</strong> ${t("– uložení skupiny,")} <strong>1–9</strong> ${t("– její výběr.")}</li>
           <li><strong>${t("Mezerník")}</strong> ${t("– vycentrování na Královský hrad.")}</li>
+          <li><strong>R</strong> ${t("– otočení budovy před umístěním o 90°.")}</li>
           <li><strong>${t("ESC")}</strong> ${t("– zruší stavbu/výběr, jinak otevře herní menu.")}</li>
           <li><strong>${t("Delete")}</strong> ${t("– zbourání vybrané vlastní budovy (po potvrzení).")}</li>
         </ul>
@@ -224,7 +225,10 @@ export function helpContent() {
         <h4>${t("🏰 Základní pravidla")}</h4>
         <ul>
           <li>${t("Stavět lze kdekoli na mapě, nejméně")} <strong>${t("20 bloků")}</strong> ${t("od nepřátelských jednotek a budov.")}</li>
-          <li>${t("Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.")}</li>
+          <li>${t("Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady a vlastní opevnění vedle sebe.")}</li>
+          <li>${t("Hradby vyznačte tažením myši. Každý díl je samostatné staveniště, ke kterému je třeba poslat poddané.")}</li>
+          <li>${t("Brána se u nepřítele zavře; vlastní bránu lze zamknout nebo otevřít v panelu výběru.")}</li>
+          <li>${t("Lučištníky pošlete pravým kliknutím do vlastní dokončené věže. Z věže mají větší dostřel.")}</li>
           <li>${t("Dřevorubec musí stát na místě bez stromů, nejlépe poblíž lesa. Kamenolom a železný důl celé na ložisku.")}</li>
           <li>${t("Poddaní čekají u ohniště. Přiřaďte je do hospodářství, pošlete na stavbu, nebo je povolejte jako vojáky.")}</li>
           <li>${t("Dělníci nosí dřevo, kámen a železo po 10 kusech do nejbližšího hotového skladu nebo Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Sýpky a sklady zvyšují kapacitu.")}</li>

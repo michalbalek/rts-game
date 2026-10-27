@@ -165,11 +165,19 @@ export class SimulationUnits {
   }
 
   updateUnits(dt) {
-    for (const unit of this.units) {
+    for (const unit of this.units.slice()) {
       if (unit.hp <= 0) continue;
       unit.cooldown = Math.max(0, unit.cooldown - dt);
       unit.aggroTimer -= dt;
       unit.repathTimer -= dt;
+      if (unit.garrison) {
+        this.updateGarrison(unit);
+        if (!this.units.includes(unit)) continue;
+        if (unit.garrison) {
+          if (!unit.garrison.entered) this.moveUnit(unit, dt);
+          continue;
+        }
+      }
       this.ejectFromBlockedTile(unit);
 
       if (unit.isVillager) {

@@ -27,12 +27,17 @@ const BUILDING_HEIGHTS = {
   granary: 78,
   lumberjack: 32,
   quarry: 44,
-  orchard: 16
+  orchard: 16,
+  wall: 43,
+  gate: 43,
+  gate_large: 54,
+  tower: 68
 };
 const DEFAULT_BUILDING_HEIGHT = 34;
 
 export function unitHitBox(unit) {
   const p = tileToScreen(unit.x, unit.y);
+  if (unit.garrison?.entered) p.y -= 60;
   return {
     minX: p.x - UNIT_HIT.rx,
     maxX: p.x + UNIT_HIT.rx,
@@ -152,6 +157,7 @@ export function unitsInWorldRect(session, minX, minY, maxX, maxY, padding = 12) 
     if (unit.ownerId !== session.selfId) continue;
     if (!isVisible(session, unit)) continue;
     const p = tileToScreen(unit.x, unit.y);
+    if (unit.garrison?.entered) p.y -= 60;
     if (p.x < left || p.x > right) continue;
     if (p.y < top || p.y > bottom) continue;
     found.push(unit);

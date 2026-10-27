@@ -48,10 +48,15 @@ export function onRightClick(e) {
   const villagers = units.filter(u => u.isVillager);
   const site = target && target.type === 'building' &&
     target.entity.ownerId === this.session.selfId && !target.entity.complete;
+  const tower = target && target.type === 'building' && target.entity.type === 'tower' &&
+    target.entity.ownerId === this.session.selfId && target.entity.complete;
+  const archers = units.filter(u => u.type === 'archer');
   const world = !target && villagers.length && this.camera
     ? this.camera.screenToWorld(e.clientX, e.clientY) : null;
   const resource = world ? pickResourceAtWorld(this.session, world.x, world.y) : null;
-  const command = site && villagers.length
+  const command = tower && archers.length
+    ? { op: 'garrison', buildingId: target.entity.id, unitIds: archers.map(u => u.id) }
+    : site && villagers.length
     ? { op: 'construct', buildingId: target.entity.id, unitIds: villagers.map(u => u.id) }
     : resource
       ? { op: 'gather', unitIds: villagers.map(u => u.id), x: resource.x, y: resource.y }
@@ -132,13 +137,14 @@ export function tryPlaceBuilding() {
   if (!this.ui.buildMode || !this.ui.hoverTile) return;
   const type = this.ui.buildMode;
   const { x, y } = this.ui.hoverTile;
-  const check = this.session.canPlace(type, x, y);
+  const rotation = this.ui.buildRotation || 0;
+  const check = this.session.canPlace(type, x, y, rotation);
   if (!check.valid) {
     this.ui.toast(check.message || check.reason, 'error');
     audio.play('error');
     return;
   }
-  const result = this.session.command({ op: 'build', buildingType: type, x, y });
+  const result = this.session.command({ op: 'build', buildingType: type, x, y, rotation });
   if (result && result.ok === false) {
     this.ui.toast(result.message || result.reason, 'error');
     audio.play('error');

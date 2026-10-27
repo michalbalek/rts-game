@@ -1,7 +1,7 @@
 # Mapa a herní svět
 
 ## Izometrický systém
-- **Dlaždice**: symetrický kosočtverec 64×32 px. Vodorovná i svislá osa jsou souměrné, hrany svírají s vodorovnou čárou úhel 26,6° (poměr 2:1).
+- **Dlaždice**: symetrický kosočtverec 56×28 px. Vodorovná i svislá osa jsou souměrné, hrany svírají s vodorovnou čárou úhel 26,6° (poměr 2:1).
 - **Projekce**: izometrická, mřížka je natočena o 45°.
 - **Vrstvy**: terén, vodní toky a přírodní zdroje, budovy, jednotky.
 - **Výška**: terén je plochý, bez výškových úrovní.

@@ -1,5 +1,6 @@
 import { BUILDING_DEFS, UNIT_DEFS } from './constants.js';
 import { localizedError } from './messages.js';
+import { rotatedBuildingSize, isBuildingRotation } from './building-orientation.js';
 
 export function unitActivity(unit) {
   if (unit.fleeing || unit.workPaused) return 'idle';
@@ -13,7 +14,7 @@ export function unitActivity(unit) {
 }
 
 export class Building {
-  constructor(id, type, ownerId, tileX, tileY, complete = true) {
+  constructor(id, type, ownerId, tileX, tileY, complete = true, rotation = 0) {
     const def = BUILDING_DEFS[type];
     if (!def) throw localizedError('Neznámá budova: {0}', { 0: type });
     this.id = id;
@@ -21,8 +22,11 @@ export class Building {
     this.ownerId = ownerId;
     this.tileX = tileX;
     this.tileY = tileY;
-    this.width = def.w;
-    this.height = def.h;
+    if (!isBuildingRotation(rotation)) throw new RangeError('Neplatná rotace budovy.');
+    this.rotation = rotation;
+    const size = rotatedBuildingSize(def, rotation);
+    this.width = size.width;
+    this.height = size.height;
     this.maxHp = def.hp;
     this.complete = complete;
     this.progress = complete ? 1 : 0;
@@ -33,6 +37,10 @@ export class Building {
     this.repair = null;      // { workerId }
     this.depositId = null;
     this.assignedWorkerIds = []; // pro rychlé uvolnění
+    if (def.gate) {
+      this.gateDesiredOpen = true;
+      this.gateOpen = complete;
+    }
   }
 
   get config() {
@@ -71,11 +79,13 @@ export class Unit {
     this.targetX = x;
     this.targetY = y;
     this.moveTarget = null;
+    this.pathGoal = null;
     this.attackTargetId = null;
     this.autoAttack = true;
     this.work = null;           // { buildingId, phase, carry, timer, source }
     this.repairBuildingId = null;
     this.build = null;          // { buildingId, arrived } – stavba, kterou dělník staví
+    this.garrison = null;
     this.fleeing = false;
     this.aggroTimer = Math.random() * 0.4;
     this.repathTimer = 0;
@@ -106,6 +116,7 @@ export class Unit {
     this.path = [];
     this.pathIndex = 0;
     this.moveTarget = null;
+    this.pathGoal = null;
     this.attackTargetId = null;
     this.autoAttack = true;
   }

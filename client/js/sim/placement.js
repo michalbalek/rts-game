@@ -2,6 +2,7 @@ import {
   BUILDING_DEFS, TILE_TYPES, RESOURCE_TYPES, ENEMY_BUILD_DISTANCE
 } from './constants.js';
 import { failure } from './messages.js';
+import { isBuildingRotation, rotatedBuildingSize } from './building-orientation.js';
 
 /** Nejkratší vzdálenost mezi dvěma obdélníky (bod má w = h = 0). */
 function rectGap(x, y, w, h, rx, ry, rw, rh) {
@@ -17,21 +18,24 @@ function rectGap(x, y, w, h, rx, ry, rw, rh) {
 export function validatePlacement(map, buildings, playerId, type, x, y, opts = {}) {
   const def = BUILDING_DEFS[type];
   if (!def) return { valid: false, reason: 'Neznámá stavba, sire!' };
+  const rotation = opts.rotation === undefined ? 0 : opts.rotation;
+  if (!isBuildingRotation(rotation)) return { valid: false, reason: 'Neplatná rotace budovy.' };
+  const { width, height } = rotatedBuildingSize(def, rotation);
   if (type === 'castle') return { valid: false, reason: 'Královský hrad nelze postavit.' };
   if (opts.alive === false) return { valid: false, reason: 'Vaše panství již padlo.' };
 
   const castle = opts.castle || buildings.find(b => b.type === 'castle' && b.ownerId === playerId && b.complete);
   if (!castle) return { valid: false, reason: 'Nemáte Královský hrad.' };
 
-  if (x < 1 || y < 1 || x + def.w > map.size - 1 || y + def.h > map.size - 1) {
+  if (x < 1 || y < 1 || x + width > map.size - 1 || y + height > map.size - 1) {
     return { valid: false, reason: 'Sem nelze stavět, můj pane!' };
   }
 
   const isEnemyOwner = ownerId => ownerId !== 0 && ownerId !== playerId;
   const enemyBuilding = buildings.some(b => isEnemyOwner(b.ownerId) &&
-    rectGap(x, y, def.w, def.h, b.tileX, b.tileY, b.width, b.height) < ENEMY_BUILD_DISTANCE);
+    rectGap(x, y, width, height, b.tileX, b.tileY, b.width, b.height) < ENEMY_BUILD_DISTANCE);
   const enemyUnit = (opts.units || []).some(u => isEnemyOwner(u.ownerId) &&
-    rectGap(x, y, def.w, def.h, u.x, u.y, 0, 0) < ENEMY_BUILD_DISTANCE);
+    rectGap(x, y, width, height, u.x, u.y, 0, 0) < ENEMY_BUILD_DISTANCE);
   if (enemyBuilding || enemyUnit) {
     return { valid: false, ...failure('Stavět nelze do {0} bloků od nepřátelské jednotky nebo budovy, sire!', { 0: ENEMY_BUILD_DISTANCE }) };
   }
@@ -39,8 +43,8 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
   let treeTiles = 0;
   let stoneTiles = 0;
   let ironTiles = 0;
-  for (let dy = 0; dy < def.h; dy++) {
-    for (let dx = 0; dx < def.w; dx++) {
+  for (let dy = 0; dy < height; dy++) {
+    for (let dx = 0; dx < width; dx++) {
       const tile = map.getTile(x + dx, y + dy);
       if (tile === TILE_TYPES.WATER_DEEP || tile === TILE_TYPES.WATER_SHALLOW) {
         return { valid: false, reason: 'Na vodě nelze stavět, sire!' };
@@ -59,14 +63,14 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
     return { valid: false, reason: 'Dřevorubec musí stát na místě bez stromů, můj pane!' };
   }
   if (def.requires === 'stone') {
-    if (stoneTiles !== def.w * def.h) {
+    if (stoneTiles !== width * height) {
       return { valid: false, reason: 'Kamenolom musí celý ležet na ložisku kamene.' };
     }
     const dep = map.getDepositAt(x, y);
     if (!dep || dep.amount <= 0) return { valid: false, reason: 'Ložisko kamene je vyčerpané.' };
   }
   if (def.requires === 'iron') {
-    if (ironTiles !== def.w * def.h) {
+    if (ironTiles !== width * height) {
       return { valid: false, reason: 'Železný důl musí celý ležet na ložisku železné rudy.' };
     }
     const dep = map.getDepositAt(x, y);
@@ -74,14 +78,15 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
   }
 
   for (const b of buildings) {
-    const overlap = x < b.tileX + b.width && x + def.w > b.tileX &&
-                    y < b.tileY + b.height && y + def.h > b.tileY;
+    const overlap = x < b.tileX + b.width && x + width > b.tileX &&
+                    y < b.tileY + b.height && y + height > b.tileY;
     if (overlap) return { valid: false, reason: 'Místo je již zabráno jinou stavbou, sire!' };
 
-    const gapOverlap = x - 1 < b.tileX + b.width && x + def.w + 1 > b.tileX &&
-                       y - 1 < b.tileY + b.height && y + def.h + 1 > b.tileY;
+    const gapOverlap = x - 1 < b.tileX + b.width && x + width + 1 > b.tileX &&
+                       y - 1 < b.tileY + b.height && y + height + 1 > b.tileY;
     const bothWarehouses = type === 'warehouse' && b.type === 'warehouse';
-    if (gapOverlap && !bothWarehouses) {
+    const bothFortifications = def.fortification && BUILDING_DEFS[b.type]?.fortification && b.ownerId === playerId;
+    if (gapOverlap && !bothWarehouses && !bothFortifications) {
       return { valid: false, reason: 'Mezi budovami musí zůstat volný pruh pro povozy!' };
     }
   }

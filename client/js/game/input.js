@@ -1,5 +1,6 @@
 import { worldToTile } from '../engine/isometric.js';
 import { BUILDING_DEFS } from '../sim/constants.js';
+import { rotatedBuildingSize } from '../sim/building-orientation.js';
 import { pickEntityAtWorld } from './picking.js';
 import { onRightClick, selectAt, selectInRect, tryPlaceBuilding } from './input-selection.js';
 import { onWheel, onKeyDown, onKeyUp, saveGroup, selectGroup, centerOnCastle, onMinimapDown, moveCameraFromMinimap, update } from './input-navigation.js';
@@ -19,6 +20,7 @@ export class Input {
     this.keys = new Set();
     this.mouse = { x: 0, y: 0, inside: false, valid: false };
     this.drag = null;
+    this.wallDrag = null;
     this.groups = new Map();
     this.minimapDragging = false;
     this.detached = false;
@@ -71,6 +73,7 @@ export class Input {
     this.ui.dragRect = null;
     this.ui.hoverTile = null;
     this.ui.hoverEntity = null;
+    this.ui.wallDrag = null;
   }
 
   setHover(clientX, clientY) {
@@ -84,8 +87,9 @@ export class Input {
 
     if (this.ui.buildMode && BUILDING_DEFS[this.ui.buildMode]) {
       const def = BUILDING_DEFS[this.ui.buildMode];
-      hx -= Math.floor((def.w - 1) / 2);
-      hy -= Math.floor((def.h - 1) / 2);
+      const { width, height } = rotatedBuildingSize(def, this.ui.buildRotation || 0);
+      hx -= Math.floor((width - 1) / 2);
+      hy -= Math.floor((height - 1) / 2);
     }
 
     this.ui.hoverTile = { x: hx, y: hy };
@@ -98,6 +102,10 @@ export class Input {
     this.mouse.x = e.clientX;
     this.mouse.y = e.clientY;
     this.mouse.valid = true;
+    if (this.wallDrag && !this.isBlocked()) {
+      this.setHover(e.clientX, e.clientY);
+      this.ui.wallDrag = { ...this.wallDrag, end: this.ui.hoverTile };
+    }
     // Tažení aktualizujeme na úrovni okna, aby obdélník nezamrzl,
     // když kurzor přejede nad HUD nebo mimo plátno.
     if (this.drag) {
@@ -140,6 +148,8 @@ export class Input {
     this.keys.clear();
     this.mouse.valid = false;
     this.minimapDragging = false;
+    this.wallDrag = null;
+    this.ui.wallDrag = null;
     if (!this.drag) return;
     this.drag = null;
     this.canvas.classList.remove('dragging');
@@ -151,6 +161,11 @@ export class Input {
     if (e.button === 0) {
       this.setHover(e.clientX, e.clientY);
       if (this.ui.buildMode) {
+        if (this.ui.buildMode === 'wall' && this.ui.hoverTile) {
+          this.wallDrag = { start: { ...this.ui.hoverTile } };
+          this.ui.wallDrag = { ...this.wallDrag, end: { ...this.ui.hoverTile } };
+          return;
+        }
         this.tryPlaceBuilding();
         return;
       }
@@ -168,6 +183,26 @@ export class Input {
 
   onMouseUp(e) {
     this.minimapDragging = false;
+    if (this.wallDrag) {
+      const start = this.wallDrag.start;
+      this.wallDrag = null;
+      this.ui.wallDrag = null;
+      if (e.button !== 0 || this.isBlocked() || !this.session || this.ui.buildMode !== 'wall') return;
+      this.setHover(e.clientX, e.clientY);
+      const end = this.ui.hoverTile;
+      const check = this.session.canPlaceWall(start.x, start.y, end.x, end.y);
+      if (!check.valid) {
+        this.ui.toast(check.message || check.reason, 'error');
+        return;
+      }
+      const result = this.session.command({ op: 'build-wall', x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+      if (result && result.ok === false) {
+        this.ui.toast(result.message || result.reason, 'error');
+        return;
+      }
+      this.ui.setBuildMode(null);
+      return;
+    }
     if (this.drag && e.button !== 0) {
       this.drag = null;
       this.canvas.classList.remove('dragging');

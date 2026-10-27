@@ -9,6 +9,8 @@ import { testConstruction, testPlacement, testCollisions } from './sim-tests/con
 import { testCarriers, testOrchards } from './sim-tests/deliveries.js';
 import { testGathering } from './sim-tests/gathering.js';
 import { testDirectGathering } from './sim-tests/direct-gathering.js';
+import { testFortifications } from './sim-tests/fortifications.js';
+import { testBuildingRotation } from './sim-tests/building-rotation.js';
 
 testMaps();
 const world = testBots();
@@ -25,6 +27,8 @@ testPlacement();
 testGathering(saved.serialized);
 testDirectGathering();
 testCollisions();
+testFortifications();
+testBuildingRotation();
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');
 process.exit(failures ? 1 : 0);

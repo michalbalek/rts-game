@@ -9,6 +9,7 @@ import { showLobby, updateLobby } from './menu-lobby.js';
 import { showLoading, setLoading, showLoadingError } from './menu-loading.js';
 
 import { TIPS } from './menu-tips.js';
+import { BUILDING_DEFS } from '../sim/constants.js';
 
 export class Menu {
   constructor({
@@ -109,7 +110,7 @@ export class Menu {
             <p class="brand-subtitle">${t("Poušť, oázy a pískovcové hrady")}</p>
             <p class="brand-flavor">${t("Ujměte se vlády, řiďte poddané, stavte hradby a veďte své vojsko k jedinému královskému trůnu.")}</p>
             <div class="brand-badges">
-              <span>${t("🏰 3 mapy")}</span><span>${t("⚔️ 4 hráči")}</span><span>${t("👑 10 budov")}</span>
+              <span>${t("🏰 3 mapy")}</span><span>${t("⚔️ 4 hráči")}</span><span>${t("👑 {0} budov", { 0: Object.keys(BUILDING_DEFS).length })}</span>
             </div>
             <div class="brand-footer">
               <span>${t("Verze 2.0.0")}</span>

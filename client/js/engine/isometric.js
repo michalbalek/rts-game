@@ -1,9 +1,9 @@
 /**
- * Matematika izometrické projekce – symetrická dlaždice 64×32 px (úhel 26,6°).
+ * Matematika izometrické projekce – symetrická dlaždice 56×28 px (úhel 26,6°).
  */
 
-export const TILE_WIDTH = 64;
-export const TILE_HEIGHT = 32;
+export const TILE_WIDTH = 56;
+export const TILE_HEIGHT = 28;
 export const HALF_TILE_WIDTH = TILE_WIDTH / 2;
 export const HALF_TILE_HEIGHT = TILE_HEIGHT / 2;
 

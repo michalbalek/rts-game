@@ -52,6 +52,8 @@ export class SimulationCombat {
         y: unit.y,
         t: 0,
         duration: Math.max(0.18, d / 14),
+        startHeight: unit.garrison?.entered ? 60 : 0,
+        targetHeight: target.garrison?.entered ? 60 : 0,
         damage: def.damage,
         targetId: target.id,
         targetIsBuilding: target.width !== undefined,
@@ -111,7 +113,7 @@ export class SimulationCombat {
       const arc = Math.sin(t * Math.PI) * Math.min(56, dist(a.sx, a.sy, a.tx, a.ty) * 8);
       a.x = a.sx + (a.tx - a.sx) * t;
       a.y = a.sy + (a.ty - a.sy) * t;
-      a.arc = arc;
+      a.arc = arc + (a.startHeight || 0) * (1 - t) + (a.targetHeight || 0) * t;
       if (t >= 1) {
         let hit = null;
         if (a.targetIsBuilding) {

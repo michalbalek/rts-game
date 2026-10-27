@@ -14,7 +14,7 @@ Ujměte se vlády nad pouštním panstvím. Povolejte poddané k ohništi před 
 
 - **3 náhodně generované mapy** – Poušť s řekou, Oáza u jezera a Skalní rokle. Každá má 4 symetrické startovní pozice.
 - **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky a obchod s pevnými cenami. Daně a ukazatel spokojenosti jsou zatím odstraněné; peníze pocházejí ze startovního kapitálu a prodeje surovin.
-- **10 budov** – Královský hrad, Kasárna, Dřevorubec, Kamenolom, Jabloňový sad, Obchod, Obydlí, Sýpka, Sklad a Železný důl.
+- **14 staveb** – hospodářské a vojenské budovy včetně hradeb, obranné věže a dvou velikostí brány.
 - **3 typy jednotek** – Pěšák, Lučištník a Poddaný. Pěšáci a lučištníci bojují, poddaní pracují a staví.
 - **Boti** – 1–3 protivníci ve třech obtížnostech. Staví podle dokumentovaného pořadí, drží část vojska u hradu a útočí.
 - **Mlha války** – volitelně zapnutelná, s prozkoumanými a neprozkoumanými oblastmi.
@@ -79,12 +79,15 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Pohyb a povely | Pravé tlačítko |
 | Zadání stavby poddaným | Vyberte poddané a klikněte pravým na vlastní staveniště, nebo v jejich panelu na stavbu v sekci Stavět |
 | Umístění stavby | Levé tlačítko |
+| Úsek hradby | Vyberte hradbu a táhněte levým tlačítkem |
+| Obsazení věže | Vyberte lučištníky a klikněte pravým tlačítkem na vlastní dokončenou věž |
 | Zrušení stavby / výběru | Pravé tlačítko nebo `ESC` |
 
 ### Klávesy
 
 | Akce | Klávesa |
 | :--- | :--- |
+| Otočení budovy před umístěním | `R` (o 90°) |
 | Uložení skupiny jednotek | `Ctrl` + `1`–`9` |
 | Výběr uložené skupiny | `1`–`9` |
 | Zrušení stavby nebo výběru | `ESC` |
@@ -94,7 +97,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 ### HUD
 
 - **Horní lišta** – peníze, dřevo, kámen, jídlo, železo a obyvatelstvo.
-- **Spodní dok** – nabídka staveb s cenou a dobou výstavby.
+- **Spodní dok** – nabídka staveb rozdělená na suroviny, hospodářství, vojsko a opevnění.
 - **Výběrový panel** – informace o budově, staveništi nebo jednotkách, přiřazení dělníků, výcvik, oprava a bourání.
 - **Minimapa** – přehled mapy včetně mlhy války; kliknutím nebo tažením se kamera přesune.
 
@@ -102,8 +105,9 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 ## ⚔️ Pravidla
 
-- **Stavění** je povoleno kdekoli na mapě, nejméně **20 dlaždic** od nepřátelských jednotek a budov. Budovy se přichytávají na mřížku a nesmějí se překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice (výjimka: sklady vedle sebe).
-- **Doba stavby** odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný přidá polovinu základní rychlosti, bez horní hranice. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
+- **Stavění** je povoleno kdekoli na mapě, nejméně **20 dlaždic** od nepřátelských jednotek a budov. Budovy se nesmějí překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice, s výjimkou sousedních skladů a vlastního opevnění.
+- **Doba stavby** běžných budov odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. Opevnění má vlastní časy uvedené v nabídce. Čas platí pro jednoho poddaného. Každý další přidá polovinu základní rychlosti.
+- **Opevnění** – tažením vytvoříte rovný úsek až 48 dílů, z nichž každý je samostatným staveništěm. Malá brána zabírá 1×1 a velká 4×1 dlaždice (po otočení 1×4). Otevřená brána propouští všechny, při přiblížení nepřítele do 6 dlaždic se zavře a po jeho odchodu znovu otevře; v panelu ji lze také zamknout. Věž pojme čtyři lučištníky s dostřelem zvýšeným o 2 dlaždice; vysadíte je z panelu věže nebo příkazem k pohybu.
 - **Staveniště** – po zakoupení budovy vznikne staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Hráč je vybere a klikne pravým tlačítkem na vlastní staveniště, nebo v jejich panelu na stavbu v sekci Stavět. Ve smíšeném výběru se přiřadí pouze poddaní; vojákům zůstanou dosavadní rozkazy. Po dokončení se poddaní vrátí k ohništi.
 - **Dřevorubec** musí stát na místě bez stromů, nejlépe poblíž lesa; **Kamenolom** na ložisku kamene a **Železný důl** na ložisku železa.
 - **Poddaní** sbírají suroviny po 10 kusech a odnášejí je do nejbližšího hotového skladu nebo hradu; jídlo jde do nejbližší sýpky (bez sýpky do hradu). Ložisko kamene má 2000 jednotek, železa 1000; po vyčerpání se po 3 minutách objeví nové.

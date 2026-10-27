@@ -49,6 +49,21 @@ export class RendererSettlement {
   drawDwelling(ctx, w, h, b) {
     this.isoBox(ctx, 0, 0, w, h, 0, 2, { top: '#bd9155', left: '#8f6634', right: '#c99e61' });
     this.isoGround(ctx, 0.12, 0.14, 1.86, 1.6, 2, '#a97f47');
+    const rotation = b?.rotation || 0;
+    const drawWell = () => {
+      const well = this.isoPoint(1.45, 1.7, 2);
+      ctx.fillStyle = '#8a8272';
+      ctx.beginPath(); ctx.ellipse(well.x, well.y, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#2f6f80';
+      ctx.beginPath(); ctx.ellipse(well.x, well.y - 1, 4.5, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#6b4423';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(well.x - 6, well.y); ctx.lineTo(well.x - 6, well.y - 12);
+      ctx.lineTo(well.x + 6, well.y - 12); ctx.lineTo(well.x + 6, well.y);
+      ctx.stroke();
+    };
+    if (rotation === 1 || rotation === 2) drawWell();
 
     // Dům.
     this.isoMasonry(ctx, 0.18, 0.16, 1.55, 1.42, 2, 24,
@@ -63,23 +78,17 @@ export class RendererSettlement {
       this.drawSmoke(ctx, chim.x, chim.y - 12, b.id);
     }
     // Dveře a okno.
-    const d0 = this.isoPoint(1.55, 0.68, 2);
-    const d1 = this.isoPoint(1.55, 1.02, 2);
-    this.isoPoly(ctx, [d0, d1, this.isoPoint(1.55, 1.02, 13), this.isoPoint(1.55, 0.68, 13)], '#4a2a10');
-    ctx.fillStyle = '#3a2816';
-    ctx.fillRect(...(() => { const p = this.isoPoint(0.75, 1.42, 12); return [p.x - 3, p.y - 3, 6, 6]; })());
-
-    // Studna.
-    const well = this.isoPoint(1.45, 1.7, 2);
-    ctx.fillStyle = '#8a8272';
-    ctx.beginPath(); ctx.ellipse(well.x, well.y, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2f6f80';
-    ctx.beginPath(); ctx.ellipse(well.x, well.y - 1, 4.5, 2.4, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#6b4423';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(well.x - 6, well.y); ctx.lineTo(well.x - 6, well.y - 12); ctx.lineTo(well.x + 6, well.y - 12); ctx.lineTo(well.x + 6, well.y);
-    ctx.stroke();
+    if (rotation === 0 || rotation === 1) {
+      const d0 = this.isoPoint(1.55, 0.68, 2);
+      const d1 = this.isoPoint(1.55, 1.02, 2);
+      this.isoPoly(ctx, [d0, d1, this.isoPoint(1.55, 1.02, 13), this.isoPoint(1.55, 0.68, 13)], '#4a2a10');
+    }
+    if (rotation === 0 || rotation === 3) {
+      const p = this.isoPoint(0.75, 1.42, 12);
+      ctx.fillStyle = '#3a2816';
+      ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+    }
+    if (rotation === 0 || rotation === 3) drawWell();
 
     // Plot.
     ctx.strokeStyle = '#7a5a34';

@@ -69,14 +69,14 @@ export class GameMap {
     return true;
   }
 
-  update(dt, buildingBlock = null) {
+  update(dt, buildingBlock = null, occupied = null) {
     for (let i = this.treeTimers.length - 1; i >= 0; i--) {
       const t = this.treeTimers[i];
       t.timer -= dt;
       if (t.timer <= 0) {
         const idx = this.idx(t.x, t.y);
         if (idx !== -1 && this.resources[idx] === RESOURCE_TYPES.NONE &&
-            !(buildingBlock && buildingBlock[idx])) {
+            !(buildingBlock && buildingBlock[idx]) && !(occupied && occupied(t.x, t.y))) {
           this.setResource(t.x, t.y, RESOURCE_TYPES.TREE);
           this.treeTimers.splice(i, 1);
         } else {

@@ -1,4 +1,4 @@
-import { tileToScreen, clamp } from './isometric.js';
+import { tileToScreen, clamp, HALF_TILE_WIDTH, TILE_WIDTH, TILE_HEIGHT } from './isometric.js';
 
 /**
  * Nejméně smysluplné oddálení. Při menším zoomu se na obrazovku vejde
@@ -84,10 +84,10 @@ export class Camera {
 
   /** Omezí kameru na mapu (s rozumným okrajem). */
   clampToMap(mapSize) {
-    const minWorldX = -(mapSize - 1) * 32 - 240;
-    const maxWorldX = (mapSize - 1) * 32 + 240;
+    const minWorldX = -(mapSize - 1) * HALF_TILE_WIDTH - 240;
+    const maxWorldX = (mapSize - 1) * HALF_TILE_WIDTH + 240;
     const minWorldY = -240;
-    const maxWorldY = (mapSize - 1) * 32 + 240;
+    const maxWorldY = (mapSize - 1) * TILE_HEIGHT + 240;
     this.x = clamp(this.x, minWorldX, maxWorldX);
     this.y = clamp(this.y, minWorldY, maxWorldY);
   }
@@ -95,8 +95,8 @@ export class Camera {
   /** Kolik dlaždic se vejde na obrazovku (přibližně). */
   visibleTileSpan() {
     return {
-      x: this.viewWidth / this.zoom / 64,
-      y: this.viewHeight / this.zoom / 32
+      x: this.viewWidth / this.zoom / TILE_WIDTH,
+      y: this.viewHeight / this.zoom / TILE_HEIGHT
     };
   }
 }

@@ -15,6 +15,7 @@ export class SimulationCommands {
         if (!Number.isFinite(tx) || !Number.isFinite(ty)) return { ok: false, reason: 'Neplatný cíl.' };
         let moving = 0;
         for (const u of units) {
+          if (u.garrison && !this.leaveGarrison(u)) continue;
           if (u.work) this.releaseWorker(u, false);
           this.releaseRepair(u);
           this.releaseBuilder(u, false);
@@ -40,6 +41,7 @@ export class SimulationCommands {
         }
         for (const u of units) {
           if (!u.isMilitary) continue;
+          if (u.garrison && !u.garrison.entered && !this.leaveGarrison(u)) continue;
           if (u.work) this.releaseWorker(u, false);
           u.clearOrders();
           u.attackTargetId = target.id;
@@ -48,9 +50,19 @@ export class SimulationCommands {
         return { ok: true };
       }
       case 'build': {
-        const result = this.placeBuilding(playerId, cmd.buildingType, cmd.x, cmd.y);
+        const result = this.placeBuilding(playerId, cmd.buildingType, cmd.x, cmd.y, { rotation: cmd.rotation });
         return { ok: result.valid, reason: result.reason, message: result.message, buildingId: result.building ? result.building.id : null };
       }
+      case 'build-wall':
+        return this.placeWallLine(playerId, cmd.x1, cmd.y1, cmd.x2, cmd.y2);
+      case 'gate':
+        return this.setGate(playerId, cmd.buildingId, cmd.open);
+      case 'garrison': {
+        const units = this.getOwnedUnits(playerId, cmd.unitIds);
+        return this.assignGarrison(playerId, cmd.buildingId, units);
+      }
+      case 'ungarrison':
+        return this.releaseGarrison(playerId, cmd.buildingId);
       case 'train':
         return this.trainUnit(playerId, cmd.buildingId, cmd.unitType);
       case 'assign':

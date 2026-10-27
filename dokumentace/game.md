@@ -5,7 +5,7 @@ Tato hra je Real-Time strategie (RTS) zasazená do prostředí pouštního král
 ## 1. Architektura projektu
 Projekt se skládá z:
 - **Serveru (`server/`)**: Webový Node.js server, který po otevření stránky v prohlížeči nahraje a spustí celého herního klienta.
-- **Klienta (`client/`)**: Webová aplikace postavená na moderním HTML5 Canvasu s izometrickým 2D vykreslováním na symetrické mřížce 64×32 px.
+- **Klienta (`client/`)**: Webová aplikace postavená na moderním HTML5 Canvasu s izometrickým 2D vykreslováním na symetrické mřížce 56×28 px.
 
 ---
 

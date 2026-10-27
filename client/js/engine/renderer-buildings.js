@@ -40,7 +40,7 @@ export class RendererBuildings {
 
       // Pokud je to otevřená plocha (jablečný sad), vykreslí se travnatý podklad na úrovni terénu.
       if (b.type === 'orchard') {
-        this.drawOrchardGround(ctx, b);
+        this.withBuildingRotation(b, () => this.drawOrchardGround(ctx, b));
       }
     }
   }
@@ -139,8 +139,23 @@ export class RendererBuildings {
   }
 
   drawBuildingStructure(ctx, b, def) {
-    const w = b.width;
-    const h = b.height;
+    this.withBuildingRotation(b, () => this.drawUnrotatedBuildingStructure(ctx, b, def));
+  }
+
+  withBuildingRotation(b, draw) {
+    const def = b.config || BUILDING_DEFS[b.type];
+    const previous = this.structureRotation;
+    this.structureRotation = { width: def.w, height: def.h, rotation: b.rotation || 0 };
+    try {
+      draw();
+    } finally {
+      this.structureRotation = previous;
+    }
+  }
+
+  drawUnrotatedBuildingStructure(ctx, b, def) {
+    const w = def.w;
+    const h = def.h;
     switch (b.type) {
       case 'castle': this.drawCastle(ctx, w, h); break;
       case 'barracks': this.drawBarracks(ctx, w, h); break;
@@ -152,6 +167,10 @@ export class RendererBuildings {
       case 'granary': this.drawGranary(ctx, w, h); break;
       case 'warehouse': this.drawWarehouse(ctx, w, h); break;
       case 'ironmine': this.drawIronMine(ctx, w, h); break;
+      case 'wall': this.drawWall(ctx); break;
+      case 'gate': this.drawGate(ctx, b); break;
+      case 'gate_large': this.drawGate(ctx, b); break;
+      case 'tower': this.drawDefenseTower(ctx, w, h); break;
       default:
         this.isoBox(ctx, 0, 0, w, h, 0, 18, {}, null);
     }

@@ -1,5 +1,6 @@
 import { Building, Unit } from './entities.js';
 import { createRng } from './rng.js';
+import { legacyGateRotation, rotatedBuildingSize } from './building-orientation.js';
 
 export class SimulationSave {
   /** Kompletní stav simulace pro localStorage (na rozdíl od síťového snímku). */
@@ -51,7 +52,8 @@ export class SimulationSave {
           work: u.work
             ? { ...u.work, source: u.work.source ? { ...u.work.source } : null }
             : null,
-          build: u.build ? { ...u.build } : null
+          build: u.build ? { ...u.build } : null,
+          garrison: u.garrison ? { ...u.garrison } : null
         })),
         projectiles: this.projectiles.map(p => ({ ...p })),
         fogData: [...this.fogData.entries()].map(([id, data]) => ({
@@ -122,6 +124,7 @@ export class SimulationSave {
         ? { ...raw.work, source: raw.work.source ? { ...raw.work.source } : null }
         : null;
       unit.build = raw.build ? { ...raw.build } : null;
+      unit.garrison = raw.garrison ? { ...raw.garrison } : null;
       return unit;
     });
 
@@ -134,11 +137,13 @@ export class SimulationSave {
 
     this.buildings = (state.buildings || []).map(raw => {
       const building = new Building(
-        raw.id, raw.type, raw.ownerId || 0, raw.tileX, raw.tileY, raw.complete !== false
+        raw.id, raw.type, raw.ownerId || 0, raw.tileX, raw.tileY, raw.complete !== false,
+        raw.rotation === undefined ? 0 : raw.rotation
       );
       Object.assign(building, raw);
-      building.width = building.config.w;
-      building.height = building.config.h;
+      const size = rotatedBuildingSize(building.config, building.rotation);
+      building.width = size.width;
+      building.height = size.height;
       building.queue = (raw.queue || []).map(q => ({ ...q }));
       building.repair = raw.repair ? { ...raw.repair } : null;
       building.depositId = raw.depositId ?? null;
@@ -149,6 +154,11 @@ export class SimulationSave {
       if (raw.isCastle) building.isCastle = true;
       return building;
     });
+    for (let i = 0; i < this.buildings.length; i++) {
+      if (this.buildings[i].type === 'gate' && state.buildings[i].rotation === undefined) {
+        this.buildings[i].rotation = legacyGateRotation(this.buildings[i], this.buildings);
+      }
+    }
     // Starší uložené hry neukládají surovinu, kterou dělník odnáší.
     for (const u of this.units) {
       if (!u.work || u.work.produce) continue;

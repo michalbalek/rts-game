@@ -2,19 +2,13 @@
    RESPONSIVITA
    ========================================================= */
 
-/* Devět karet v jedné řadě ořezává ceny staveb, proto dok do 1600 px má dvě řady. */
-@media (max-width: 1600px) {
-  .dock-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .build-size { display: none; }
-}
-
 @media (max-width: 1240px) {
   .hud-brand-text { display: none; }
   .hud-bottom { grid-template-columns: 300px minmax(0, 1fr) 232px; }
   .minimap-panel { --minimap-size: 140px; }
-  .build-card { flex-direction: row; justify-content: flex-start; gap: 6px; padding: 5px 7px; }
   .build-name { font-size: 9px; }
   .build-cost { font-size: 8px; }
+  .build-size { display: none; }
 }
 
 @media (max-width: 1080px) {
@@ -57,9 +51,11 @@
     gap: 7px;
   }
   .selection-panel { grid-column: 1 / -1; max-height: 168px; min-height: 0; }
-  .build-dock { min-height: 0; }
+  .build-dock { min-height: 0; grid-column: 1; grid-row: 2; }
   .dock-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .minimap-panel { grid-row: 2; }
+  .dock-categories { flex-wrap: wrap; overflow: visible; }
+  .dock-category { flex: 1 1 40%; }
+  .minimap-panel { grid-column: 2; grid-row: 2; }
 }
 
 @media (max-width: 620px) {

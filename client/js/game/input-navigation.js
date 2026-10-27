@@ -29,6 +29,16 @@ export function onKeyDown(e) {
   }
   if (!this.session) return;
 
+  if (e.code === 'KeyR' && this.ui.buildMode && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    if (!e.repeat) {
+      this.ui.buildRotation = ((this.ui.buildRotation || 0) + 1) % 4;
+      if (this.mouse && this.mouse.inside && this.mouse.valid) this.setHover(this.mouse.x, this.mouse.y);
+      audio.play('click', { volume: 0.6 });
+    }
+    return;
+  }
+
   if (e.key === 'Escape') {
     e.preventDefault();
     if (this.ui.buildMode) {

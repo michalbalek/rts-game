@@ -14,7 +14,7 @@ Take charge of a desert domain. Summon your subjects to the campfire in front of
 
 - **3 randomly generated maps** – Desert with a River (Poušť s řekou), Oasis by the Lake (Oáza u jezera) and Rocky Gorge (Skalní rokle). Each has 4 symmetrical starting positions.
 - **Full economy** – wood, stone, food, iron and money. Warehouses, granaries and a market with fixed prices. Taxes and the happiness indicator are removed for now; money comes from starting capital and resource sales.
-- **10 buildings** – Royal Castle (Královský hrad), Barracks (Kasárna), Woodcutter (Dřevorubec), Quarry (Kamenolom), Apple Orchard (Jabloňový sad), Market (Obchod), Housing (Obydlí), Granary (Sýpka), Warehouse (Sklad) and Iron Mine (Železný důl).
+- **14 structures** – economic and military buildings, including walls, a defensive tower and two gate sizes.
 - **3 unit types** – Footman (Pěšák), Archer (Lučištník) and Subject (Poddaný). Footmen and archers fight; subjects work and build.
 - **Bots** – 1–3 opponents across three difficulty levels. They build in a documented order, keep part of their army near the castle and attack.
 - **Fog of war** – optional, with explored and unexplored areas.
@@ -79,12 +79,15 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 | Movement and orders | Right button |
 | Order subjects to build | Select subjects, then right-click your construction site or click its button in the Construction section of their panel |
 | Place a building | Left button |
+| Lay out a wall | Select the wall and drag with the left button |
+| Garrison a tower | Select archers and right-click your completed tower |
 | Cancel building / selection | Right button or `ESC` |
 
 ### Keys
 
 | Action | Key |
 | :--- | :--- |
+| Rotate a building before placement | `R` (90°) |
 | Save a unit group | `Ctrl` + `1`–`9` |
 | Select a saved group | `1`–`9` |
 | Cancel building or selection | `ESC` |
@@ -94,7 +97,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 ### HUD
 
 - **Top bar** – money, wood, stone, food, iron and population.
-- **Bottom dock** – building menu with cost and construction time.
+- **Bottom dock** – building menu grouped into resources, economy, military and fortifications.
 - **Selection panel** – information about the selected building, construction site or units, worker assignment, training, repair and demolition.
 - **Minimap** – map overview including fog of war; clicking or dragging moves the camera.
 
@@ -102,8 +105,9 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 
 ## ⚔️ Rules
 
-- **Construction** is allowed anywhere on the map, at least **20 tiles** away from enemy units and buildings. Buildings snap to the grid and may not overlap; a free strip of 1 tile must remain between them (exception: warehouses next to each other).
-- **Construction time** depends on size: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. The time applies to one subject. Each additional subject adds half of the base speed, with no upper limit (a 2×2 site takes 40 s with two subjects, 24 s with four).
+- **Construction** is allowed anywhere on the map, at least **20 tiles** away from enemy units and buildings. Buildings may not overlap and need a one-tile gap, except adjacent warehouses and your own fortifications.
+- **Construction time** for ordinary buildings depends on size: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. Fortifications have their own times shown in the menu. The time applies to one subject; each additional subject adds half of the base speed.
+- **Fortifications** – drag to lay out a straight section of up to 48 wall tiles, each a separate construction site. The small gate is 1×1; the large gate is 4×1 tiles (1×4 when rotated). An open gate admits everyone, closes when an enemy is within 6 tiles, and reopens when they leave; the selection panel can also lock it. A tower holds four archers with 2 extra tiles of range; release them from its panel or order them to move.
 - **Construction site** – buying a building creates a construction site. The player selects subjects and right-clicks their own site, or clicks the site's button in their panel's Construction section. In a mixed selection, only subjects are assigned; soldiers keep their existing orders. It progresses only while they work on it. When it is finished, they return to the campfire.
 - **Woodcutter** must stand on a site without trees, preferably near a forest; **Quarry** on a stone deposit and **Iron Mine** on an iron deposit.
 - **Subjects** gather resources in batches of 10 and carry them to the nearest completed warehouse or the castle; food goes to the nearest granary (castle if there is none). A stone deposit holds 2000 units and an iron deposit 1000; once depleted, a new deposit appears after 3 minutes.

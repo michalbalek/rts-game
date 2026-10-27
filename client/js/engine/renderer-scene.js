@@ -1,5 +1,6 @@
 import { worldToTile, clamp } from './isometric.js';
 import { visibleTileRows } from './viewport.js';
+import { rotateBuildingPoint } from '../sim/building-orientation.js';
 
 export class RendererScene {
   render(dt, camera, ui = {}) {
@@ -44,18 +45,20 @@ export class RendererScene {
           for (let gx = 0; gx < 3; gx++) {
             const u = 0.62 + gx * 1.16;
             const v = 0.62 + gy * 1.16;
+            const point = rotateBuildingPoint(u, v, 4, 4, b.rotation || 0);
             renderList.push({
               kind: 'orchard_tree',
               entity: b,
               gx, gy, u, v,
-              depth: b.tileX + b.tileY + u + v
+              depth: b.tileX + b.tileY + point.u + point.v
             });
           }
         }
+        const basket = rotateBuildingPoint(0.4, 4 - 0.55, 4, 4, b.rotation || 0);
         renderList.push({
           kind: 'orchard_basket',
           entity: b,
-          depth: b.tileX + b.tileY + 0.4 + b.height - 0.55
+          depth: b.tileX + b.tileY + basket.u + basket.v
         });
         renderList.push({
           kind: 'building_overlay',
@@ -80,7 +83,10 @@ export class RendererScene {
     for (const u of this.session.state.units) {
       if (!this.entityVisible(u)) continue;
       if (!this.inBounds(u.x, u.y, bounds, 3)) continue;
-      renderList.push({ kind: 'unit', entity: u, depth: u.x + u.y + 0.35 });
+      const tower = u.garrison?.entered && this.session.state.buildings.find(b => b.id === u.garrison.towerId);
+      renderList.push({ kind: 'unit', entity: u, depth: tower
+        ? tower.tileX + tower.tileY + Math.max(tower.width, tower.height) + 0.1
+        : u.x + u.y + 0.35 });
     }
     renderList.sort((a, b) => a.depth - b.depth);
 
@@ -88,13 +94,16 @@ export class RendererScene {
       if (item.kind === 'building' || item.kind === 'castle') {
         this.drawBuilding(ctx, item.entity, ui, camera);
       } else if (item.kind === 'unit') {
+        ctx.save();
+        if (item.entity.garrison?.entered) ctx.translate(0, -60);
         this.drawUnit(ctx, item.entity, ui, camera);
+        ctx.restore();
       } else if (item.kind === 'campfire') {
         this.drawCampfire(ctx, item.x, item.y);
       } else if (item.kind === 'orchard_tree') {
-        this.drawOrchardTree(ctx, item.entity, item.gx, item.gy, item.u, item.v);
+        this.withBuildingRotation(item.entity, () => this.drawOrchardTree(ctx, item.entity, item.gx, item.gy, item.u, item.v));
       } else if (item.kind === 'orchard_basket') {
-        this.drawOrchardBasket(ctx, item.entity);
+        this.withBuildingRotation(item.entity, () => this.drawOrchardBasket(ctx, item.entity));
       } else if (item.kind === 'building_overlay') {
         this.drawBuildingOverlay(ctx, item.entity, ui);
       }

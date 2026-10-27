@@ -356,13 +356,65 @@ export const BUILDING_DEFS = {
     produce: 'iron',
     requires: 'iron',
     desc: 'Šachta na ložisku železné rudy (1000 jednotek). Dělníci nosí rudu do nejbližšího skladu nebo hradu.'
+  },
+  wall: {
+    key: 'wall',
+    name: 'Hradba',
+    icon: '🧱',
+    w: 1, h: 1,
+    hp: 1000,
+    buildTime: 20,
+    cost: cost(20, 0, 20),
+    workers: 0,
+    fortification: true,
+    desc: 'Kamenná hradba zastavuje pohyb jednotek. Tažením myši lze vyznačit celý úsek.'
+  },
+  tower: {
+    key: 'tower',
+    name: 'Obranná věž',
+    icon: '🗼',
+    w: 2, h: 2,
+    hp: 1800,
+    buildTime: 90,
+    cost: cost(160, 40, 100),
+    workers: 0,
+    fortification: true,
+    garrisonCapacity: 4,
+    desc: 'Odolná věž pojme až čtyři lučištníky, kteří z ní mají větší dostřel.'
+  },
+  gate: {
+    key: 'gate',
+    name: 'Malá brána',
+    icon: '🚪',
+    w: 1, h: 1,
+    hp: 1200,
+    buildTime: 45,
+    cost: cost(80, 40, 50),
+    workers: 0,
+    fortification: true,
+    gate: true,
+    desc: 'Otevřenou bránou projde kdokoliv. Při přiblížení nepřítele se automaticky zavře.'
+  },
+  gate_large: {
+    key: 'gate_large',
+    name: 'Velká brána',
+    icon: '🏰',
+    w: 4, h: 1,
+    hp: 2400,
+    buildTime: 90,
+    cost: cost(180, 80, 120),
+    workers: 0,
+    fortification: true,
+    gate: true,
+    desc: 'Široká brána pro čtyři dlaždice. Při přiblížení nepřítele se automaticky zavře.'
   }
 };
 
-// Pořadí v panelu staveb (hrad se nestaví).
-export const BUILD_MENU = [
-  'barracks', 'lumberjack', 'quarry', 'orchard', 'market',
-  'dwelling', 'granary', 'warehouse', 'ironmine'
+export const BUILD_CATEGORIES = [
+  { key: 'resources', name: 'Suroviny', types: ['lumberjack', 'quarry', 'ironmine', 'orchard'] },
+  { key: 'economy', name: 'Hospodářství', types: ['dwelling', 'market', 'granary', 'warehouse'] },
+  { key: 'military', name: 'Vojsko', types: ['barracks'] },
+  { key: 'fortifications', name: 'Opevnění', types: ['wall', 'tower', 'gate', 'gate_large'] }
 ];
 
 export const BUILDING_SIZE_HP = { 1: 500, 2: 800, 3: 1200, 4: 1500 };

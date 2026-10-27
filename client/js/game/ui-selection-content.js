@@ -91,6 +91,23 @@ export function buildingPanelHtml(b) {
     body += `<button class="btn btn-secondary wide" data-action="market">${t("🪙 Otevřít obchod")}</button>`;
   }
 
+  if (def.gate && b.complete) {
+    body += `<div class="sel-row"><span>${t('Stav brány')}</span><b>${b.gateOpen ? t('Otevřená') : t('Zavřená')}</b></div>`;
+    if (mine) {
+      body += `<button class="btn btn-secondary btn-small" data-action="gate" data-open="${!b.gateDesiredOpen}">${b.gateDesiredOpen ? t('Zamknout bránu') : t('Otevřít bránu')}</button>`;
+      if (b.gateDesiredOpen && !b.gateOpen) body += `<p class="sel-desc">${t('Brána je zavřená kvůli nepříteli a znovu se otevře, až odejde.')}</p>`;
+    }
+  }
+
+  if (b.type === 'tower' && b.complete) {
+    const count = this.session.state.units.filter(u => u.garrison?.towerId === b.id && u.garrison.entered).length;
+    body += `<div class="sel-row"><span>${t('Lučištníci ve věži')}</span><b>${count} / ${def.garrisonCapacity}</b></div>`;
+    if (mine) {
+      body += `<p class="sel-desc">${t('Vyberte lučištníky a klikněte pravým tlačítkem na věž.')}</p>
+        <button class="btn btn-secondary btn-small" data-action="ungarrison" ${count ? '' : 'disabled'}>${t('Vysadit lučištníky')}</button>`;
+    }
+  }
+
   if (mine && b.complete && def.cost && (def.cost.money || def.cost.wood || def.cost.stone)) {
     const repairCost = Object.entries(def.cost)
       .filter(([key, v]) => ['money', 'wood', 'stone'].includes(key) && v > 0)
@@ -112,7 +129,7 @@ export function buildingPanelHtml(b) {
       <div class="sel-title">
         <h3>${escapeHtml(t(def.name))}</h3>
         <span class="sel-meta" style="--owner:${b.ownerId ? PLAYER_COLORS[(b.ownerId - 1) % 4] : '#9a9a92'}">
-          ${escapeHtml(ownerName)} · ${def.w}${t("×")}${def.h} · ${status}
+          ${escapeHtml(ownerName)} · ${b.width}${t("×")}${b.height} · ${status}
         </span>
       </div>
     </div>
@@ -146,7 +163,7 @@ export function unitsPanelHtml(units) {
       </div>
       <div class="stat-grid">
         <div><span>${t("Poškození")}</span><b>${def.damage || 0}</b></div>
-        <div><span>${t("Dostřel")}</span><b>${def.range || 0}</b></div>
+        <div><span>${t("Dostřel")}</span><b>${(def.range || 0) + (single.garrison?.entered ? 2 : 0)}</b></div>
         <div><span>${t("Rychlost")}</span><b>${def.speed}</b></div>
         <div><span>${t("Brnění")}</span><b>${def.armor || 0}</b></div>
       </div>

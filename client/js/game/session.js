@@ -2,6 +2,8 @@ import { t } from '../i18n/index.js';
 import { GameSim, distanceToBuilding } from '../sim/sim.js';
 import { GameMap } from '../sim/mapgen.js';
 import { validatePlacement } from '../sim/placement.js';
+import { validateWallLine } from '../sim/wall-line.js';
+import { rotatedBuildingSize } from '../sim/building-orientation.js';
 import {
   BUILDING_DEFS, UNIT_DEFS, FOG_RANGES, GAME_MODES
 } from '../sim/constants.js';
@@ -20,6 +22,11 @@ class BaseSession {
 
   get player() {
     return this.state.players.find(p => p.id === this.selfId) || null;
+  }
+
+  canPlaceWall(x1, y1, x2, y2) {
+    return validateWallLine(this.state.map, this.state.buildings, this.selfId, this.player,
+      this.castle, this.state.units, x1, y1, x2, y2);
   }
 
   get castle() {
@@ -123,8 +130,8 @@ export class LocalSession extends BaseSession {
     return this.sim.getBuilderCounts().get(building.id) || { active: 0, total: 0 };
   }
 
-  canPlace(type, x, y) {
-    return this.sim.canPlaceBuilding(this.selfId, type, x, y);
+  canPlace(type, x, y, rotation = 0) {
+    return this.sim.canPlaceBuilding(this.selfId, type, x, y, rotation);
   }
 
   getFog() {
@@ -256,10 +263,11 @@ export class RemoteSession extends BaseSession {
       Object.assign(b, raw);
       const def = BUILDING_DEFS[raw.type];
       b.config = def;
-      b.width = def.w;
-      b.height = def.h;
-      b.centerX = b.tileX + def.w / 2;
-      b.centerY = b.tileY + def.h / 2;
+      const size = rotatedBuildingSize(def, raw.rotation || 0);
+      b.width = size.width;
+      b.height = size.height;
+      b.centerX = b.tileX + b.width / 2;
+      b.centerY = b.tileY + b.height / 2;
       b.containsTile = (x, y) =>
         x >= b.tileX && x < b.tileX + b.width && y >= b.tileY && y < b.tileY + b.height;
     }
@@ -278,9 +286,11 @@ export class RemoteSession extends BaseSession {
       }
       const prevX = u.x;
       const prevY = u.y;
+      const wasGarrisoned = !!u.garrison?.entered;
       Object.assign(u, raw);
-      u.x = prevX;
-      u.y = prevY;
+      const garrisonChanged = wasGarrisoned !== !!u.garrison?.entered;
+      u.x = garrisonChanged ? raw.x : prevX;
+      u.y = garrisonChanged ? raw.y : prevY;
       u.targetX = raw.x;
       u.targetY = raw.y;
       u.config = UNIT_DEFS[raw.type];
@@ -386,7 +396,7 @@ export class RemoteSession extends BaseSession {
     return this.fogData.explored[iy * this.map.size + ix] === 1;
   }
 
-  canPlace(type, x, y) {
+  canPlace(type, x, y, rotation = 0) {
     const player = this.player;
     const def = BUILDING_DEFS[type];
     const canAfford = !!(player && def && player.resources && Object.keys(def.cost).every(
@@ -396,6 +406,7 @@ export class RemoteSession extends BaseSession {
       alive: player ? player.alive : true,
       castle: this.castle,
       units: this.state.units,
+      rotation,
       canAfford
     });
   }

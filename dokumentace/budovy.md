@@ -5,18 +5,19 @@
 ### Mřížkový systém a uchycení (Grid Snapping)
 - **Přesná mřížka a rozměry**: Každá budova zabírá přesně definovanou plochu na herní mřížce (např. 1×1, 2×2, 3×3 nebo 4×4 bloky).
 - **Pevně daná velikost (Footprint)**: Každá budova má svou pevně definovanou šířku a délku v celočíselných jednotkách dlaždic ($W \times H$).
+- **Otáčení**: Před umístěním lze budovu klávesou **R** otáčet po 90°. U obdélníkových staveb se tím prohodí šířka a délka půdorysu; po umístění už rotaci měnit nelze.
 - **Uchycení na mřížku (Snap to Grid)**: Umístění budovy se automaticky přichytává k celočíselným souřadnicím dlaždic. Není možné umístit budovu „mezi“ bloky.
-- **Výchozí izometrická orientace (symetrická dlaždice 2:1)**: Všechny budovy jsou výchozím způsobem vykreslovány i kolizně orientovány na symetrické mřížce 64×32 px v souladu s celou herní mapou. Základna každé budovy na mřížce tvoří izometrický kosočtverec/polygon.
+- **Výchozí izometrická orientace (symetrická dlaždice 2:1)**: Všechny budovy jsou výchozím způsobem vykreslovány i kolizně orientovány na symetrické mřížce 56×28 px v souladu s celou herní mapou. Základna každé budovy na mřížce tvoří izometrický kosočtverec/polygon.
 - **Stavební okruh**: Stavba je neomezená, jen ji nelze položit v okruhu **20 bloků** od nepřátelské jednotky nebo budovy. Poddaní na rozestavěné stavbě nepřestanou stavět jen kvůli nepříteli v okolí; napadený poddaný uteče a práci přeruší.
 - **Materiál na stavbu**: stavba se hradí ze zásob panství v okamžiku položení základů. Náklady jsou u každé budovy v jejím popisu.
 - **Staveniště**: po zakoupení vznikne na místě budovy staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Bez nich stavba stojí.
 - **Zadání stavby poddaným**: hráč vybere libovolný počet poddaných a klikne pravým tlačítkem na vlastní staveniště, nebo v jejich panelu v sekci **Stavět** klikne na tlačítko stavby. Vybraní poddaní pak jdou na staveniště a začnou stavět. Ve smíšeném výběru se přiřadí pouze poddaní; vojákům se rozkazy nezmění.
-- **Doba stavby**: podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný na staveništi přidá jen polovinu rychlosti jednoho poddaného, takže celková rychlost je 1 + 0,5 × (počet poddaných − 1) násobek rychlosti jednoho. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
+- **Doba stavby**: běžné budovy podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s; opevnění má vlastní časy uvedené níže. Čas platí pro jednoho poddaného. Každý další poddaný přidá polovinu základní rychlosti.
 - **Dokončení stavby**: po dokončení se poddaní vrátí k ohništi a čekají na další příkaz. Hotovou budovu lze používat a přiřazovat do ní dělníky (viz [ekonomika.md](ekonomika.md)).
 - **Kolize a terén**: 
   - Žádné dvě budovy se nesmí překrývat.
   - Mezi budovami musí zůstat volný pruh, kterým procházejí NPC a vojáci (šířka pruhu: 1 dlaždice).
-  - Výjimka: sklady lze stavět přímo vedle sebe bez pruhu.
+  - Výjimka: sklady a vlastní hradby, věže a brány lze navzájem stavět bez pruhu.
   - Dlaždice pod budovou musí být volné (přírodní zdroje jako stromy či kameny se při stavbě vyčistí, nebo je stavba přímo vyžaduje jako kamenolom).
 
 ### Uzavřené a otevřené budovy, kolize a vykreslování postav
@@ -28,7 +29,7 @@
   - U uzavřených budov jsou postavy procházející kolem budovy zepředu (jižní a východní stěna) vykresleny před budovou, zatímco postavy za budovou jsou přirozeně zakryty 3D stěnami budovy.
 
 ### Zdraví, poškození a zánik
-- **Zdraví budov**: 1×1 500, 2×2 800, 3×3 1200, 4×4 1500, Královský hrad 2000.
+- **Zdraví budov**: běžné 1×1 500, 2×2 800, 3×3 1200, 4×4 1500, Královský hrad 2000; opevnění má vlastní hodnoty níže.
 - **Poškození**: nepřátelské jednotky ubírají budově zdraví. Hradby a věže chrání budovy za nimi.
 - **Rozestavěná budova**: zdraví roste úměrně postupu stavby. Při zničení se vrátí 50 % surovin.
 - **Zánik**: při nule zdraví budova zanikne a je zničena. Dělníci se vrací do hradu k ohništi.
@@ -43,6 +44,13 @@
 ---
 
 ## Seznam a detailní popis budov
+
+### Opevnění
+- **Hradba**: 1×1, 1000 zdraví, 20 s, 20 peněz a 20 kamene za díl. Tažením vznikne rovný úsek až 48 samostatných stavenišť; každé potřebuje stavitele.
+- **Malá brána**: 1×1, 1200 zdraví, 45 s, 80 peněz, 40 dřeva a 50 kamene.
+- **Velká brána**: 4×1 (po otočení 1×4), 2400 zdraví, 90 s, 180 peněz, 80 dřeva a 120 kamene.
+- Otevřenou bránou kterékoliv velikosti projde kdokoliv; nepřítel do 6 dlaždic ji automaticky zavře. Po jeho odchodu se odemčená brána znovu otevře. Vlastník ji může zamknout nebo povolit otevření v panelu.
+- **Obranná věž**: 2×2, 1800 zdraví, 90 s, 160 peněz, 40 dřeva a 100 kamene. Výběrem lučištníků a pravým kliknutím na dokončenou vlastní věž do ní lze poslat až čtyři; mají dostřel o 2 dlaždice vyšší. Vysadit je lze z panelu nebo rozkazem k pohybu. Po zničení věže se obsádka uvolní.
 
 ### 1. Královský hrad
 - **Velikost na mřížce**: 3×3 bloky

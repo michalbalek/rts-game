@@ -1,17 +1,35 @@
 import { HALF_TILE_WIDTH, HALF_TILE_HEIGHT, TILE_HEIGHT, tileToScreen } from './isometric.js';
 import { BUILDING_DEFS } from '../sim/constants.js';
+import { wallLine } from '../sim/wall-line.js';
+import { rotatedBuildingSize } from '../sim/building-orientation.js';
 
 export class RendererInteraction {
   drawBuildGhost(ctx, ui) {
     if (!ui.buildMode || !ui.hoverTile) return;
+    if (ui.buildMode === 'wall' && ui.wallDrag) {
+      const { start, end } = ui.wallDrag;
+      const tiles = wallLine(start.x, start.y, end.x, end.y) || [start, end];
+      const valid = this.session.canPlaceWall(start.x, start.y, end.x, end.y).valid;
+      for (const tile of tiles) {
+        const pos = tileToScreen(tile.x, tile.y);
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        this.drawFootprint(ctx, 1, 1, valid ? 'rgba(74, 222, 128, 0.26)' : 'rgba(239, 68, 68, 0.3)',
+          valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(239, 68, 68, 0.85)', 1.5);
+        ctx.restore();
+      }
+      return;
+    }
     const def = BUILDING_DEFS[ui.buildMode];
     if (!def) return;
+    const rotation = ui.buildRotation || 0;
+    const { width, height } = rotatedBuildingSize(def, rotation);
     const hover = ui.hoverTile;
-    const check = this.session.canPlace(ui.buildMode, hover.x, hover.y);
+    const check = this.session.canPlace(ui.buildMode, hover.x, hover.y, rotation);
     const valid = check.valid;
 
-    for (let dy = 0; dy < def.h; dy++) {
-      for (let dx = 0; dx < def.w; dx++) {
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
         const x = hover.x + dx;
         const y = hover.y + dy;
         if (x < 0 || y < 0 || x >= this.map.size || y >= this.map.size) continue;
@@ -34,16 +52,11 @@ export class RendererInteraction {
     const pos = tileToScreen(hover.x, hover.y);
     ctx.save();
     ctx.translate(pos.x, pos.y);
-    this.isoBox(ctx, 0, 0, def.w, def.h, 0, 20,
-      valid
-        ? { top: 'rgba(160, 246, 190, 0.38)', left: 'rgba(60, 150, 90, 0.3)', right: 'rgba(100, 200, 130, 0.3)' }
-        : { top: 'rgba(254, 160, 160, 0.35)', left: 'rgba(150, 50, 50, 0.3)', right: 'rgba(200, 90, 90, 0.3)' },
-      valid ? 'rgba(74, 222, 128, 0.8)' : 'rgba(239, 68, 68, 0.85)');
-    const center = this.isoPoint(def.w / 2, def.h / 2, 22);
-    ctx.font = '18px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.fillText(def.icon, center.x, center.y);
+    ctx.globalAlpha = valid ? 0.65 : 0.38;
+    this.drawBuildingStructure(ctx, {
+      id: 0, type: ui.buildMode, tileX: hover.x, tileY: hover.y,
+      width, height, rotation, complete: true, gateOpen: false, workers: 0
+    }, def);
     ctx.restore();
   }
 

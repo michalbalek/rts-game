@@ -27,6 +27,14 @@ export function bindSelectionPanel() {
         if (building) this.issue({ op: 'repair', buildingId: building.id });
         audio.play('repair');
         break;
+      case 'gate':
+        if (building) this.issue({ op: 'gate', buildingId: building.id, open: el.dataset.open === 'true' });
+        audio.play('click');
+        break;
+      case 'ungarrison':
+        if (building) this.issue({ op: 'ungarrison', buildingId: building.id });
+        audio.play('click');
+        break;
       case 'construct': {
         const unitIds = this.selectedVillagerIds();
         if (!unitIds.length) break;
@@ -87,12 +95,13 @@ export function selectionSignature() {
   if (!s) return 'none';
   if (s.selectedBuilding) {
     const b = s.selectedBuilding;
-    return `b:${b.id}:${b.complete}:${b.workers}:${assignedWorkers(b)}:${b.queue ? b.queue.length : 0}:${!!b.repair}:${b.ownerId}`;
+    const garrison = s.state.units.filter(u => u.garrison?.towerId === b.id && u.garrison.entered).length;
+    return `b:${b.id}:${b.complete}:${b.workers}:${assignedWorkers(b)}:${b.queue ? b.queue.length : 0}:${!!b.repair}:${b.ownerId}:${b.gateOpen}:${b.gateDesiredOpen}:${garrison}`;
   }
   if (s.selection.length) {
     const sites = this.constructionSites().map(b => b.id).join(',');
     // Stav práce určuje tlačítko Uvolnit, takže musí být v podpisu výběru.
-    return `u:${s.selection.map(u => `${u.id}:${u.type}:${u.work || u.build ? 'job' : ''}`).sort().join(',')}|s:${sites}`;
+    return `u:${s.selection.map(u => `${u.id}:${u.type}:${u.work || u.build ? 'job' : ''}:${!!u.garrison?.entered}`).sort().join(',')}|s:${sites}`;
   }
   return 'none';
 }

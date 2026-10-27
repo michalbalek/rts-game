@@ -3,30 +3,88 @@ import { Building } from './entities.js';
 import { findNearestWalkable } from './pathfinding.js';
 import { validatePlacement } from './placement.js';
 import { notice } from './messages.js';
+import { validateWallLine } from './wall-line.js';
+import { distanceToBuilding, isEnemy } from './sim-geometry.js';
+import { rotatedBuildingSize } from './building-orientation.js';
+
+const GATE_ENEMY_DISTANCE = 6;
 
 export class SimulationBuildings {
-  canPlaceBuilding(playerId, type, x, y) {
+  updateGate(gate) {
+    const enemyNearby = this.units.some(unit => unit.hp > 0 && isEnemy(gate.ownerId, unit.ownerId) &&
+      distanceToBuilding(unit.x, unit.y, gate) <= GATE_ENEMY_DISTANCE);
+    const open = gate.complete && gate.gateDesiredOpen && !enemyNearby;
+    if (gate.gateOpen !== open) {
+      gate.gateOpen = open;
+      this.rebuildBlockGrid();
+      if (!open) {
+        for (const unit of this.units) {
+          const entry = unit.gateEntry;
+          if (!entry || entry.gateId !== gate.id ||
+              !gate.containsTile(Math.floor(unit.x), Math.floor(unit.y))) continue;
+          unit.gateEntry = null;
+          if (!this.isWalkableTile(Math.floor(entry.x), Math.floor(entry.y))) continue;
+          unit.x = entry.x;
+          unit.y = entry.y;
+          const goal = unit.moveTarget || unit.pathGoal;
+          if (goal) this.navigateTo(unit, goal.x, goal.y);
+          else unit.setPath([]);
+        }
+      }
+    }
+  }
+
+  setGate(playerId, buildingId, open) {
+    const gate = this.buildings.find(b => b.id === buildingId);
+    if (!gate || !gate.config.gate || gate.ownerId !== playerId || !gate.complete || typeof open !== 'boolean') {
+      return { ok: false, reason: 'Tuto bránu nelze ovládat.' };
+    }
+    gate.gateDesiredOpen = open;
+    this.updateGate(gate);
+    return { ok: true };
+  }
+
+  placeWallLine(playerId, x1, y1, x2, y2) {
+    const check = validateWallLine(this.map, this.buildings, playerId, this.getPlayer(playerId),
+      this.getCastle(playerId), this.units, x1, y1, x2, y2);
+    if (!check.valid) return { ok: false, reason: check.reason, message: check.message };
+    for (const tile of check.tiles) {
+      const result = this.placeBuilding(playerId, 'wall', tile.x, tile.y, { notify: false });
+      if (!result.valid) throw new Error(`Wall placement failed after validation: ${result.reason}`);
+    }
+    this.emit('toast', {
+      playerId,
+      ...notice('Stavba hradeb zahájena: {0} dílů', { 0: check.tiles.length }),
+      kind: 'info'
+    });
+    return { ok: true, count: check.tiles.length };
+  }
+
+  canPlaceBuilding(playerId, type, x, y, rotation = 0) {
     const player = this.getPlayer(playerId);
     const def = BUILDING_DEFS[type];
     return validatePlacement(this.map, this.buildings, playerId, type, x, y, {
       alive: player ? player.alive : false,
       castle: this.getCastle(playerId),
       units: this.units,
+      rotation,
       canAfford: player && def ? this.canAfford(playerId, def.cost) : false
     });
   }
 
-  placeBuilding(playerId, type, x, y) {
-    const check = this.canPlaceBuilding(playerId, type, x, y);
+  placeBuilding(playerId, type, x, y, opts = {}) {
+    const rotation = opts.rotation === undefined ? 0 : opts.rotation;
+    const check = this.canPlaceBuilding(playerId, type, x, y, rotation);
     if (!check.valid) return check;
     const def = BUILDING_DEFS[type];
+    const { width, height } = rotatedBuildingSize(def, rotation);
 
     if (!this.spend(playerId, def.cost)) {
       return { valid: false, reason: 'Nedostatek surovin.' };
     }
 
-    for (let dy = 0; dy < def.h; dy++) {
-      for (let dx = 0; dx < def.w; dx++) {
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
         const tx = x + dx;
         const ty = y + dy;
         if (this.map.getResource(tx, ty) === RESOURCE_TYPES.TREE) {
@@ -35,7 +93,7 @@ export class SimulationBuildings {
       }
     }
 
-    const building = new Building(this.nextId++, type, playerId, x, y, false);
+    const building = new Building(this.nextId++, type, playerId, x, y, false, rotation);
     building.hp = Math.max(1, Math.round(def.hp * 0.05));
     if (def.requires === 'stone' || def.requires === 'iron') {
       const dep = this.map.getDepositAt(x, y);
@@ -47,7 +105,7 @@ export class SimulationBuildings {
     // Žádná jednotka nesmí uvíznout pod staveništěm ani uvnitř uzavřené budovy.
     for (const u of this.units) {
       if (building.containsTile(Math.floor(u.x), Math.floor(u.y)) ||
-          (u.x >= x - 0.2 && u.x <= x + def.w + 0.2 && u.y >= y - 0.2 && u.y <= y + def.h + 0.2)) {
+          (u.x >= x - 0.2 && u.x <= x + width + 0.2 && u.y >= y - 0.2 && u.y <= y + height + 0.2)) {
         const safe = findNearestWalkable(this.map, this.blockGrid, u.x, u.y, 10);
         if (safe) {
           u.x = safe.x + 0.5;
@@ -58,11 +116,13 @@ export class SimulationBuildings {
       }
     }
 
-    this.emit('toast', {
-      playerId,
-      ...notice('Stavba zahájena: {0}', { 0: { key: def.name } }),
-      kind: 'info'
-    });
+    if (opts.notify !== false) {
+      this.emit('toast', {
+        playerId,
+        ...notice('Stavba zahájena: {0}', { 0: { key: def.name } }),
+        kind: 'info'
+      });
+    }
     return { valid: true, building };
   }
 
@@ -154,6 +214,7 @@ export class SimulationBuildings {
   updateBuildings(dt) {
     const builderCounts = this.getBuilderCounts();
     for (const b of this.buildings.slice()) {
+      if (b.config.gate) this.updateGate(b);
       if (!b.complete) {
         const def = b.config;
         if (def.buildTime > 0) {
@@ -167,11 +228,12 @@ export class SimulationBuildings {
             b.complete = true;
             b.progress = 1;
             b.hp = b.maxHp;
+            if (b.config.gate) this.updateGate(b);
             this.rebuildBlockGrid();
             this.releaseBuildersOf(b.id, true);
 
             // Po dokončení uzavřené budovy ověříme, že uvnitř nezůstala žádná jednotka.
-            if (!def.passable) {
+            if (!def.passable && !(def.gate && b.gateOpen)) {
               for (const u of this.units) {
                 if (b.containsTile(Math.floor(u.x), Math.floor(u.y))) {
                   const safe = findNearestWalkable(this.map, this.blockGrid, u.x, u.y, 10);

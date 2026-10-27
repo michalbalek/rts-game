@@ -1,4 +1,5 @@
 import { Modals, escapeHtml } from './modals.js';
+import { t } from '../i18n/index.js';
 import { audio } from '../engine/audio.js';
 import { updateTopBar, getStorageCaps, updateLegend, renderLegend, setGameCountdown } from './ui-hud.js';
 import { buildDock, refreshBuildDock, updateDockAffordability, canAfford, setBuildMode, hideBanner } from './ui-build-dock.js';
@@ -16,6 +17,8 @@ export class GameUI {
     this.modals = modals || new Modals();
     this.session = null;
     this.buildMode = null;
+    this.buildRotation = 0;
+    this.buildCategory = 'resources';
     this.timer = 0;
     this.lastSelectionSignature = '';
     this.lastLegendSignature = '';
@@ -57,6 +60,7 @@ export class GameUI {
   setSession(session) {
     this.session = session;
     this.buildMode = null;
+    this.buildRotation = 0;
     this.lastSelectionSignature = '';
     this.lastLegendSignature = '';
     this.resultsOpen = false;
@@ -74,6 +78,7 @@ export class GameUI {
   clearSession() {
     this.session = null;
     this.buildMode = null;
+    this.buildRotation = 0;
     this.el.selectionPanel.innerHTML = '';
     this.el.buildDock.innerHTML = '';
     this.el.minimapInfo.innerHTML = '';

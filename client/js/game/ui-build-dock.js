@@ -1,11 +1,13 @@
 import { t } from '../i18n/index.js';
-import { BUILDING_DEFS, BUILD_MENU, MARKET_PRICES } from '../sim/constants.js';
+import { BUILDING_DEFS, BUILD_CATEGORIES, MARKET_PRICES } from '../sim/constants.js';
 import { escapeHtml } from './modals.js';
 import { audio } from '../engine/audio.js';
 
 export function buildDock() {
   if (!this.el.buildDock) return;
-  const cards = BUILD_MENU.map(type => {
+  const category = BUILD_CATEGORIES.find(item => item.key === this.buildCategory) || BUILD_CATEGORIES[0];
+  this.buildCategory = category.key;
+  const cards = category.types.map(type => {
     const def = BUILDING_DEFS[type];
     const cost = Object.entries(def.cost)
       .filter(([, value]) => value > 0)
@@ -27,14 +29,26 @@ export function buildDock() {
   }).join('');
   this.el.buildDock.innerHTML = `
     <div class="dock-heading">${t("Stavby")} <span>${t("odstup 20 bloků od nepřítele")}</span></div>
+    <div class="dock-categories" aria-label="${t('Kategorie staveb')}">
+      ${BUILD_CATEGORIES.map(item => `<button class="dock-category${item.key === category.key ? ' active' : ''}" data-category="${item.key}" aria-pressed="${item.key === category.key}">${escapeHtml(t(item.name))}</button>`).join('')}
+    </div>
     <div class="dock-cards">${cards}</div>`;
 
+  this.el.buildDock.querySelectorAll('.dock-category').forEach(button => {
+    button.addEventListener('click', () => {
+      this.buildCategory = button.dataset.category;
+      this.buildDock();
+      this.refreshBuildDock();
+      audio.play('click', { volume: 0.6 });
+    });
+  });
   this.el.buildDock.querySelectorAll('.build-card').forEach(card => {
     card.addEventListener('click', () => {
       const type = card.dataset.type;
       this.setBuildMode(this.buildMode === type ? null : type);
       audio.play('click', { volume: 0.6 });
     });
+    this.refreshBuildDock();
   });
 }
 
@@ -57,6 +71,7 @@ export function canAfford(cost) {
 }
 
 export function setBuildMode(type) {
+  if ((type || null) !== this.buildMode) this.buildRotation = 0;
   this.buildMode = type || null;
   this.refreshBuildDock();
   if (!this.el.buildBanner) return;
@@ -71,7 +86,7 @@ export function setBuildMode(type) {
     <span class="banner-icon">${def.icon}</span>
     <span class="banner-text">
       <strong>${t("Stavím:")} ${escapeHtml(t(def.name))}</strong>
-      <span>${t("Levé tlačítko umístí budovu · pravé tlačítko nebo ESC zruší")}</span>
+      <span>${this.buildMode === 'wall' ? t("Tažením levého tlačítka vyznačte hradbu · pravé tlačítko nebo ESC zruší") : t("Levé tlačítko umístí budovu · R otočí · pravé tlačítko nebo ESC zruší")}</span>
     </span>
     <button class="btn btn-secondary btn-small" id="cancel-build">${t("Zrušit")}</button>`;
   const cancel = this.el.buildBanner.querySelector('#cancel-build');
