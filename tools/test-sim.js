@@ -11,6 +11,7 @@ import { testGathering } from './sim-tests/gathering.js';
 import { testDirectGathering } from './sim-tests/direct-gathering.js';
 import { testFortifications } from './sim-tests/fortifications.js';
 import { testBuildingRotation } from './sim-tests/building-rotation.js';
+import { testAutoBuilders } from './sim-tests/auto-builders.js';
 
 testMaps();
 const world = testBots();
@@ -29,6 +30,7 @@ testDirectGathering();
 testCollisions();
 testFortifications();
 testBuildingRotation();
+testAutoBuilders();
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy prošly.');
 process.exit(failures ? 1 : 0);

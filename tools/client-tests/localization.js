@@ -131,6 +131,8 @@ export function testLocalization(assert) {
       settingsForm(DEFAULT_SETTINGS).includes('id="opt-language"') &&
       helpContent().includes('Right mouse button') && creditsContent().includes('Project authors'),
     'přeložena nastavení, nápověda a kredity');
+    assert(helpContent().includes('nearest reachable owned construction site within 10 tiles'),
+      'nápověda popisuje automatické pokračování stavby včetně dosahu');
     assert(TIPS.every(tip => t(tip) !== tip), 'tipy se překládají až při zobrazení, ne při importu');
 
     const ui = Object.create(GameUI.prototype);

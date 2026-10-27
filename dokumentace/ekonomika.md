@@ -20,7 +20,7 @@
 - **Počáteční obyvatelé**: hrad má na začátku 20 volných obyvatel.
 - **Kapacita**: 20 obyvatel z hradu a 8 dalších za každé obydlí.
 - **Přiřazení**: volné obyvatele lze přiřadit jako dělníky do Dřevorubce, Kamenolomu, Jabloňového sadu a Železného dolu, nebo rekrutovat jako vojáky (pěšáci v Královském hradu, lučištníci v Kasárnách).
-- **Stavění**: po zakoupení budovy vznikne staveniště. Vybrané volné obyvatele přidělíte tlačítkem stavby v sekci Stavět v jejich panelu. Pracují na něm, dokud není budova hotová. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Po dokončení se vrátí k ohništi (viz [budovy.md](budovy.md)).
+- **Stavění**: po zakoupení budovy vznikne staveniště. Vybrané volné obyvatele přidělíte tlačítkem stavby v sekci Stavět v jejich panelu. Pracují na něm, dokud není budova hotová. Každý další stavitel přidá 50 % základní rychlosti, bez horní hranice. Poté pokračují k dosažitelnému vlastnímu staveništi do 10 dlaždic, jinak se vrátí k ohništi (viz [budovy.md](budovy.md)).
 - **Práce dělníka**: dělník přiřazený k budově nejdřív přijde k této budově. U uzavřených budov zůstává venku u vstupu/obvodu budovy a chodí ke zdroji (např. stromy, ložisko). Při těžbě dřeva dojde ke stromu, stojí otočený k němu a seká; po vytěžení odnese náklad. Stejně pracuje i poddaný poslaný ke stromu bez budovy. U otevřených budov (Jabloňový sad) dělník vstupuje přímo do sadu, chodí po trávě mezi stromy (kde je plně viditelný a neskrývá se pod texturou) a sbírá jablka. V místní hře je na mapě vidět čára od dělníka k jeho cíli.
 - **Nosnost**: dělník nese 10 jednotek najednou. U botů se nosnost řídí obtížností.
 - **Doba sběru**: 10 kusů trvá 20 s.

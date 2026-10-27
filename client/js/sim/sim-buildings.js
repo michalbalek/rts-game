@@ -230,8 +230,6 @@ export class SimulationBuildings {
             b.hp = b.maxHp;
             if (b.config.gate) this.updateGate(b);
             this.rebuildBlockGrid();
-            this.releaseBuildersOf(b.id, true);
-
             // Po dokončení uzavřené budovy ověříme, že uvnitř nezůstala žádná jednotka.
             if (!def.passable && !(def.gate && b.gateOpen)) {
               for (const u of this.units) {
@@ -246,6 +244,7 @@ export class SimulationBuildings {
                 }
               }
             }
+            this.continueBuildersAfter(b.id);
             this.emit('buildingComplete', {
               playerId: b.ownerId,
               x: b.centerX,

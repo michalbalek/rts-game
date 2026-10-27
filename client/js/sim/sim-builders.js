@@ -88,6 +88,21 @@ export class SimulationBuilders {
     }
   }
 
+  continueBuildersAfter(buildingId) {
+    for (const unit of this.units) {
+      if (!unit.build || unit.build.buildingId !== buildingId) continue;
+      if (unit.isVillager && unit.hp > 0 && !unit.fleeing) {
+        const sites = this.buildings
+          .filter(b => b.ownerId === unit.ownerId && !b.complete && b.config.buildTime > 0)
+          .map(b => ({ building: b, distance: distanceToBuilding(unit.x, unit.y, b) }))
+          .filter(site => site.distance <= BUILD.autoSearchRadius)
+          .sort((a, b) => a.distance - b.distance || a.building.id - b.building.id);
+        if (sites.some(site => this.assignBuilders(unit.ownerId, site.building.id, [unit]).ok)) continue;
+      }
+      this.releaseBuilder(unit, true);
+    }
+  }
+
   updateVillagerBuild(unit) {
     const player = this.getPlayer(unit.ownerId);
     const b = this.buildings.find(x => x.id === unit.build.buildingId);

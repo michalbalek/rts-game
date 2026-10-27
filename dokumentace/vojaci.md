@@ -24,7 +24,7 @@
 
 ### 3. Poddaný / Dělník
 - Chodí pro suroviny k budovám a odnášejí je po 10 kusech. Dřevo, kámen a železo jdou do nejbližšího hotového skladu nebo hradu, jídlo do nejbližší sýpky (bez sýpky do hradu, viz [ekonomika.md](ekonomika.md)). Pokud se celý náklad nevejde do zásob, počkají, až se uvolní místo, a odevzdají ho najednou.
-- **Úloha**: čeká u ohniště před hradem, dokud ho hráč nepřiřadí k budově nebo ke stavbě na staveništi (tlačítkem stavby v sekci Stavět). Po dokončení stavby se vrací k ohništi. Tlačítkem „Uvolnit z práce“ ho lze v místní hře propustit; zůstane na místě. Poddaný, který nese náklad, ho nejdřív odevzdá; dokud ho nese, nejde přidělit na stavbu ani uvolnit.
+- **Úloha**: čeká u ohniště před hradem, dokud ho hráč nepřiřadí k budově nebo ke stavbě na staveništi (tlačítkem stavby v sekci Stavět). Po dokončení pokračuje k dosažitelnému vlastnímu staveništi do 10 dlaždic, jinak se vrací k ohništi. Tlačítkem „Uvolnit z práce“ ho lze v místní hře propustit; zůstane na místě. Poddaný, který nese náklad, ho nejdřív odevzdá; dokud ho nese, nejde přidělit na stavbu ani uvolnit.
 - **Útok**: dělník nebojuje. Při napadení uteče do hradu.
 
 ### Další plánované jednotky

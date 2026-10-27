@@ -1,5 +1,6 @@
 import { t, languageOptions } from '../i18n/index.js';
 import { CAMERA_SPEEDS, isValidNick } from './settings.js';
+import { BUILD } from '../sim/constants.js';
 
 /** Jednoduchý správce modálních oken sdílený menu i hrou. */
 export class Modals {
@@ -226,7 +227,8 @@ export function helpContent() {
         <ul>
           <li>${t("Stavět lze kdekoli na mapě, nejméně")} <strong>${t("20 bloků")}</strong> ${t("od nepřátelských jednotek a budov.")}</li>
           <li>${t("Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady a vlastní opevnění vedle sebe.")}</li>
-          <li>${t("Hradby vyznačte tažením myši. Každý díl je samostatné staveniště, ke kterému je třeba poslat poddané.")}</li>
+          <li>${t("Hradby vyznačte tažením myši. Každý díl je samostatné staveniště.")}</li>
+          <li>${t("Po dokončení stavby poddaní pokračují na nejbližším dosažitelném vlastním staveništi do {0} dlaždic; jinak se vrátí k ohništi.", { 0: BUILD.autoSearchRadius })}</li>
           <li>${t("Brána se u nepřítele zavře; vlastní bránu lze zamknout nebo otevřít v panelu výběru.")}</li>
           <li>${t("Lučištníky pošlete pravým kliknutím do vlastní dokončené věže. Z věže mají větší dostřel.")}</li>
           <li>${t("Dřevorubec musí stát na místě bez stromů, nejlépe poblíž lesa. Kamenolom a železný důl celé na ložisku.")}</li>

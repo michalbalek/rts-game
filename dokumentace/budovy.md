@@ -13,7 +13,7 @@
 - **Staveniště**: po zakoupení vznikne na místě budovy staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Bez nich stavba stojí.
 - **Zadání stavby poddaným**: hráč vybere libovolný počet poddaných a klikne pravým tlačítkem na vlastní staveniště, nebo v jejich panelu v sekci **Stavět** klikne na tlačítko stavby. Vybraní poddaní pak jdou na staveniště a začnou stavět. Ve smíšeném výběru se přiřadí pouze poddaní; vojákům se rozkazy nezmění.
 - **Doba stavby**: běžné budovy podle velikosti 1×1 30 s, 2×2 60 s, 3×3 90 s, 4×4 120 s; opevnění má vlastní časy uvedené níže. Čas platí pro jednoho poddaného. Každý další poddaný přidá polovinu základní rychlosti.
-- **Dokončení stavby**: po dokončení se poddaní vrátí k ohništi a čekají na další příkaz. Hotovou budovu lze používat a přiřazovat do ní dělníky (viz [ekonomika.md](ekonomika.md)).
+- **Dokončení stavby**: každý přidělený poddaný pokračuje k nejbližšímu dosažitelnému vlastnímu staveništi do 10 dlaždic od své pozice (vzdálenost se měří k okraji staveniště). Není-li žádné v dosahu, vrátí se k ohništi. Hotovou budovu lze používat a přiřazovat do ní dělníky (viz [ekonomika.md](ekonomika.md)).
 - **Kolize a terén**: 
   - Žádné dvě budovy se nesmí překrývat.
   - Mezi budovami musí zůstat volný pruh, kterým procházejí NPC a vojáci (šířka pruhu: 1 dlaždice).

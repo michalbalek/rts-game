@@ -165,7 +165,8 @@ export const DELIVERY = {
 export const BUILD = {
   extraBuilderSpeed: 0.5, // každý další stavitel přidá jen 50 % základní rychlosti
   reach: 1.2,             // stavitel dojde k obrysu budovy do této vzdálenosti
-  leaveReach: 1.8         // a odejde až za ni (hystereze, aby neposkakoval)
+  leaveReach: 1.8,        // a odejde až za ni (hystereze, aby neposkakoval)
+  autoSearchRadius: 10
 };
 
 // Násobek rychlosti stavby: 1 stavitel = 1×, 2 = 1,5×, 3 = 2×, 4 = 2,5× …
