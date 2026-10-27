@@ -35,6 +35,7 @@ Projekt se skládá z:
    - Výroba a výcvik lučištníků s dlouhým tisovým lukem.
 3. **Dřevorubec (Lumber Camp)**:
    - Dřevorubecký tábor pro těžbu cenného dřeva v oázách a hájích.
+   - Staví se na místě bez stromů, nejlépe poblíž lesa.
 4. **Kamenolom (Quarry)**:
    - Pískovcový a vápencový lom s těžebním jeřábem na skalních nalezištích.
 5. **Jabloňový sad (Apple Orchard)**:

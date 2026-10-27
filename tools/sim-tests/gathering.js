@@ -1,6 +1,6 @@
 import { GameSim } from '../../client/js/sim/sim.js';
 import { RESOURCE_TYPES } from '../../client/js/sim/constants.js';
-import { assert } from './helpers.js';
+import { assert, findLumberSpotNearTree } from './helpers.js';
 
 export function testGathering(serialized) {
   console.log('\n--- Dřevorubec: nejbližší strom, doprava do hradu a celé náklady ---');
@@ -22,8 +22,12 @@ export function testGathering(serialized) {
     };
     // Čtyři stavitelé postaví dřevorubce a po dokončení se mu přiřadí čtyři dělníci.
     const startLumberjack = (s, x, y) => {
-      const placed = s.command(1, { op: 'build', buildingType: 'lumberjack', x, y });
+      const spot = findLumberSpotNearTree(s, 1, x, y, 8);
+      if (!spot) return null;
+      const placed = s.command(1, { op: 'build', buildingType: 'lumberjack', ...spot });
       if (!placed.ok) return null;
+      assert(s.map.getResource(x, y) === RESOURCE_TYPES.TREE,
+        'stavba dřevorubce zachová nedaleký strom pro těžbu');
       const b = s.buildings.find(q => q.id === placed.buildingId);
       const builders = s.units.filter(u => u.ownerId === 1 && u.isVillager).slice(0, 4);
       s.command(1, { op: 'construct', buildingId: b.id, unitIds: builders.map(u => u.id) });

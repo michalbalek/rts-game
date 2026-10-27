@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { testRightClick, testCameraNavigation } from './client-tests/input.js';
+import { testRightClick, testCameraNavigation, testLumberPlacementPreview } from './client-tests/input.js';
 import { testLocalization } from './client-tests/localization.js';
 import { testAudio } from './client-tests/audio.js';
 import { GameUI } from '../client/js/game/ui.js';
@@ -442,6 +442,7 @@ console.log('\n--- Vykreslení budov a postav ---');
 
 testRightClick(assert);
 testCameraNavigation(assert);
+testLumberPlacementPreview(assert);
 testLocalization(assert);
 testAudio(assert);
 

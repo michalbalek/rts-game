@@ -1,10 +1,53 @@
 import { onRightClick } from '../../client/js/game/input-selection.js';
 import { audio } from '../../client/js/engine/audio.js';
 import { Input } from '../../client/js/game/input.js';
-import { LocalSession } from '../../client/js/game/session.js';
+import { LocalSession, RemoteSession } from '../../client/js/game/session.js';
 import { Camera } from '../../client/js/engine/camera.js';
 import { tileToScreen } from '../../client/js/engine/isometric.js';
 import { pickResourceAtWorld } from '../../client/js/game/picking.js';
+import { RESOURCE_TYPES } from '../../client/js/sim/constants.js';
+import { setLanguage, getLanguage, t } from '../../client/js/i18n/index.js';
+
+export function testLumberPlacementPreview(assert) {
+  console.log('\n--- Náhled umístění dřevorubce ---');
+  const local = new LocalSession({
+    seed: 1234, mapType: 'desert', mode: 'sandbox', capital: 'rich',
+    players: [{ name: 'Test', isBot: false }]
+  });
+  const remote = new RemoteSession({
+    seed: 1234, mapType: 'desert', selfId: local.selfId, players: local.state.players
+  }, null);
+  remote.map = local.sim.map;
+  remote.state.buildings = local.state.buildings;
+  remote.state.units = local.state.units;
+  let spot = null;
+  for (let y = 1; y < local.state.map.size - 1 && !spot; y++) {
+    for (let x = 1; x < local.state.map.size - 1; x++) {
+      if (local.canPlace('lumberjack', x, y).valid) {
+        spot = { x, y };
+        break;
+      }
+    }
+  }
+  assert(!!spot, 'existuje volné místo pro náhled stavby');
+  if (!spot) return;
+  const { x, y } = spot;
+  assert(local.canPlace('lumberjack', x, y).valid && remote.canPlace('lumberjack', x, y).valid,
+    'lokální i síťový náhled povolí místo bez stromu');
+  local.sim.map.setResource(x, y, RESOURCE_TYPES.TREE);
+  const localCheck = local.canPlace('lumberjack', x, y);
+  const remoteCheck = remote.canPlace('lumberjack', x, y);
+  assert(!localCheck.valid && !remoteCheck.valid && localCheck.reason === remoteCheck.reason,
+    'lokální i síťový náhled shodně zakáží stavbu na stromě');
+  const previousLanguage = getLanguage();
+  try {
+    setLanguage('en');
+    assert(t(remoteCheck.reason) === 'A Lumber Camp must stand on a site without trees, my lord!',
+      'důvod odmítnutí se překládá do angličtiny');
+  } finally {
+    setLanguage(previousLanguage);
+  }
+}
 
 export function testCameraNavigation(assert) {
   console.log('\n--- Posun kamery myší ---');

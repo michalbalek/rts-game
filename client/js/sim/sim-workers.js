@@ -58,7 +58,7 @@ export class SimulationWorkers {
     if (!player || !b || b.ownerId !== playerId) return { ok: false, reason: 'Neplatná budova.' };
     if (!b.complete) return { ok: false, reason: 'Budova se teprve staví.' };
     if (!b.config.workers) return { ok: false, reason: 'Sem nelze přiřadit pracovníky.' };
-    if (b.config.requires && b.config.requires !== 'tree') {
+    if (b.config.requires) {
       const dep = this.map.deposits.find(d => d.id === b.depositId);
       if (!dep || !dep.active) return { ok: false, reason: 'Ložisko je vyčerpané.' };
     }

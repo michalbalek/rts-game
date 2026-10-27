@@ -1,5 +1,5 @@
 import { GameSim } from '../../client/js/sim/sim.js';
-import { buildSpeedFactor } from '../../client/js/sim/constants.js';
+import { buildSpeedFactor, RESOURCE_TYPES } from '../../client/js/sim/constants.js';
 import { assert, findSpot } from './helpers.js';
 
 export function testConstruction(startedAt) {
@@ -135,6 +135,46 @@ export function testPlacement() {
   assert(!beyondEnemyRange.reason || !beyondEnemyRange.reason.includes('nepřátel'),
     've vzdálenosti přes 20 bloků od nepřítele pravidlo neplatí');
 
+  const lumberSpot = findSpot(placementSim, 1, 'lumberjack');
+  assert(!!lumberSpot, 'dřevorubce lze umístit na místo bez stromu');
+  let clearSpot = null;
+  for (let y = 5; y < placementSim.map.size - 5 && !clearSpot; y++) {
+    for (let x = 5; x < placementSim.map.size - 5 && !clearSpot; x++) {
+      if (!placementSim.canPlaceBuilding(1, 'lumberjack', x, y).valid) continue;
+      let hasTree = false;
+      for (let dy = -4; dy <= 4 && !hasTree; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          if (placementSim.map.getResource(x + dx, y + dy) === RESOURCE_TYPES.TREE) {
+            hasTree = true;
+            break;
+          }
+        }
+      }
+      if (!hasTree) clearSpot = { x, y };
+    }
+  }
+  assert(!!clearSpot, 'dřevorubce lze umístit i bez stromů v bezprostředním okolí');
+  if (lumberSpot) {
+    const { x, y } = lumberSpot;
+    placementSim.map.setResource(x, y, RESOURCE_TYPES.TREE);
+    const onTree = placementSim.canPlaceBuilding(1, 'lumberjack', x, y);
+    assert(!onTree.valid && onTree.reason.includes('bez stromů'),
+      'náhled dřevorubce na stromě odmítne umístění');
+    const resources = { ...placementSim.getPlayer(1).resources };
+    const rejected = placementSim.command(1, { op: 'build', buildingType: 'lumberjack', x, y });
+    assert(!rejected.ok && placementSim.map.getResource(x, y) === RESOURCE_TYPES.TREE &&
+      Object.keys(resources).every(key => placementSim.getPlayer(1).resources[key] === resources[key]),
+    'příkaz na stromě je odmítnut bez odstranění stromu a bez spotřeby surovin');
+    for (const resource of [RESOURCE_TYPES.STONE, RESOURCE_TYPES.IRON]) {
+      placementSim.map.setResource(x, y, resource);
+      assert(!placementSim.canPlaceBuilding(1, 'lumberjack', x, y).valid,
+        'dřevorubec se nadále nesmí stavět na ložisku');
+    }
+    placementSim.map.setResource(x, y, RESOURCE_TYPES.NONE);
+    assert(placementSim.canPlaceBuilding(1, 'lumberjack', x, y).valid &&
+      placementSim.command(1, { op: 'build', buildingType: 'lumberjack', x, y }).ok,
+    'náhled i příkaz povolí dřevorubce na volném místě');
+  }
 }
 
 export function testCollisions() {

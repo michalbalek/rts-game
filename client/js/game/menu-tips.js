@@ -1,5 +1,5 @@
 export const TIPS = [
-  'Dřevorubec musí stát na stromě. Kamenolom a Železný důl celou plochou na ložisku.',
+  'Dřevorubec musí stát na místě bez stromů, nejlépe poblíž lesa. Kamenolom a Železný důl celou plochou na ložisku.',
   'Mezi budovami musí zůstat volný pruh široký jednu dlaždici. Sklady lze stavět těsně vedle sebe.',
   'Poddaní čekají u ohniště před hradem. Přiřaďte je do hospodářství nebo je povolejte jako vojáky.',
   'Lučištníkova střela letí obloukem a může minout pohybující se cíl. Pěšák je spolehlivější v tlačenici.',

@@ -55,8 +55,8 @@ export function validatePlacement(map, buildings, playerId, type, x, y, opts = {
   if (!def.requires && (stoneTiles > 0 || ironTiles > 0)) {
     return { valid: false, reason: 'Na ložisku mohou stát jen kamenolom a železný důl.' };
   }
-  if (def.requires === 'tree' && treeTiles === 0) {
-    return { valid: false, reason: 'Dřevorubec musí stát na stromě, můj pane!' };
+  if (type === 'lumberjack' && treeTiles > 0) {
+    return { valid: false, reason: 'Dřevorubec musí stát na místě bez stromů, můj pane!' };
   }
   if (def.requires === 'stone') {
     if (stoneTiles !== def.w * def.h) {

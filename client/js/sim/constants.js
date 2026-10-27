@@ -268,8 +268,7 @@ export const BUILDING_DEFS = {
     cost: cost(50, 20, 0),
     workers: 4,
     produce: 'wood',
-    requires: 'tree',
-    desc: 'Dřevorubecký tábor. Musí stát na stromě. Dělníci nosí dřevo do nejbližšího skladu nebo hradu.'
+    desc: 'Dřevorubecký tábor. Staví se na volném místě, nejlépe poblíž stromů. Dělníci nosí dřevo do nejbližšího skladu nebo hradu.'
   },
   quarry: {
     key: 'quarry',

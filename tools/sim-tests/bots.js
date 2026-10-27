@@ -1,6 +1,6 @@
 import { GameSim } from '../../client/js/sim/sim.js';
 import { RESOURCE_TYPES } from '../../client/js/sim/constants.js';
-import { assert } from './helpers.js';
+import { assert, findLumberSpotNearTree } from './helpers.js';
 
 export function testBots() {
   console.log('\n--- Simulace s botem ---');
@@ -15,6 +15,21 @@ export function testBots() {
       { name: 'Bot', isBot: true, difficulty: 'medium' }
     ]
   });
+  let botLumberTrees = null;
+  const command = sim.command.bind(sim);
+  sim.command = (playerId, cmd) => {
+    if (playerId === 2 && cmd.op === 'build' && cmd.buildingType === 'lumberjack') {
+      botLumberTrees = [];
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (sim.map.getResource(cmd.x + dx, cmd.y + dy) === RESOURCE_TYPES.TREE) {
+            botLumberTrees.push({ x: cmd.x + dx, y: cmd.y + dy });
+          }
+        }
+      }
+    }
+    return command(playerId, cmd);
+  };
   assert(sim.buildings.length === 2, 'dva hrady');
   assert(sim.units.length === 40, 'dvě sídla po 20 poddaných');
   assert(sim.players[0].resources.wood === 200, 'startovní kapitál dřeva');
@@ -36,15 +51,15 @@ export function testBots() {
     `hráč ${player.id}: síťový snímek neobsahuje daně ani spokojenost`);
   }
 
-  // Lidský hráč zadá dřevorubce na stromě, čtyři poddaní ho postaví a přiřadí se dělníci.
+  // Lidský hráč zadá dřevorubce u stromu, čtyři poddaní ho postaví a přiřadí se dělníci.
   const humanCastle = sim.getCastle(1);
   let lumberSpot = null;
   for (let y = 0; y < sim.map.size && !lumberSpot; y++) {
     for (let x = 0; x < sim.map.size; x++) {
       if (Math.hypot(x - humanCastle.centerX, y - humanCastle.centerY) > 30) continue;
       if (sim.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-      if (sim.canPlaceBuilding(1, 'lumberjack', x, y).valid) {
-        lumberSpot = { x, y };
+      lumberSpot = findLumberSpotNearTree(sim, 1, x, y);
+      if (lumberSpot) {
         break;
       }
     }
@@ -96,6 +111,11 @@ export function testBots() {
     console.log(`  hráč ${p.name}: peníze ${Math.floor(p.resources.money)}, dřevo ${Math.floor(p.resources.wood)}, kámen ${Math.floor(p.resources.stone)}, jídlo ${Math.floor(p.resources.food)}, železo ${Math.floor(p.resources.iron)}; lid ${p.population}/${p.capacity}; zabito ${p.stats.lost}, zničeno ${p.stats.destroyed}, sehráno ${p.stats.gathered}`);
   }
   assert(sim.buildings.some(b => b.ownerId === 2 && b.complete), 'bot postavil alespoň jednu budovu');
+  const botLumber = sim.buildings.find(b => b.ownerId === 2 && b.type === 'lumberjack');
+  assert(botLumber && sim.map.getResource(botLumber.tileX, botLumber.tileY) === RESOURCE_TYPES.NONE,
+    'bot postaví dřevorubce na místě bez stromu');
+  assert(botLumberTrees && botLumberTrees.length > 0,
+    'bot vybírá pro dřevorubce místo poblíž stromů');
   assert(sim.players[0].resources.wood > humanWoodBefore, 'lidský dělník přinesl dřevo');
   assert(sim.time > 159, 'simulace běžela přes 160 s');
 

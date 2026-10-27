@@ -105,7 +105,7 @@ $env:LOBBY_COUNTDOWN='10'; npm start
 - **Stavění** je povoleno kdekoli na mapě, nejméně **20 dlaždic** od nepřátelských jednotek a budov. Budovy se přichytávají na mřížku a nesmějí se překrývat; mezi nimi musí zůstat volný pruh 1 dlaždice (výjimka: sklady vedle sebe).
 - **Doba stavby** odpovídá velikosti: 1×1 = 30 s, 2×2 = 60 s, 3×3 = 90 s, 4×4 = 120 s. Tato doba platí pro jednoho poddaného. Každý další poddaný přidá polovinu základní rychlosti, bez horní hranice. Například 2×2 se dvěma poddanými trvá 40 s, se čtyřmi 24 s.
 - **Staveniště** – po zakoupení budovy vznikne staveniště. Stavba postupuje jen tehdy, když na ní pracují přidělení poddaní. Hráč je vybere a klikne pravým tlačítkem na vlastní staveniště, nebo v jejich panelu na stavbu v sekci Stavět. Ve smíšeném výběru se přiřadí pouze poddaní; vojákům zůstanou dosavadní rozkazy. Po dokončení se poddaní vrátí k ohništi.
-- **Dřevorubec** musí stát na stromě, **Kamenolom** na ložisku kamene a **Železný důl** na ložisku železa.
+- **Dřevorubec** musí stát na místě bez stromů, nejlépe poblíž lesa; **Kamenolom** na ložisku kamene a **Železný důl** na ložisku železa.
 - **Poddaní** sbírají suroviny po 10 kusech a odnášejí je do nejbližšího hotového skladu nebo hradu; jídlo jde do nejbližší sýpky (bez sýpky do hradu). Ložisko kamene má 2000 jednotek, železa 1000; po vyčerpání se po 3 minutách objeví nové.
 - **Nedostatek surovin** znamená, že se příkaz neprovede a písař to oznámí. Náklady se platí celé při zadání.
 - **Výcvik** spotřebuje volného poddaného u ohniště. Pěšák = 60 peněz + 20 jídla / 40 s, Lučištník = 70 peněz + 20 jídla / 45 s.

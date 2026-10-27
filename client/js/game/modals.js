@@ -225,7 +225,7 @@ export function helpContent() {
         <ul>
           <li>${t("Stavět lze kdekoli na mapě, nejméně")} <strong>${t("20 bloků")}</strong> ${t("od nepřátelských jednotek a budov.")}</li>
           <li>${t("Mezi budovami musí zůstat volný pruh široký 1 dlaždici; výjimkou jsou sklady vedle sebe.")}</li>
-          <li>${t("Dřevorubec musí stát na stromě, kamenolom a železný důl celé na ložisku.")}</li>
+          <li>${t("Dřevorubec musí stát na místě bez stromů, nejlépe poblíž lesa. Kamenolom a železný důl celé na ložisku.")}</li>
           <li>${t("Poddaní čekají u ohniště. Přiřaďte je do hospodářství, pošlete na stavbu, nebo je povolejte jako vojáky.")}</li>
           <li>${t("Dělníci nosí dřevo, kámen a železo po 10 kusech do nejbližšího hotového skladu nebo Královského hradu, jídlo do nejbližší sýpky (bez sýpky do hradu). Sýpky a sklady zvyšují kapacitu.")}</li>
           <li>${t("Obydlí přidá 8 míst v kapacitě. Hrad sám pojme 20 obyvatel.")}</li>

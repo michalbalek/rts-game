@@ -18,3 +18,17 @@ export function findSpot(targetSim, playerId, type, maxDistance = 24) {
   }
   return null;
 }
+
+export function findLumberSpotNearTree(sim, playerId, treeX, treeY, maxDistance = 1) {
+  for (let radius = 1; radius <= maxDistance; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+        const x = treeX + dx;
+        const y = treeY + dy;
+        if (sim.canPlaceBuilding(playerId, 'lumberjack', x, y).valid) return { x, y };
+      }
+    }
+  }
+  return null;
+}

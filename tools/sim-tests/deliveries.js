@@ -1,6 +1,6 @@
 import { GameSim } from '../../client/js/sim/sim.js';
 import { RESOURCE_TYPES } from '../../client/js/sim/constants.js';
-import { assert, findSpot } from './helpers.js';
+import { assert, findSpot, findLumberSpotNearTree } from './helpers.js';
 
 export function testCarriers() {
   console.log('\n--- Nosič s nákladem nejde přeřadit ---');
@@ -20,8 +20,8 @@ export function testCarriers() {
     for (let x = 0; x < sim8.map.size; x++) {
       if (Math.hypot(x - carryCastle.centerX, y - carryCastle.centerY) > 30) continue;
       if (sim8.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-      if (sim8.canPlaceBuilding(1, 'lumberjack', x, y).valid) {
-        carrySpot = { x, y };
+      carrySpot = findLumberSpotNearTree(sim8, 1, x, y);
+      if (carrySpot) {
         break;
       }
     }

@@ -200,14 +200,20 @@ function findBuildSpot(sim, player, castle, type) {
     for (let y = Math.max(1, cy - r); y <= Math.min(sim.map.size - 2, cy + r); y++) {
       for (let x = Math.max(1, cx - r); x <= Math.min(sim.map.size - 2, cx + r); x++) {
         if (sim.map.getResource(x, y) !== RESOURCE_TYPES.TREE) continue;
-        const d = Math.hypot(x - cx, y - cy);
-        if (d >= bestD) continue;
-        if (!sim.canPlaceBuilding(player.id, type, x, y).valid) continue;
-        best = { x, y };
-        bestD = d;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const tx = x + dx;
+            const ty = y + dy;
+            const d = Math.hypot(tx - cx, ty - cy);
+            if (d >= bestD || !sim.canPlaceBuilding(player.id, type, tx, ty).valid) continue;
+            best = { x: tx, y: ty };
+            bestD = d;
+          }
+        }
       }
     }
-    return best;
+    if (best) return best;
   }
 
   // Obecná stavba – spirála kolem hradu.
