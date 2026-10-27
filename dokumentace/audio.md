@@ -2,7 +2,7 @@
 
 ## Herní hudba a atmosféra
 - **Hudba**: orientální a středověké motivy v pomalém tempu. V boji se tempo zrychlí.
-- **Ambient**: vítr a písek na pouštních mapách, šumění vody a ptáci v oázách.
+- **Ambient**: občasné ptačí cvrlikání v oázách a zvuky budov.
 - **Hlavní menu**: klidná hudba. V herním menu se hudba ztlumí o 50 %.
 - **Konec hry**: fanfára při vítězství, smutná melodie při prohře.
 

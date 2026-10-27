@@ -9,3 +9,4 @@ Při změnách dodržuj [pravidla přispívání](../CONTRIBUTING.md), zejména
 - Existující nadlimitní soubory řeš postupně při souvisejících změnách: odděluj upravovanou odpovědnost, zbytek zbytečně nepřepisuj a soubor dále nezvětšuj. Neprováděj plošný refaktoring bez zadání.
 - Při rozdělování zachovej chování, aktualizuj importy a vstupní body a spusť odpovídající existující testy. Ve shrnutí změn uveď případný zbývající nadlimitní soubor.
 - Před dokončením změn zdrojového kódu spusť `npm run test:structure`; tato kontrola je také součástí `npm test`.
+- Zprávy commitů piš podle Conventional Commits jako jedinou stručnou větu v předmětu, bez dalšího popisného těla; případné požadované technické podpisy uveď v zápatí.

@@ -1,6 +1,6 @@
 /**
  * Procedurální zvuk a hudba přes Web Audio API – bez externích souborů.
- * Hudba se skládá z orientálních motivů, ambient z větru, vody a ptáků.
+ * Hudba se skládá z orientálních motivů, ambient zahrnuje ptáky a zvuky budov.
  */
 const MUSIC_MODES = {
   menu: {

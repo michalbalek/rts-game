@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { testRightClick } from './client-tests/input.js';
 import { testLocalization } from './client-tests/localization.js';
+import { testAudio } from './client-tests/audio.js';
 import { GameUI } from '../client/js/game/ui.js';
 import { Renderer } from '../client/js/engine/renderer.js';
 import { unitAnimation } from '../client/js/engine/unit-animation.js';
@@ -426,6 +427,7 @@ console.log('\n--- Vykreslení budov a postav ---');
 
 testRightClick(assert);
 testLocalization(assert);
+testAudio(assert);
 
 console.log(failures ? `\n${failures} CHYB` : '\nVšechny testy klienta prošly.');
 process.exit(failures ? 1 : 0);

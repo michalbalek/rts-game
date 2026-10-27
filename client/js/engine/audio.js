@@ -27,11 +27,6 @@ export class AudioEngine {
     this.step = 0;
     this.battleTimer = 0;
 
-    this.windSource = null;
-    this.waterSource = null;
-    this.windGain = null;
-    this.waterGain = null;
-
     this.ambientTimer = 1.5;
     this.lastSfx = new Map();
     this.started = false;
@@ -60,7 +55,6 @@ export class AudioEngine {
       this.ambientBus.connect(this.master);
 
       this.makeNoise();
-      this.startAmbient();
       this.schedulerTimer = setInterval(() => this.scheduleMusic(), 180);
       return true;
     } catch (err) {

@@ -12,43 +12,8 @@ export class AudioAmbient {
     this.noiseBuffer = buffer;
   }
 
-  startAmbient() {
-    // Vítr.
-    const wind = this.ctx.createBufferSource();
-    wind.buffer = this.noiseBuffer;
-    wind.loop = true;
-    const windFilter = this.ctx.createBiquadFilter();
-    windFilter.type = 'bandpass';
-    windFilter.frequency.value = 380;
-    windFilter.Q.value = 0.6;
-    this.windGain = this.ctx.createGain();
-    this.windGain.gain.value = 0.05;
-    wind.connect(windFilter).connect(this.windGain).connect(this.ambientBus);
-    wind.start();
-    this.windSource = wind;
-
-    // Voda (zapíná se v oáze).
-    const water = this.ctx.createBufferSource();
-    water.buffer = this.noiseBuffer;
-    water.loop = true;
-    const waterFilter = this.ctx.createBiquadFilter();
-    waterFilter.type = 'bandpass';
-    waterFilter.frequency.value = 950;
-    waterFilter.Q.value = 0.5;
-    this.waterGain = this.ctx.createGain();
-    this.waterGain.gain.value = 0;
-    water.connect(waterFilter).connect(this.waterGain).connect(this.ambientBus);
-    water.start();
-    this.waterSource = water;
-  }
-
   setBiome(biome) {
     this.biome = biome || 'desert';
-    if (!this.ctx) return;
-    const target = this.biome === 'desert' ? 0.06 : this.biome === 'canyon' ? 0.035 : 0.028;
-    this.windGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.5);
-    const waterTarget = this.biome === 'oasis' ? 0.035 : this.biome === 'desert' ? 0.012 : 0;
-    this.waterGain.gain.setTargetAtTime(waterTarget, this.ctx.currentTime, 0.6);
   }
 
   chirp() {
