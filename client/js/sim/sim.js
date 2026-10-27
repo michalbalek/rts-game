@@ -1,4 +1,4 @@
-import { PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, BOT_DIFFICULTIES, GAME_MODES } from './constants.js';
+import { PLAYER_COLORS, PLAYER_COLOR_NAMES, CAPITALS, BOT_DIFFICULTIES, GAME_MODES, AUTO_MARKET_INTERVAL } from './constants.js';
 import { GameMap } from './mapgen.js';
 import { createRng, randomSeed } from './rng.js';
 import { updateBot } from './bot.js';
@@ -64,6 +64,7 @@ export class GameSim {
     this.pendingDeposits = [];
     this.slowTimer = 0;
     this.foodWarnTimer = 0;
+    this.marketTimer = AUTO_MARKET_INTERVAL;
 
     this.map.onChange = (idx, res) => {
       this.regionsDirty = true;
@@ -92,6 +93,7 @@ export class GameSim {
         spawnTimer: 5,
         foodShortage: false,
         foodDebt: 0,
+        marketRules: {},
         stats: { destroyed: 0, trained: 0, gathered: 0, lost: 0, damage: 0 },
         bot: { nextBuild: 0, attackTimer: 0, armyTarget: 8, lastAttack: -999, guardSet: false }
       };

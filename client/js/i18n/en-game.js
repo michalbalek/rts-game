@@ -17,6 +17,8 @@ export default {
   "Odolná věž pojme až čtyři lučištníky, kteří z ní mají větší dostřel.": "A sturdy tower holds up to four archers, who gain extra range.",
   "Otevřenou bránou projde kdokoliv. Při přiblížení nepřítele se automaticky zavře.": "Anyone can pass through an open gate. It closes automatically when enemies approach.",
   "Nejprve postavte Obchod.": "Build a Market first.",
+  "Neplatná hranice automatického obchodu.": "Invalid automatic trade threshold.",
+  "Hranice nákupu nesmí být vyšší než hranice prodeje.": "The buy threshold cannot exceed the sell threshold.",
   "Karmínová": "Crimson",
   "Modrá": "Blue",
   "Zelená": "Green",

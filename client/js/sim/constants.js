@@ -92,6 +92,9 @@ export const MARKET_PRICES = {
   iron: { buy: 20, sell: 14, name: 'Železo', icon: '⛓️' }
 };
 
+export const AUTO_MARKET_INTERVAL = 10;
+export const AUTO_MARKET_MAX = 1000000;
+
 export const BOT_DIFFICULTIES = {
   easy: {
     key: 'easy',

@@ -13,7 +13,7 @@ Take charge of a desert domain. Summon your subjects to the campfire in front of
 ### Key Features
 
 - **3 randomly generated maps** – Desert with a River (Poušť s řekou), Oasis by the Lake (Oáza u jezera) and Rocky Gorge (Skalní rokle). Each has 4 symmetrical starting positions.
-- **Full economy** – wood, stone, food, iron and money. Warehouses, granaries and a market with fixed prices. Taxes and the happiness indicator are removed for now; money comes from starting capital and resource sales.
+- **Full economy** – wood, stone, food, iron and money. Warehouses, granaries and a market with fixed prices and optional automatic buying and selling. Taxes and the happiness indicator are removed for now; money comes from starting capital and resource sales.
 - **14 structures** – economic and military buildings, including walls, a defensive tower and two gate sizes.
 - **3 unit types** – Footman (Pěšák), Archer (Lučištník) and Subject (Poddaný). Footmen and archers fight; subjects work and build.
 - **Bots** – 1–3 opponents across three difficulty levels. They build in a documented order, keep part of their army near the castle and attack.

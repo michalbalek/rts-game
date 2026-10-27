@@ -8,6 +8,7 @@
 - **Sýpka**: zvyšuje kapacitu jen pro jídlo, o 300 jednotek. Je cílem odnosu jídla z jabloňového sadu.
 - **Stavba**: budova se hradí ze zásob panství v okamžiku položení základů. Stavbu dokončí přidělení poddaných na staveniště. Náklady jednotlivých budov jsou v [budovy.md](budovy.md).
 - **Měna**: peníze, utrácí se v budově Obchodu. Nákup omezuje jen peníze a volná kapacita (sklad pro suroviny, sýpka pro jídlo). Prodej omezuje zásoba.
+- **Automatický obchod**: v dokončeném Obchodu lze pro každou surovinu nastavit „Dokoupit do“ a „Prodat nad“. Každých 10 herních sekund se zásoba pod první hranicí doplní a přebytek nad druhou prodá na danou hranici. Prázdné pole příslušnou akci vypne; nákupní hranice nesmí být vyšší než prodejní. Nejdříve se provedou prodeje, potom nákupy, v pořadí dřevo, kámen, jídlo, železo. Nákup proběhne i částečně podle peněz a místa, zbytek se zkusí později. Pravidla jsou společná všem obchodům hráče, ukládají se s hrou a fungují, jen pokud má alespoň jeden dokončený Obchod.
 - **Nedostatek zdrojů**: stavba, výcvik i nákup vyžadují celé náklady už při zadání. Pokud zdroje nestačí, příkaz se neprovede a písař to oznámí.
 - **Vyčerpání zdrojů**: ložisko kamene má zásobu 2000 jednotek, ložisko železa 1000. Po vyčerpání se nové ložisko objeví jinde na mapě (viz [mapa.md](mapa.md)). Stromy se obnovují a jablka v sadu jsou nevyčerpatelná.
 - **Startovní kapitál**: hráč volí při spuštění hry, kolik peněz a surovin dostane na začátku. Méně kapitálu znamená vyšší obtížnost.

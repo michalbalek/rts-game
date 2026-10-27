@@ -246,6 +246,13 @@ export class GameUI {
   }
 
   toast(text, kind = 'info') {
+    if (kind === 'error' && this.marketOpen && this.modals.root) {
+      const error = this.modals.root.querySelector('[data-market-error]');
+      if (error) {
+        error.textContent = t(text);
+        error.hidden = false;
+      }
+    }
     if (!this.el.toastRoot) return;
     const node = document.createElement('div');
     node.className = `toast ${kind}`;

@@ -69,6 +69,8 @@
   .market-head { display: none; }
   .market-row { grid-template-columns: 1fr 1fr; }
   .market-actions { justify-content: flex-start; }
+  .market-rule { grid-template-columns: 1fr 1fr; }
+  .market-rule-title, .market-rule-active { grid-column: 1 / -1; }
   .results-table { font-size: 11px; }
   .results-table th:nth-child(n+4),
   .results-table td:nth-child(n+4) { display: none; }

@@ -1,6 +1,7 @@
 import { Building, Unit } from './entities.js';
 import { createRng } from './rng.js';
 import { legacyGateRotation, rotatedBuildingSize } from './building-orientation.js';
+import { AUTO_MARKET_INTERVAL } from './constants.js';
 
 export class SimulationSave {
   /** Kompletní stav simulace pro localStorage (na rozdíl od síťového snímku). */
@@ -30,12 +31,14 @@ export class SimulationSave {
         botTimer: this.botTimer,
         slowTimer: this.slowTimer,
         foodWarnTimer: this.foodWarnTimer,
+        marketTimer: this.marketTimer,
         eventSeq: this.eventSeq,
         mapChangeSeq: this.mapChangeSeq,
         pendingDeposits: this.pendingDeposits.map(p => ({ ...p })),
         players: this.players.map(p => ({
           ...p,
           resources: { ...p.resources },
+          marketRules: Object.fromEntries(Object.entries(p.marketRules).map(([key, rule]) => [key, { ...rule }])),
           stats: { ...p.stats },
           bot: { ...p.bot }
         })),
@@ -83,6 +86,8 @@ export class SimulationSave {
     this.botTimer = Number(state.botTimer) || 1;
     this.slowTimer = Number(state.slowTimer) || 0;
     this.foodWarnTimer = Number(state.foodWarnTimer) || 0;
+    this.marketTimer = Number.isFinite(state.marketTimer) && state.marketTimer > 0
+      ? state.marketTimer : AUTO_MARKET_INTERVAL;
     this.eventSeq = state.eventSeq || 0;
     this.mapChangeSeq = state.mapChangeSeq || 0;
     this.pendingDeposits = (state.pendingDeposits || []).map(p => ({ ...p }));
@@ -100,6 +105,7 @@ export class SimulationSave {
       const player = {
         ...p,
         resources: { ...(p.resources || {}) },
+        marketRules: Object.fromEntries(Object.entries(p.marketRules || {}).map(([key, rule]) => [key, { ...rule }])),
         stats: { ...(p.stats || {}) },
         bot: { ...(p.bot || {}) },
         alive: p.alive !== false,

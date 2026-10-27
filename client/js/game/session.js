@@ -248,6 +248,7 @@ export class RemoteSession extends BaseSession {
       self.population = snap.self.population;
       self.capacity = snap.self.capacity;
       self.foodShortage = snap.self.foodShortage;
+      self.marketRules = snap.self.marketRules || {};
       self.stats = snap.self.stats;
     }
     this.applyDeposits(snap.deposits);

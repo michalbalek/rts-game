@@ -111,6 +111,8 @@ export class SimulationCommands {
       case 'buy':
       case 'sell':
         return this.marketTrade(playerId, cmd.resource, Number(cmd.amount) || 0, cmd.op);
+      case 'market-rule':
+        return this.setMarketRule(playerId, cmd.resource, cmd.buyTo, cmd.sellTo);
       case 'ping':
         return { ok: true };
       default:

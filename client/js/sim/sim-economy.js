@@ -1,4 +1,4 @@
-import { MARKET_PRICES, WORK, STORAGE } from './constants.js';
+import { MARKET_PRICES, WORK, STORAGE, AUTO_MARKET_INTERVAL, AUTO_MARKET_MAX } from './constants.js';
 
 export class SimulationEconomy {
   getStorageCaps(playerId) {
@@ -125,6 +125,55 @@ export class SimulationEconomy {
     }
     this.foodWarnTimer = Math.max(0, this.foodWarnTimer - dt);
     this.slowTimer = Math.max(0, this.slowTimer - dt);
+    this.marketTimer -= dt;
+    if (this.marketTimer <= 1e-9) {
+      this.marketTimer = AUTO_MARKET_INTERVAL - ((-this.marketTimer) % AUTO_MARKET_INTERVAL);
+      this.updateAutoMarket();
+    }
+  }
+
+  setMarketRule(playerId, resource, buyTo, sellTo) {
+    const player = this.getPlayer(playerId);
+    if (!player || !player.alive) return { ok: false, reason: 'Vaše panství již padlo.' };
+    if (!Object.hasOwn(MARKET_PRICES, resource)) return { ok: false, reason: 'Neplatná surovina.' };
+    if (![buyTo, sellTo].every(value => value === null ||
+      (Number.isSafeInteger(value) && value >= 0 && value <= AUTO_MARKET_MAX))) {
+      return { ok: false, reason: 'Neplatná hranice automatického obchodu.' };
+    }
+    if (buyTo !== null && sellTo !== null && buyTo > sellTo) {
+      return { ok: false, reason: 'Hranice nákupu nesmí být vyšší než hranice prodeje.' };
+    }
+    if (!this.buildings.some(b => b.ownerId === playerId && b.complete && b.type === 'market')) {
+      return { ok: false, reason: 'Nejprve postavte Obchod.' };
+    }
+    if (buyTo === null && sellTo === null) delete player.marketRules[resource];
+    else player.marketRules[resource] = { buyTo, sellTo };
+    return { ok: true };
+  }
+
+  updateAutoMarket() {
+    for (const player of this.players) {
+      if (!player.alive || !Object.keys(player.marketRules).length ||
+          !this.buildings.some(b => b.ownerId === player.id && b.complete && b.type === 'market')) continue;
+      for (const mode of ['sell', 'buy']) {
+        for (const [resource, price] of Object.entries(MARKET_PRICES)) {
+          const rule = player.marketRules[resource];
+          if (!rule) continue;
+          const stock = player.resources[resource];
+          const amount = mode === 'sell'
+            ? rule.sellTo === null ? 0 : Math.min(AUTO_MARKET_MAX, Math.floor(stock - rule.sellTo))
+            : rule.buyTo === null ? 0 : Math.min(
+              Math.floor(rule.buyTo - stock),
+              Math.floor(player.resources.money / price.buy),
+              this.freeStorage(player.id, resource)
+            );
+          if (amount > 0) {
+            const result = this.marketTrade(player.id, resource, amount, mode, AUTO_MARKET_MAX);
+            if (!result.ok) console.error('Automatický obchod selhal:', result.reason);
+          }
+        }
+      }
+    }
   }
 
   enforceStorageCaps(playerId) {
@@ -146,13 +195,13 @@ export class SimulationEconomy {
     }
   }
 
-  marketTrade(playerId, resource, amount, mode) {
-    const price = MARKET_PRICES[resource];
+  marketTrade(playerId, resource, amount, mode, maxAmount = 5000) {
+    const price = Object.hasOwn(MARKET_PRICES, resource) ? MARKET_PRICES[resource] : null;
     const player = this.getPlayer(playerId);
     if (!player || !player.alive) return { ok: false, reason: 'Vaše panství již padlo.' };
     if (!price) return { ok: false, reason: 'Neplatná surovina.' };
     amount = Math.floor(amount);
-    if (amount <= 0 || amount > 5000) return { ok: false, reason: 'Neplatné množství.' };
+    if (!Number.isSafeInteger(amount) || amount <= 0 || amount > maxAmount) return { ok: false, reason: 'Neplatné množství.' };
     const hasMarket = this.buildings.some(b => b.ownerId === playerId && b.complete && b.type === 'market');
     if (!hasMarket) return { ok: false, reason: 'Nejprve postavte Obchod.' };
 

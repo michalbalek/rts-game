@@ -158,6 +158,7 @@ export class SimulationVisibility {
         population: viewer.population,
         capacity: viewer.capacity,
         foodShortage: viewer.foodShortage,
+        marketRules: Object.fromEntries(Object.entries(viewer.marketRules).map(([key, rule]) => [key, { ...rule }])),
         stats: { ...viewer.stats }
       },
       players: this.players.map(p => ({

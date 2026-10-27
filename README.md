@@ -13,7 +13,7 @@ Ujměte se vlády nad pouštním panstvím. Povolejte poddané k ohništi před 
 ### Hlavní prvky
 
 - **3 náhodně generované mapy** – Poušť s řekou, Oáza u jezera a Skalní rokle. Každá má 4 symetrické startovní pozice.
-- **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky a obchod s pevnými cenami. Daně a ukazatel spokojenosti jsou zatím odstraněné; peníze pocházejí ze startovního kapitálu a prodeje surovin.
+- **Plná ekonomika** – dřevo, kámen, jídlo, železo a peníze. Sklady, sýpky a obchod s pevnými cenami a volitelným automatickým nákupem a prodejem. Daně a ukazatel spokojenosti jsou zatím odstraněné; peníze pocházejí ze startovního kapitálu a prodeje surovin.
 - **14 staveb** – hospodářské a vojenské budovy včetně hradeb, obranné věže a dvou velikostí brány.
 - **3 typy jednotek** – Pěšák, Lučištník a Poddaný. Pěšáci a lučištníci bojují, poddaní pracují a staví.
 - **Boti** – 1–3 protivníci ve třech obtížnostech. Staví podle dokumentovaného pořadí, drží část vojska u hradu a útočí.

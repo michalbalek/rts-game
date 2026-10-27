@@ -220,6 +220,70 @@
   margin-top: 12px;
 }
 
+.market-error {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 12px 0;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: #29130e;
+  color: #fca5a5;
+}
+
+.market-automatic {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(222, 179, 112, 0.25);
+}
+
+.market-automatic h3 {
+  margin: 0;
+  color: #f0d8ae;
+  font-size: 15px;
+}
+
+.market-rules {
+  display: grid;
+  gap: 8px;
+}
+
+.market-rule {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) repeat(2, minmax(95px, 1fr)) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(222, 179, 112, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(10, 6, 3, 0.3);
+}
+
+.market-rule-title {
+  align-self: center;
+  color: #f0d8ae;
+  font-weight: 600;
+}
+
+.market-rule label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.market-rule .text-input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+.market-rule-active {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 /* Výsledky */
 
 .modal-results {
@@ -301,4 +365,3 @@
   font-weight: 600;
   color: #f0d8ae;
 }
-

@@ -17,6 +17,10 @@ export function testLumberPlacementPreview(assert) {
   const remote = new RemoteSession({
     seed: 1234, mapType: 'desert', selfId: local.selfId, players: local.state.players
   }, null);
+  local.sim.getPlayer(local.selfId).marketRules.stone = { buyTo: 50, sellTo: 100 };
+  remote.applySnapshot(local.sim.serialize(local.selfId));
+  assert(remote.player.marketRules.stone.buyTo === 50 && remote.player.marketRules.stone.sellTo === 100,
+    'multiplayerový klient přijme vlastní pravidla obchodu ze snímku');
   remote.map = local.sim.map;
   remote.state.buildings = local.state.buildings;
   remote.state.units = local.state.units;

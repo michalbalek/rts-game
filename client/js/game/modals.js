@@ -245,6 +245,7 @@ export function helpContent() {
           <li>${t("Lučištníci útočí z dálky a jejich šípy mohou minout pohybující se cíl.")}</li>
           <li>${t("Plná kapacita zastaví dělníky. Postavte včas další Sklad (suroviny) nebo Sýpku (jídlo).")}</li>
           <li>${t("Další peníze získáte prodejem přebytečných surovin v Obchodu.")}</li>
+          <li>${t("V Obchodu můžete nastavit automatický nákup a prodej podle zásob; pravidla se kontrolují každých 10 herních sekund.")}</li>
           <li>${t("Vyčerpané ložisko se po 3 minutách objeví jinde na mapě.")}</li>
         </ul>
       </section>
